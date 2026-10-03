@@ -47,6 +47,23 @@ Source: BurstGPT README and v2.0 release notes; docs/decisions.md ADR-009.
 
 </details>
 
+## M0.2 Trace loaders [B] 2026-10-03
+Prerequisite: docs/architecture.md → Public interfaces → data.traces; docs/glossary.md → Data and traces → "failure row" and "canonical schema"; data/README.md.
+
+Bet (Arnav, before): what share of rows have output_tokens == 0 in Azure conv 2023, and in BurstGPT_3 (higher, lower or similar to Azure)? _______
+Outcome (after, from the smoke command's n_failures): _______ ✔/✘
+
+Q1 (justify): The loaders keep failure rows (output_tokens == 0) by default and only report the count; dropping is decided in M0.3. Why not drop them inside the loader, and what could go wrong downstream if they were kept without anyone noticing?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+Whether to drop them is an analysis decision, not a parsing one, so it belongs after the EDA (M0.3) and in one visible place. If the loader dropped them silently, the arrival process would lose requests that really reached the service, so the arrival rate and burstiness would be understated; the loader's job is to reproduce the file faithfully and make the choice explicit (`drop_failures`, with `df.attrs["n_failures"]` always reported). If they are kept unnoticed, a request with 0 output tokens has no decode phase, so it distorts the output-length distribution (a spike at 0), the 99th-percentile normalisation constant and mean service time. arrival_s also stays relative to the file's first request after dropping, so the time axis is the same either way.
+
+Source: M0.2 task brief; src/marl_lb/data/traces.py `_finalise`; the share itself comes from the smoke command, not from this answer.
+
+</details>
+
 ## Revisit
 Questions marked partly or missed. Re-ask at the start of the next session; move a line to "cleared" once you get it.
 

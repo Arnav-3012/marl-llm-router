@@ -21,7 +21,7 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 
 ## Phase M0 — Data
 - [x] M0.1 [B] Download Azure LLM Inference 2023 and BurstGPT into data/raw (read-only) — done when: files present, row counts printed
-- [ ] M0.2 [B] data/traces.py loaders — done when: tests/test_traces.py passes
+- [x] M0.2 [B] data/traces.py loaders — done when: tests/test_traces.py passes
 - [ ] M0.3 [A] Notebook 01_trace_eda (Arnav writes the analysis cells; skeleton with questions provided): arrival rates, P/O distributions, burstiness; also the fraction of BurstGPT rows with a Session ID, whether Request tokens grow within a session (is history included?), the session length distribution, and confirm Azure 2023 has only TIMESTAMP, ContextTokens, GeneratedTokens — done when: notebook runs top to bottom and findings are recorded in ADR-009, written by Arnav in his own words
 - [ ] M0.3a [B] Viva check for M0.3 (trace EDA) — done when: entry written by Claude Code and self-checked by Arnav in docs/viva.md
 - [ ] M0.3.1 [B] Tests for normalisation and split in tests/test_processed.py: constants are the 99th percentile per feature, values clipped to [0,1]; train/held-out split is time-ordered, has no overlap, and reports both sizes — done when: tests written and failing as expected

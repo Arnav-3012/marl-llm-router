@@ -1,0 +1,5 @@
+Timestamp,Session ID,Elapsed time,Model,Request tokens,Response tokens,Total tokens,Log Type
+19440110.0,,0.5,ChatGPT,100,20,120,API log
+19440112.5,c7f2a1,1.25,ChatGPT,200,0,200,Conversation log
+19440115.0,c7f2a1,2.0,GPT-4,300,40,340,Conversation log
+19440120.0,,0.1,GPT-4,50,5,55,API log

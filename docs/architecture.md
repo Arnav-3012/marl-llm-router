@@ -69,8 +69,9 @@ Forward-target rule (ADR-013, SED-style): the environment sends a forwarded requ
 - CsvLogger(path: Path).log(row: dict[str, float]) -> None
 
 ### data.traces
-- load_azure_2023(path: Path) -> DataFrame
-- load_burstgpt(path: Path) -> DataFrame
+- load_azure_2023(path: Path, drop_failures: bool = False) -> DataFrame
+- load_burstgpt(path: Path, drop_failures: bool = False) -> DataFrame
+  # Canonical schema: arrival_s (float64, s from the file's first request), prompt_tokens (int64), output_tokens (int64), session_id (nullable string), source (file stem), then BurstGPT extras (Model, Log Type, Elapsed time if present). df.attrs["n_failures"] = rows with output_tokens == 0, counted before any dropping. ValueError names the file on missing column, decreasing time or negative tokens.
 - sample_stream(trace: DataFrame, arrival_rate_rps: float, seed: int, split: str) -> list[Request]   # split: "train" | "heldout"
   # arrival_rate_rps in req/s. The ρ → rate conversion lives in data/load.py (ADR-011, M1.28), not here.
 
