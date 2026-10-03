@@ -151,3 +151,15 @@ Decision: Option A, accepted 2026-10-03, S.8 review.
 - Transition reward therefore = shared R_SLA at resolution (ADR-010) − λ·C_j − KV term (serving agent only) − β·B_t (every transition) − the immediate Defer/Forward costs from ADR-010.
 Alternatives considered: (B) accrue per-step terms into each agent's currently open transition: keeps the per-step definitions, but credits cost to whatever the agent last did (e.g. a Forward), so credit is noisy; (C) keep per-step rewards with dummy idle-tick transitions: breaks ADR-013's rule that an idle agent records no transition.
 Consequences: The cost-per-request metric stays consistent with the reward through the invariant above. The server must track per-request attributed service seconds and per-request resident ticks above the KV threshold (sim.server / sim.cluster, Tier A). A request that is never served has C_j = 0. tests/test_reward.py covers the invariant and the per-request terms (M1.17). ADR-010 Decision text points here for the cost and KV terms.
+
+## ADR-015: Interference model in the simulator
+Status: proposed · Date: 2026-10-03
+What: Whether, and how, the simulator slows a server down when other servers are busy at the same time is not yet decided; the choice is made in M0.5.4.1 from the profiling data, among options A, B and C below.
+Why: ADR-003 and M0.5.4 fit an interference parameter, but the service-time model in context.md (T = a·(P − P_cached) + Σ t_step(B_i), t_step(B) = t0 + k·B) has no interference term, so M1.8 would have nothing to apply it to. The real servers share one M4 Pro chip, so the effect may be real, and it must be modelled or reported rather than silently dropped.
+Context: Without an interference term, the fitted parameter has no home in the service-time formula (context.md Environment). The decision depends on how large the measured slowdown is and how it scales with the number of busy servers, which is only known after M0.5.2.
+Decision: Not yet taken. Fixed in M0.5.4.1 from the M0.5.2 profiling data. Candidates:
+- (A) t_step and a are multiplied by (1 + s_class × n_other_busy/(N−1)), with s_class fitted per server class. n_other_busy is the number of other servers with at least one request in service that tick.
+- (B) A fixed multiplier on t_step and a whenever any other server is busy.
+- (C) No interference term in the simulator; the measured slowdown is reported as a sim-to-real limitation (M5.3).
+Alternatives considered: the three options above are the alternatives; none is rejected yet.
+Consequences: M0.5.2 must measure decode and prefill slowdown with 0..N−1 other servers busy, so A can be fitted (a single "any other busy" point would only support B). M0.5.4 fits whatever the accepted option needs. The M1.7 tests and the M1.8 service-time code follow the accepted option, and configs/sim.yaml and calibration.json carry its parameters (no magic numbers). If C is chosen, E7 (sim-to-real gap) is expected to show the slowdown and M5.3 says so.

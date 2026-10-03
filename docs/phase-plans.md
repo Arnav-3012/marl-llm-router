@@ -33,12 +33,13 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 ## Phase M0.5 — Profiling (timebox 6h)
 - [ ] M0.5.0 [B] Learning gate L1 (before profiling): Deep-Dive Guide videos 1–5, Parts A–B — done when: Arnav answers the relevant self-check questions from the Deep-Dive Guide into docs/viva.md
 - [ ] M0.5.1 [B] Install llama.cpp, fetch Qwen2.5-3B Q4_K_M and a slow-class model — done when: llama-server answers a request
-- [ ] M0.5.2 [B] profiling/bench_server.py: TTFT, TPOT at varying prompt length and batch size, prefix-cache reuse — done when: raw CSV written for both classes
+- [ ] M0.5.2 [B] profiling/bench_server.py: TTFT, TPOT at varying prompt length and batch size, prefix-cache reuse — done when: raw CSV written for both classes; also measure decode and prefill slowdown with 0..N−1 other servers busy (ADR-015)
 - [ ] M0.5.3 [B] Tests for the fitting maths on synthetic data (known a, t0, k recovered) — done when: tests/test_fit_calibration.py passes
 - [ ] M0.5.4 [A] profiling/fit_calibration.py: fit a, t0, k, cache speedup, interference — done when: tests/test_fit_calibration.py passes
 - [ ] M0.5.4a [B] Viva check for M0.5.4 (fit_calibration) — done when: entry written by Claude Code and self-checked by Arnav in docs/viva.md
+- [ ] M0.5.4.1 [B] ADR-015 (interference model: options A/B/C) accepted from the M0.5.2 slowdown data, before M1.7 — done when: ADR-015 status accepted
 - [ ] M0.5.5 [B] Write calibration.json, plot fit vs measured in notebook 02 — done when: fit residuals plotted and reviewed
-- [ ] M0.5.6 [B] ADR: server class split, class prices, KV budgets — done when: ADR approved
+- [ ] M0.5.6 [B] ADR: server class split, class prices, KV budgets; the class prices are labelled "synthetic price per busy second (rough real GPU price ratios)" wherever they appear — done when: ADR approved
 
 ## Phase M1 — Simulator + heuristics
 - [ ] M1.1 [B] config.py + utils (seeding, logging, io) with tests — done when: tests/test_config.py and tests/test_utils.py pass
@@ -84,7 +85,7 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 - [ ] M1.27 [B] tests/test_load.py: sweep logic on synthetic sweeps, one per criterion (known λ_sat recovered under the completion-ratio, drop-rate and backlog-growth criteria separately), plus a non-monotone sweep that is flagged — done when: tests written and passing
 - [ ] M1.28 [B] ρ helper in data/load.py: ρ = λ_arr / λ_sat, returning the arrival rate in req/s (data/load.py is Tier B in the architecture.md map) — done when: λ_sat recorded in ADR-011 "Definition of ρ" and in results/ (a measurement; no status change)
 - [ ] M1.29 [B] eval/evaluate.py + scripts/evaluate.py baseline run on held-out traffic, all baselines in local and global forms where applicable (after M1.28, so ρ is defined) — done when: results/baselines/ written with config copied
-- [ ] M1.30 [B] Sanity checks (M2 gate): (i) SED-local at k=full and SED-global each beat Random at ρ=0.8, plus a test or check that SED-local at k=0 behaves like Random (it always Accepts, so it is entry-rule routing, ADR-012); (ii) Little's law L ≈ λ_arr·W at ρ = 0.5 and 0.8; (iii) heuristic ordering matches the prediction written in docs/viva.md before the run, and any violation is explained rather than tuned away — done when: numbers in results/ reviewed with Arnav
+- [ ] M1.30 [B] Sanity checks (M2 gate): (i) SED-local at k=full and SED-global each beat Random at ρ=0.8, plus a test or check that SED-local at k=0 behaves like Random (it always Accepts, so it is entry-rule routing, ADR-012); (ii) Little's law L ≈ λ_arr·W at ρ = 0.5 and 0.8; (iii) heuristic ordering matches the prediction written in docs/viva.md before the run, and any violation is explained rather than tuned away; (iv) headroom check: SED-global vs SED-local (k=full and k=0) vs Random at ρ = 0.8 and 0.95, 5 seeds, mean ± 95% CI — done when: numbers in results/ reviewed with Arnav, the gaps are recorded in docs/logs.md, and if SED-local and SED-global overlap in CI, an ADR is written before M2 deciding whether the headline shifts to the cost frontier (E3) or the workload changes (e.g. BurstGPT bursts)
 
 ## Phase M2 — Single-agent DDQN
 - [ ] M2.0 [B] Learning gate L2 (before M2): Deep-Dive Guide videos 6–10, Parts C–D — done when: Arnav answers the relevant self-check questions from the Deep-Dive Guide into docs/viva.md
@@ -159,7 +160,7 @@ Break-its (M3). Same rule: hypothesis in docs/viva.md (Break-it log) first; conf
 - [ ] M5.1 [B] Results tables from results/ only (no invented numbers) — done when: tables match files
 - [ ] M5.1a [B] Fill docs/numbers.md from results/ only, source path on every row — done when: no empty row has a results/ file available and no value lacks a path
 - [ ] M5.2 [B] Report draft: method, experiments, answers to the 3 questions — done when: draft reviewed
-- [ ] M5.3 [B] Limitations and threats (non-stationarity, sim fidelity, N=4) — done when: section reviewed
+- [ ] M5.3 [B] Limitations and threats (non-stationarity, sim fidelity, N=4, shared-chip contention: servers coupled on one M4 Pro, not a real cluster; decentralisation as a design choice, "what if routing is decentralised", with the central DQN as reference; synthetic prices) — done when: section reviewed
 - [ ] M5.4 [B] Compile final viva bank from docs/viva.md — done when: bank covers every viva check and every Revisit item
 - [ ] M5.4a [B] Strict mock viva (run in claude.ai); results into docs/viva.md Revisit list — done when: every wrong answer is listed in Revisit with its missing piece
 - [ ] M5.4b [B] Run the codebase-wiki skill to generate docs/wiki/ — done when: docs/wiki/ exists and Arnav has skimmed it

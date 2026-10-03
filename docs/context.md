@@ -1,5 +1,6 @@
 # MARL LLM Router — Project Context
 Owner: Arnav · Course: AAI (RL & Multi-Agent Systems) mini project · Group: E035, E032 · Deadline: 2026-10-27 · Last updated: 2026-10-03 (S.8)
+Source of truth for concepts: the Deep-Dive Guide is v2 (2026-10-03), a Claude Doc at https://claude.ai/code/artifact/3cb1eae2-fdc0-4b66-9b1a-71bb5ac56f24. Where it and an ADR disagree, the ADR applies.
 
 ## One line
 Independent Double-DQN agents, one per heterogeneous LLM server, learn Accept/Forward/Defer routing in a simulator calibrated on real llama.cpp servers. We measure goodput vs strong heuristics, a cost–latency Pareto frontier, the price of partial observability, and the sim-to-real gap; then ship it as a reproducible, demo-able project.
@@ -11,6 +12,7 @@ Independent Double-DQN agents, one per heterogeneous LLM server, learn Accept/Fo
 
 ## Positioning
 Learning + CV project, not a research paper, not RLHF. Train in simulation; real servers for calibration and validation only. Repo private until the course is graded, then public (MIT).
+Decentralisation is a design question we study (central DQN as reference), not a claim that real routers are decentralised; the real servers share one chip, and the prices are synthetic.
 
 ## Pipeline
 Profile (real) → Calibrate (profiling/calibration.json) → Train (sim) → Deploy (FastAPI router on real servers) → Compare (metrics + sim-to-real gap) → Showcase (Docker, HF Space demo, video)
