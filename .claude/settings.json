@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash",
+      "Edit(data/raw/**)"
+    ]
+  }
+}

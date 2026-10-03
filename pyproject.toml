@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "marl-lb"
+version = "0.1.0"
+description = "Independent Double-DQN agents routing requests across heterogeneous LLM servers."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "torch",
+    "numpy",
+    "pandas",
+    "scipy",
+    "pyyaml",
+    "matplotlib",
+    "tqdm",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+]
+
+[project.optional-dependencies]
+demo = ["gradio"]
+
+[dependency-groups]
+dev = ["pytest", "ruff", "pettingzoo"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/marl_lb"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+extend-exclude = ["*.ipynb"]  # notebooks are not linted; two placeholders are 0-byte
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

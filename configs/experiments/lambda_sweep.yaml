@@ -1,0 +1,6 @@
+# E3: cost weight sweep -> cost-latency Pareto frontier.
+experiment: lambda_sweep
+seeds: [0, 1, 2, 3, 4]
+rho: [0.8]
+lambda_cost: [0, 0.25, 0.5, 1, 2] # λ values
+compare_to: [sed, cache_aware]    # fixed rules plotted against the frontier

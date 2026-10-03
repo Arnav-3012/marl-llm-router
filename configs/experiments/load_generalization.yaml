@@ -1,0 +1,7 @@
+# E5: train at rho=0.8, test at 0.95 and on BurstGPT.
+experiment: load_generalization
+seeds: [0, 1, 2, 3, 4]
+train_rho: 0.8
+test:
+  - {source: azure2023, rho: 0.95}   # higher load, same trace family
+  - {source: burstgpt, rho: null}    # burst traffic; rho value set in M4

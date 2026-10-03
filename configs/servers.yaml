@@ -1,0 +1,28 @@
+# Server cluster definition. Calibration-derived values come ONLY from profiling/calibration.json (RULES.md #8).
+n_servers: 4                      # N from context.md
+classes:
+  fast_expensive:
+    count: 2                      # TODO(ADR): class split of the N=4 servers not fixed in context.md; confirm in M1
+    real_model: "Qwen2.5-3B-Instruct-Q4_K_M.gguf"   # real llama-server model, run on Metal
+    prefill_cost_per_token: null  # a: from calibration.json
+    step_base_time: null          # t0: from calibration.json
+    step_per_batch_time: null     # k: from calibration.json
+    cache_speedup: null           # prefix-cache prefill speedup: from calibration.json
+    interference: null            # slowdown from co-running requests: from calibration.json
+    kv_token_budget: null         # KV capacity in tokens: from calibration.json
+    price_per_busy_second: null   # class price in C = price * busy seconds; TODO(ADR) in M1
+  slow_cheap:
+    count: 2                      # TODO(ADR): confirm in M1
+    real_model: null              # 0.5-1.5B GGUF, or CPU-only (-ngl 0); decide in M0.5
+    prefill_cost_per_token: null  # a: from calibration.json
+    step_base_time: null          # t0: from calibration.json
+    step_per_batch_time: null     # k: from calibration.json
+    cache_speedup: null           # from calibration.json
+    interference: null            # from calibration.json
+    kv_token_budget: null         # from calibration.json
+    price_per_busy_second: null   # TODO(ADR) in M1; must be lower than fast_expensive
+real_endpoints:                   # used by the M6 router only
+  - {name: server0, url: null}    # llama-server base URL, e.g. http://localhost:8080
+  - {name: server1, url: null}    # fill in M6
+  - {name: server2, url: null}    # fill in M6
+  - {name: server3, url: null}    # fill in M6

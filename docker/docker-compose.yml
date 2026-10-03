@@ -1,0 +1,9 @@
+# Placeholder (M7). Two compose profiles, see docs/context.md "Showcase spec".
+#
+# Profile `cpu`:  llama-server CPU containers + router + replay.
+#                 Runs anywhere (no GPU needed).
+# Profile `host`: router + replay in Docker; llama-servers run natively on the Mac
+#                 (Docker on macOS cannot use the Metal GPU) and are reached
+#                 via host.docker.internal.
+#
+# services: {}   # to be defined in M7

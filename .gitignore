@@ -1,0 +1,17 @@
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+results/*
+!results/.gitkeep
+.venv/
+__pycache__/
+*.pyc
+*.gguf
+*.pt
+!demo/weights/*.pt
+.DS_Store
+.ipynb_checkpoints/
+.env
+.ruff_cache/
+.pytest_cache/

@@ -1,0 +1,5 @@
+# E2: cooperation term (beta * B_t) on vs off.
+experiment: cooperation
+seeds: [0, 1, 2, 3, 4]
+rho: [0.8]                        # training/eval load; TODO(ADR) if more loads wanted
+beta_coop: [0.0, null]            # off, on; "on" value set in M3 via ADR

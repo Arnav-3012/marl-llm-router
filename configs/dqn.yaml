@@ -1,0 +1,22 @@
+# Independent Double-DQN hyperparameters.
+network:
+  obs_dim: 7                      # own wait, own KV, prompt size, slack, hop count, neighbour wait, prefix hit
+  hidden: [64, 64]                # MLP 7->64->64->3, ReLU
+  n_actions: 3                    # Accept / Forward / Defer
+gamma: 0.99                       # discount
+loss: huber                       # Huber loss
+optimizer: adam                   # Adam
+lr: null                          # learning rate; tune in M2
+batch_size: null                  # minibatch size; tune in M2
+grad_clip: 10                     # gradient-norm clip
+target_update: null               # target-network sync (steps or tau); tune in M2
+replay:
+  capacity: 50000                 # context.md range is 20k-50k
+  warmup: null                    # transitions before learning starts; set in M2
+epsilon:
+  start: 1.0                      # initial exploration
+  end: 0.05                       # final exploration
+  decay_steps: null               # linear decay length; set in M2
+device: auto                      # mps if available, else cpu
+centralised:
+  enabled: false                  # centralised DQN reference (upper bound, M3)

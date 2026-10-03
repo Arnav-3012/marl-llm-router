@@ -1,0 +1,26 @@
+# Simulator, traffic, request and reward settings.
+calibration_path: profiling/calibration.json   # sole source of server physics
+dt: null                          # tick length in seconds (discrete-time, ADR-001); set in M1
+episode_ticks: null               # ticks per training episode; set in M1
+max_hops: 2                       # Forward limit per request
+max_defers: null                  # D: Defer limit per request; set in M1
+traffic:
+  source: azure2023               # azure2023 | burstgpt (burst tests, E5)
+  rho: 0.8                        # offered load as fraction of cluster capacity (E1 sweeps 0.5/0.8/0.95)
+  train_split: null               # fraction of trace for training; held-out remainder for eval; set in M0
+  normalisation_path: data/processed/normalisation.json   # P/O normalisation constants, written in M0
+sla:
+  ttft_target: null               # seconds; set in M1 from calibration/EDA
+  tpot_target: null               # seconds per output token; set in M1
+observation:
+  k: 1                            # neighbour visibility radius: 0 | 1 | full (E4 sweeps)
+  prefix_hit_enabled: false       # cache variant: adds prefix-hit fraction to the observation
+reward:
+  r_sla_met: 10                   # both targets met
+  r_sla_missed: -10               # at least one target missed
+  r_drop: -5                      # dropped request, charged to the last holder
+  kv_penalty_per_step: -1         # per step while KV fullness > threshold
+  kv_threshold: 0.8               # KV fullness fraction above which the penalty applies
+  lambda_cost: 0.5                # λ weighting cost C (E3 sweeps); default mid-sweep value
+  beta_coop: 0.0                  # β weighting cluster breach rate B_t (E2: 0 = off)
+  breach_window: null             # W: steps over which B_t is averaged; set in M3

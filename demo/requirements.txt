@@ -1,0 +1,2 @@
+# Placeholder (M7): dependencies for the Hugging Face Space (CPU, simulator mode).
+# gradio, torch (cpu), numpy, pandas, matplotlib, pyyaml

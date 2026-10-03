@@ -1,0 +1,6 @@
+# E4: visibility radius k vs centralised reference (price of partial observability).
+experiment: k_ablation
+seeds: [0, 1, 2, 3, 4]
+rho: [0.8]
+k: [0, 1, full]                   # decentralised neighbour visibility
+include_centralised: true         # centralised DQN upper bound

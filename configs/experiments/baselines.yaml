@@ -1,0 +1,8 @@
+# E1: baselines vs MARL at three loads, same traffic.
+experiment: baselines
+seeds: [0, 1, 2, 3, 4]            # >= 5 seeds, mean +/- 95% CI
+rho: [0.5, 0.8, 0.95]             # load sweep
+policies: [random, round_robin, jsq, po2, sed, cache_aware, marl]   # baselines + learned
+eval:
+  epsilon: 0.0                    # greedy evaluation
+  held_out: true                  # held-out traffic only
