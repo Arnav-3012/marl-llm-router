@@ -76,3 +76,17 @@ Context: The prefix cache (sim/prefix_cache.py, cache-aware baseline, prefix-hit
 Decision: Not yet taken. Decide after the M0.3 findings (Session ID coverage, token growth within a session, session length distribution, Azure columns confirmed). The M0.3 findings are recorded in this ADR.
 Alternatives considered: (A) BurstGPT Session IDs for the cache experiments: real session structure, but only a subset of rows, and a different trace from the Azure traffic used elsewhere; (B) synthetic sessions layered on Azure traffic: same arrival and length distributions as the main experiments, but session structure is invented and must be stated as an assumption (parameters in configs/, not in code).
 Consequences: Until decided, cache experiments (E1 Cache-aware, cache hit rate) are not claimed as validated on real conversation structure. Whichever option is chosen, the report states the source of the conversation id.
+
+## ADR-010: Delayed-reward credit (s', discount)
+Status: proposed · Date: 2026-10-03
+Context: ADR-004 credits an outcome to the decision-time state and action, but the outcome resolves Δ ticks later, possibly on another server. The DDQN target needs a defined next state s' and discount for such a transition, and the choice changes what the agent learns.
+Decision: Recommended (a), SMDP: s' = the agent's own observation at the resolution tick, discount γ^Δ. Not yet approved. Boundary: if the typical Δ exceeds 1/(1−γ) ticks (100 ticks at γ=0.99), the discounted outcome is almost invisible at decision time, so dt must be shortened or γ raised. Typical Δ is measured in M1 and recorded here before approval.
+Alternatives considered: (b) s' = the agent's next decision state with no Δ discount: simple, but the target ignores how long the outcome took and mixes unrelated states; (c) expected-outcome proxy reward at decision time: no delay, but biased and hides the true SLA outcome (the reason ADR-004 rejected proxy rewards).
+Consequences: With (a), pending transitions store the decision tick so Δ and γ^Δ are computed at resolution, and tests/test_reward.py and tests/test_train_loop.py assert s', Δ and the discount. The M1.18 and M2.9 implementations follow whichever option is approved.
+
+## ADR-011: Definition of ρ
+Status: proposed · Date: 2026-10-03
+Context: Every experiment is specified at load ρ ∈ {0.5, 0.8, 0.95}, but ρ has no operational meaning until the capacity it is measured against is fixed. A formula from per-server service rates ignores batching, KV limits, cache hits and routing losses.
+Decision: ρ = λ_arr / λ_sat, where λ_sat is the arrival rate (req/s) at which waits grow without bound over an episode for an all-SED cluster, found by a saturation sweep on train traffic. λ_sat is measured in M1.24–M1.26 and recorded here and in results/. The helper lives in data/load.py (Tier B). Not yet approved.
+Alternatives considered: ρ from nominal service rates in calibration.json (no sweep needed, but ignores batching, KV limits and cache effects, so ρ=0.95 may not mean near-saturation); saturation of the best heuristic over all policies (a fairer capacity, but more runs and the best policy changes with the configuration).
+Consequences: ρ is defined relative to SED, so a policy better than SED can run at ρ near or above 1 without saturating; the report says so. The baseline evaluation (M1.27) comes after λ_sat is known. If server classes or calibration.json change, λ_sat must be re-measured.

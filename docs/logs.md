@@ -31,3 +31,9 @@ Done: Applied the plan fixes to phase-plans.md (cut order and read-the-tests rul
 Learned: Several viva/break-it/rewrite tasks, ADR-008, viva.md and numbers.md already existed, so nothing was added for them.
 Blockers: ADR-009 stays Proposed until M0.3. The joint-action ADR will take the next free number when written in M3.
 Next: Arnav reviews the diff, runs ruff, pytest, and commits; then M0.1.
+
+## 2026-10-03 — Phase S: S.5 plan fixes round 2
+Done: phase-plans.md: added the delayed-reward credit ADR task (M1.16) before the reward tests, with reward and train-loop tests asserting s', Δ and the discount; moved the ρ helper after SED as a saturation sweep, sweep tests and helper (M1.24–M1.26) so baselines (M1.27) follow it; split the cluster task into three Tier A tasks with viva checks (M1.11–M1.13, conservation at the end of M1.13); cluster tests assert drop attribution, not reward values; M2.12 gate now 5 seeds plus an action-histogram check; break-its use 3 seeds, diagnostic only, Arnav runs the commands; M3.12 run budget about 100; M5.4 replaced by compiling the viva bank. Added ADR-010 and ADR-011 (Proposed), data/load.py to the architecture.md map (Tier B), and the "source: next line" note in context.md. M1 IDs renumbered (note in the phase-plans.md header); M2 and M3 IDs unchanged.
+Learned: ρ cannot be defined before SED exists, so baseline evaluation had to move after the saturation sweep.
+Blockers: ADR-010 must be approved before M1.17; ADR-011 stays Proposed until λ_sat is measured in M1.26. ADR-009 still waits on M0.3.
+Next: Arnav reviews the diff, runs ruff, pytest, and commits; then M0.1.

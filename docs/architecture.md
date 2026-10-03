@@ -29,6 +29,7 @@ Signatures below are text contracts, not code. Types are indicative; finalise pe
 | src/marl_lb/config.py | YAML -> dataclasses | B |
 | src/marl_lb/utils/{seeding,logging,io}.py | seeds, CSV logs, run dirs | B |
 | src/marl_lb/data/traces.py | trace loading and sampling | B |
+| src/marl_lb/data/load.py | ρ = λ_arr / λ_sat helper, ρ → arrival rate in req/s (ADR-011) | B |
 | src/marl_lb/sim/request.py | request record | B |
 | src/marl_lb/sim/server.py | service time, batching, queue | A |
 | src/marl_lb/sim/kv_cache.py | KV token budget | A |
@@ -116,5 +117,5 @@ Actions: 0 Accept, 1 Forward, 2 Defer. Illegal actions masked.
 ## Ownership map (Tier A: Arnav types; Tier B: Claude Code writes)
 
 - Tier A: profiling/fit_calibration.py, sim/{server,kv_cache,prefix_cache,cluster,metrics}.py, policies/heuristics.py, agents/*, train/loop.py, eval/{stats,pareto}.py, router/{observation,policy_router}.py
-- Tier B: config, utils, data/traces, sim/request, scripts, plotting, eval/evaluate, router/{app,server_client}, profiling/bench_server, tests, configs, docs, docker/*, demo/*
+- Tier B: config, utils, data/{traces,load}, sim/request, scripts, plotting, eval/evaluate, router/{app,server_client}, profiling/bench_server, tests, configs, docs, docker/*, demo/*
 - Not in map: ask which tier (CLAUDE.md). Never downgrade A to B.
