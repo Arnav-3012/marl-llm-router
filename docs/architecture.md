@@ -28,7 +28,9 @@ Signatures below are text contracts, not code. Types are indicative; finalise pe
 | profiling/fit_calibration.py | fit a, t0, k, cache speedup, interference | A |
 | src/marl_lb/config.py | YAML -> dataclasses | B |
 | src/marl_lb/utils/{seeding,logging,io}.py | seeds, CSV logs, run dirs | B |
-| src/marl_lb/data/traces.py | trace loading and sampling | B |
+| src/marl_lb/data/traces.py | trace loaders and stream sampler | B |
+| src/marl_lb/data/processed.py | normalisation constants (99th percentile, clip to [0,1]), time-ordered train/held-out split | A |
+| notebooks/01_trace_eda.ipynb | trace EDA (analysis cells); skeleton is B | A |
 | src/marl_lb/data/load.py | ρ = λ_arr / λ_sat helper, ρ → arrival rate in req/s (ADR-011) | B |
 | src/marl_lb/sim/request.py | request record | B |
 | src/marl_lb/sim/server.py | service time, batching, queue | A |
@@ -70,6 +72,9 @@ Forward-target rule (ADR-013, SED-style): the environment sends a forwarded requ
 - load_azure_2023(path: Path) -> DataFrame
 - load_burstgpt(path: Path) -> DataFrame
 - sample_stream(trace: DataFrame, rho: float, seed: int, split: str) -> list[Request]   # split: "train" | "heldout"
+
+### data.processed (Tier A)
+- Function names and signatures are Arnav's to choose in M0.4; tests in tests/test_processed.py (M0.3.1) fix the behaviour: per-feature 99th-percentile constants, clip to [0,1], time-ordered split with no overlap, sizes reported.
 
 ### sim.request
 - Request(id: int, arrival: float, prompt_tokens: int, output_tokens: int, conv_id: int, ttft_target: float, tpot_target: float, hops: int, defers: int)
@@ -127,6 +132,6 @@ Forward-target rule (ADR-013, SED-style): the environment sends a forwarded requ
 
 ## Ownership map (Tier A: Arnav types; Tier B: Claude Code writes)
 
-- Tier A: profiling/fit_calibration.py, sim/{server,kv_cache,prefix_cache,cluster,metrics}.py, policies/heuristics.py, agents/*, train/loop.py, eval/{stats,pareto}.py, router/{observation,policy_router}.py
-- Tier B: config, utils, data/{traces,load}, sim/request, scripts, plotting, eval/evaluate, router/{app,server_client}, profiling/bench_server, tests, configs, docs, docker/*, demo/*
+- Tier A: notebooks/01_trace_eda.ipynb (analysis cells), data/processed.py, profiling/fit_calibration.py, sim/{server,kv_cache,prefix_cache,cluster,metrics}.py, policies/heuristics.py, agents/*, train/loop.py, eval/{stats,pareto}.py, router/{observation,policy_router}.py
+- Tier B: config, utils, data/{traces,load}, download script, stream sampler, sim/request, scripts, plotting, eval/evaluate, router/{app,server_client}, profiling/bench_server, tests, configs, docs, docker/*, demo/*
 - Not in map: ask which tier (CLAUDE.md). Never downgrade A to B.

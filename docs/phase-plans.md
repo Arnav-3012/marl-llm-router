@@ -5,7 +5,7 @@
 
 **Ordering rule (RULES.md #13): nothing from M6 onward starts before M5's charts exist in results/.**
 Tick a task only after Arnav pastes passing test output (RULES.md #10). Each task ≤ 4h. Every Tier A task is followed by a [B] "viva check" task (suffix `a`): 3 questions per CLAUDE.md, answers into docs/viva.md. Rewrite-from-memory tasks use suffix `b`. [B] test tasks come before the [A] task they cover. One task = one commit: "<phase>: <what> (<metric if any>)".
-Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ helper moved after SED; old M1.12 split into three; ADR task inserted before reward tests) and in S.6 (ADR-012 task inserted at M1.21 and prototype run at M1.24; everything from the old M1.21 on shifted, so the S.5 log entry's M1.24–M1.27 are now M1.26–M1.29); M2 and M3 IDs unchanged. S.7 renumbered nothing: it adds one dotted task (M1.8.1) and edits task text only. S.8 renumbers nothing either: it adds M1.25.1 (ADR-011 approved), changes what M1.8.1 and M1.16 approve (M1.8.1 now ADR-012 and ADR-013; M1.16 now ADR-010 and ADR-014), removes the ADR-012 approval from M1.21, and edits task text; the IDs above are unchanged. Dotted suffixes (M1.8.1, M1.25.1) are used for new tasks from now on. No other file references them.
+Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ helper moved after SED; old M1.12 split into three; ADR task inserted before reward tests) and in S.6 (ADR-012 task inserted at M1.21 and prototype run at M1.24; everything from the old M1.21 on shifted, so the S.5 log entry's M1.24–M1.27 are now M1.26–M1.29); M2 and M3 IDs unchanged. S.7 renumbered nothing: it adds one dotted task (M1.8.1) and edits task text only. S.8 renumbers nothing either: it adds M1.25.1 (ADR-011 approved), changes what M1.8.1 and M1.16 approve (M1.8.1 now ADR-012 and ADR-013; M1.16 now ADR-010 and ADR-014), removes the ADR-012 approval from M1.21, and edits task text; the IDs above are unchanged. Dotted suffixes (M1.8.1, M1.25.1) are used for new tasks from now on. M0 plan change (after S.8): M0.3 and M0.4 moved from Tier B to Tier A; added M0.3a, M0.3.1, M0.4a, M0.6a; no IDs changed. No other file references them.
 
 ## Phase S — Setup
 - [x] S.1 [B] Repo scaffold: folder tree, module docstrings, pyproject, .gitignore — done when: `uv sync` succeeds and `ruff check .` is clean (Arnav confirmed both)
@@ -21,9 +21,13 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 ## Phase M0 — Data
 - [ ] M0.1 [B] Download Azure LLM Inference 2023 and BurstGPT into data/raw (read-only) — done when: files present, row counts printed
 - [ ] M0.2 [B] data/traces.py loaders — done when: tests/test_traces.py passes
-- [ ] M0.3 [B] Notebook 01_trace_eda: arrival rates, P/O distributions, burstiness; also the fraction of BurstGPT rows with a Session ID, whether Request tokens grow within a session (is history included?), the session length distribution, and confirm Azure 2023 has only TIMESTAMP, ContextTokens, GeneratedTokens — done when: notebook runs top to bottom and findings are recorded in ADR-009
-- [ ] M0.4 [B] Normalisation constants to data/processed/normalisation.json, train/held-out split — done when: tests/test_traces.py covers split with no overlap
+- [ ] M0.3 [A] Notebook 01_trace_eda (Arnav writes the analysis cells; skeleton with questions provided): arrival rates, P/O distributions, burstiness; also the fraction of BurstGPT rows with a Session ID, whether Request tokens grow within a session (is history included?), the session length distribution, and confirm Azure 2023 has only TIMESTAMP, ContextTokens, GeneratedTokens — done when: notebook runs top to bottom and findings are recorded in ADR-009, written by Arnav in his own words
+- [ ] M0.3a [B] Viva check for M0.3 (trace EDA) — done when: 3 answers logged and graded in docs/viva.md
+- [ ] M0.3.1 [B] Tests for normalisation and split in tests/test_processed.py: constants are the 99th percentile per feature, values clipped to [0,1]; train/held-out split is time-ordered, has no overlap, and reports both sizes — done when: tests written and failing as expected
+- [ ] M0.4 [A] data/processed.py: normalisation constants to data/processed/normalisation.json, time-ordered train/held-out split — done when: the M0.3.1 tests pass
+- [ ] M0.4a [B] Viva check for M0.4 (normalisation and split) — done when: 3 answers logged and graded in docs/viva.md
 - [ ] M0.6 [B] Seeded stream sampler taking an arrival rate in req/s (not ρ; ρ is converted in M1.28) — done when: same seed gives identical stream (test passes)
+- [ ] M0.6a [B] Viva check for M0.6 (arrival-rate rescaling) — done when: 3 answers logged and graded in docs/viva.md
 
 ## Phase M0.5 — Profiling (timebox 6h)
 - [ ] M0.5.0 [B] Learning gate L1 (before profiling): Deep-Dive Guide videos 1–5, Parts A–B — done when: Arnav answers the relevant self-check questions from the Deep-Dive Guide into docs/viva.md

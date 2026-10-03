@@ -74,8 +74,8 @@ Ordering rule: nothing from M6+ starts before M5's charts exist.
 Python 3.11 · uv + pyproject.toml · PyTorch (mps→cpu) · numpy, pandas, scipy · YAML configs → dataclasses · CSV logs + matplotlib, tqdm · pytest, ruff · pettingzoo (dev, API test) · llama.cpp llama-server + Qwen2.5 GGUF Q4_K_M · FastAPI, uvicorn, httpx · Docker + compose · Gradio + Hugging Face Spaces · (stretch) vLLM on Kaggle.
 
 ## Ownership map
-- Tier A (Arnav types; Claude Code teaches with faded worked examples): profiling/fit_calibration.py, sim/{server, kv_cache, prefix_cache, cluster, metrics}.py, policies/heuristics.py, agents/*, train/loop.py, eval/{stats, pareto}.py, router/{observation, policy_router}.py
-- Tier B (Claude Code writes): config, utils, data/traces, sim/request, scripts, plotting, eval/evaluate, router/{app, server_client}, profiling/bench_server, tests, configs, docs, docker/*, demo/* (Gradio app)
+- Tier A (Arnav types; Claude Code teaches with faded worked examples): notebooks/01_trace_eda.ipynb (analysis cells), data/processed.py (normalisation, train/held-out split), profiling/fit_calibration.py, sim/{server, kv_cache, prefix_cache, cluster, metrics}.py, policies/heuristics.py, agents/*, train/loop.py, eval/{stats, pareto}.py, router/{observation, policy_router}.py
+- Tier B (Claude Code writes): config, utils, data/traces (loaders, sampler), download script, sim/request, scripts, plotting, eval/evaluate, router/{app, server_client}, profiling/bench_server, tests, configs, docs, docker/*, demo/* (Gradio app)
 
 ## Working rules
 Claude never runs commands (gives them instead) and never commits. Tier A default = faded worked examples: predict → explain → code part → Arnav types (no copy-paste) → explain-back → rebuild task. Repeated patterns = skeleton first. "challenge" = spec + skeleton + tests only. Viva-critical pieces (reward, DDQN update, SED, CI) rewritten once from memory.

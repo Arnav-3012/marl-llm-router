@@ -61,3 +61,20 @@ Done: S.8 review: ADR-010..014 accepted (ADR-011 criterion only; λ_sat value TB
 Learned: Approval tasks can be ticked on Arnav's approval; implementation tasks still wait for passing tests (RULES.md #10).
 Blockers: ADR-009 still proposed (waits on M0.3); the M1.21 ADR-012 amendment needs approval before M1.22.
 Next: Arnav commits; then M0.1.
+
+## 2026-10-03 — Phase M0: plan change, M0.3 and M0.4 to Tier A
+Done: context.md and architecture.md ownership maps now list notebooks/01_trace_eda.ipynb (analysis cells) and data/processed.py (normalisation, split) as Tier A; data/traces.py loaders, download script and stream sampler stay B; architecture.md has a data.processed entry and module-map rows. phase-plans.md: M0.3 and M0.4 are [A]; added M0.3a, M0.3.1 (tests before M0.4), M0.4a, M0.6a; header note added; no IDs changed. notebooks/01_trace_eda.skeleton.ipynb written (the 0-byte placeholder 01_trace_eda.ipynb cannot be read or edited by the tools; Arnav renames the skeleton over it) with: imports, a loader TODO, questions (a)-(j) with empty code cells, and a Bets cell.
+Learned: The M0.1 bets are not in docs/viva.md yet, so the Bets cell points to a section that does not exist until M0.1 is done.
+Blockers: None. M0.3 is Tier A: Arnav writes the cells and ADR-009 text. ADR-009 stays Proposed until then.
+Next: Arnav reviews, stages, commits; then M0.1 (write the bets in docs/viva.md before looking at the data).
+
+## 2026-10-03 — M0.1: download raw traces
+Done: configs/data.yaml (4 sources, URLs from the official pages), scripts/download_data.py (streaming, resume, sha256, manifest, --only, --dry-run), data/README.md, .gitignore now tracks data/raw/MANIFEST.json. Run output of the script:
+
+```
+<Arnav pastes the printed table here>
+```
+
+Learned: <Arnav>
+Blockers: sha256 fields in configs/data.yaml are null until Arnav pins them from MANIFEST.json (optional). Azure and BurstGPT_1 URLs track a branch, not a tag, so the files could change upstream; the manifest sha256 is the record.
+Next: M0.2 once the manifest is committed.
