@@ -3,7 +3,8 @@ calibration_path: profiling/calibration.json   # sole source of server physics
 dt: null                          # tick length in seconds (discrete-time, ADR-001); set in M1
 episode_ticks: null               # ticks per training episode; set in M1
 max_hops: 2                       # Forward limit per request
-max_defers: null                  # D: Defer limit per request; set in M1
+max_defers: null                  # D: Defer limit per request; set in M1.2 via ADR
+entry_rule: uniform               # which agent a new request enters at (ADR-013)
 traffic:
   source: azure2023               # azure2023 | burstgpt (burst tests, E5)
   rho: 0.8                        # offered load as fraction of cluster capacity (E1 sweeps 0.5/0.8/0.95)
@@ -18,8 +19,8 @@ observation:
 reward:
   r_sla_met: 10                   # both targets met
   r_sla_missed: -10               # at least one target missed
-  r_drop: -5                      # dropped request, charged to the last holder
-  kv_penalty_per_step: -1         # per step while KV fullness > threshold
+  r_drop: -5                      # −5 R_SLA shared by every agent that acted on the request; last holder for per-server metrics only (ADR-010)
+  w_kv: null                      # per-request KV term weight, ADR-014; value set by a later ADR
   kv_threshold: 0.8               # KV fullness fraction above which the penalty applies
   lambda_cost: 0.5                # λ weighting cost C (E3 sweeps); default mid-sweep value
   beta_coop: 0.0                  # β weighting cluster breach rate B_t (E2: 0 = off)

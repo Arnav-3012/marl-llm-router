@@ -71,7 +71,8 @@ Forward-target rule (ADR-013, SED-style): the environment sends a forwarded requ
 ### data.traces
 - load_azure_2023(path: Path) -> DataFrame
 - load_burstgpt(path: Path) -> DataFrame
-- sample_stream(trace: DataFrame, rho: float, seed: int, split: str) -> list[Request]   # split: "train" | "heldout"
+- sample_stream(trace: DataFrame, arrival_rate_rps: float, seed: int, split: str) -> list[Request]   # split: "train" | "heldout"
+  # arrival_rate_rps in req/s. The ρ → rate conversion lives in data/load.py (ADR-011, M1.28), not here.
 
 ### data.processed (Tier A)
 - Function names and signatures are Arnav's to choose in M0.4; tests in tests/test_processed.py (M0.3.1) fix the behaviour: per-feature 99th-percentile constants, clip to [0,1], time-ordered split with no overlap, sizes reported.

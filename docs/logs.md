@@ -72,12 +72,25 @@ Next: Arnav reviews, stages, commits; then M0.1 (write the bets in docs/viva.md 
 Done: configs/data.yaml (4 sources, URLs from the official pages), scripts/download_data.py (streaming, resume, sha256, manifest, --only, --dry-run), data/README.md, .gitignore now tracks data/raw/MANIFEST.json. Run output of the script:
 
 ```
-<Arnav pastes the printed table here>
+Source: data/raw/MANIFEST.json (raw facts only; analysis is M0.3)
+name              rows       bytes      first -> last timestamp
+azure_conv_2023   19366      719188     2023-11-16 18:15:46.68 -> 2023-11-16 19:14:08.40  (span 3501.722 s)
+azure_code_2023   8819       320117     2023-11-16 18:17:03.98 -> 2023-11-16 19:14:19.93  (span 3435.948 s)
+burstgpt_1        1429737    50853373   5 -> 5269973  (no Session ID column)
+burstgpt_3        5344021    231682327  19440110.0 -> 28943983.0
+                  non-empty Session ID: 233617 of 5344021 (4.3716%)
+All four: timestamps non-decreasing in file order. sha256 values are in MANIFEST.json.
 ```
 
 Learned: <Arnav>
 Blockers: sha256 fields in configs/data.yaml are null until Arnav pins them from MANIFEST.json (optional). Azure and BurstGPT_1 URLs track a branch, not a tag, so the files could change upstream; the manifest sha256 is the record.
 Next: M0.2 once the manifest is committed.
+
+## 2026-10-03 — Housekeeping: align config and interfaces with accepted ADRs; tick M0.1
+Done: architecture.md data.traces sample_stream takes arrival_rate_rps (req/s), ρ → rate conversion noted in data/load.py (ADR-011, M1.28). configs/sim.yaml: r_drop comment per ADR-010, kv_penalty_per_step replaced by w_kv: null (ADR-014), entry_rule: uniform added (ADR-013), max_defers comment points to M1.2. phase-plans.md: M1.2 also fills max_defers (D) via ADR; M0.1 ticked. glossary.md: D / max_defers points to M1.2. No null value was set.
+Learned: Stale config comments outlive the ADRs that replace them; grep configs/ after each ADR amendment.
+Blockers: evaluate(... rho ...) in architecture.md and traffic.rho in sim.yaml still use ρ (not in this task's scope; the ρ → rate conversion happens before sample_stream). kv_threshold in sim.yaml may also be stale under ADR-014, unchecked.
+Next: M0.2.
 
 ## 2026-10-03 — Process change: viva.md becomes a Q&A reference (ADR-008 amended)
 Done: ADR-008 amended (What/Why added; Claude grading removed; every task gets a viva.md entry written by Claude Code, Arnav self-checks; Tier B = 1 question, Tier A = 3). docs/viva.md rewritten with "How to use this file", entry template, the M0.1 entry (bets: Azure 2023 time span, BurstGPT_3 Session ID fraction; Arnav's lines empty; Q1 justify with collapsed answer), Revisit and Break-it log kept. context.md Interview-readiness, phase-plans.md (every `a` task wording, header note, line 7) and CLAUDE.md Interview-readiness section updated. No task IDs changed.

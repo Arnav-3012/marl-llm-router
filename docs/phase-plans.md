@@ -20,7 +20,7 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 - [x] S.8 [B] Plan fixes round 5 (ADR-014 reward terms, ADR-010 drop attribution, ADR-011 λ_sat criterion, ADR-012 and ADR-013 amendments, approval ordering, deadline, guide errata) — done when: files reviewed and approved by Arnav
 
 ## Phase M0 — Data
-- [ ] M0.1 [B] Download Azure LLM Inference 2023 and BurstGPT into data/raw (read-only) — done when: files present, row counts printed
+- [x] M0.1 [B] Download Azure LLM Inference 2023 and BurstGPT into data/raw (read-only) — done when: files present, row counts printed
 - [ ] M0.2 [B] data/traces.py loaders — done when: tests/test_traces.py passes
 - [ ] M0.3 [A] Notebook 01_trace_eda (Arnav writes the analysis cells; skeleton with questions provided): arrival rates, P/O distributions, burstiness; also the fraction of BurstGPT rows with a Session ID, whether Request tokens grow within a session (is history included?), the session length distribution, and confirm Azure 2023 has only TIMESTAMP, ContextTokens, GeneratedTokens — done when: notebook runs top to bottom and findings are recorded in ADR-009, written by Arnav in his own words
 - [ ] M0.3a [B] Viva check for M0.3 (trace EDA) — done when: entry written by Claude Code and self-checked by Arnav in docs/viva.md
@@ -42,7 +42,7 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 
 ## Phase M1 — Simulator + heuristics
 - [ ] M1.1 [B] config.py + utils (seeding, logging, io) with tests — done when: tests/test_config.py and tests/test_utils.py pass
-- [ ] M1.2 [B] sim/request.py + fill dt, episode_ticks, targets in configs via ADR — done when: tests/test_request.py passes
+- [ ] M1.2 [B] sim/request.py + fill dt, episode_ticks, targets and max_defers (D) in configs via ADR — done when: tests/test_request.py passes
 - [ ] M1.3 [B] tests/test_kv_cache.py (admit, release, full, fullness) — done when: tests written and failing as expected
 - [ ] M1.4 [A] sim/kv_cache.py — done when: tests/test_kv_cache.py passes
 - [ ] M1.4a [B] Viva check for M1.4 (kv_cache) — done when: entry written by Claude Code and self-checked by Arnav in docs/viva.md
