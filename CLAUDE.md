@@ -64,7 +64,7 @@ Fading:
 
 ## End of session (Tier B, show a summary of edits for approval)
 - logs.md: one dated entry (template in file).
-- decisions.md: ADR when a design choice is made or changed.
+- decisions.md: ADR when a design choice is made or changed; every new or amended ADR carries What/Why lines (RULES.md #14; ADR-001..009 are not backfilled).
 - mistakes.md: when a bug or misconception cost > 15 min, plus the rule that prevents it.
 - phase-plans.md: tick only per RULES.md #10.
 - architecture.md: when an interface changes.

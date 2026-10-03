@@ -53,7 +53,9 @@ Observation (7 floats in [0,1]): own expected wait, own KV fullness, prompt size
 Actions: 0 Accept, 1 Forward, 2 Defer. Illegal actions masked.
 Decision protocol (ADR-013): each agent decides on at most one request per tick, the oldest it holds (FIFO); other held requests wait (counts toward TTFT, not a Defer, no cost).
 Idle-agent rule (ADR-013): an agent holding no request this tick gets a zero observation (7 zeros) and an all-False mask; it takes no action and no transition is recorded.
-Forward-target rule (ADR-013): the environment sends a forwarded request to the visible neighbour (within radius k) with the lowest expected wait, ties to the lowest index; the agent only decides whether to forward. Forward is masked when k=0 or at the hop limit; Defer is masked at the defer limit.
+Entry rule (ADR-013): each arriving request lands at an entry agent chosen uniformly at random (seeded); config field entry_rule: uniform in configs/sim.yaml.
+Deferred-to-back rule (ADR-013): a deferred request moves to the back of the agent's held queue, so the oldest request is not re-decided every tick.
+Forward-target rule (ADR-013, SED-style): the environment sends a forwarded request to the visible neighbour (within radius k) minimising expected wait + this request's estimated service time on that neighbour, ties to the lowest index; the agent only decides whether to forward. Forward is masked when k=0 or at the hop limit; Defer is masked at the defer limit.
 
 ### config
 - load_config(path: Path) -> Config
@@ -92,6 +94,7 @@ Forward-target rule (ADR-013): the environment sends a forwarded request to the 
 
 ### sim.metrics (Tier A)
 - MetricsCollector.record(event) -> None ; .summary() -> dict[str, float]   # goodput, ttft/tpot p50/p95, e2e, sla, breach, drop, cost/request, cache hit, utilisation, jain
+- Cost attribution (ADR-014): per-request cost C_j (prefill seconds in full, each decode step's t_step(B_i) split equally across the B_i requests in that step, times class price) must satisfy Σ_j C_j = Σ_i c_i × busy_seconds_i over an episode, so cost per request stays consistent with the reward. Drops count against the last holder here (per-server stats); reward credit follows ADR-010.
 
 ### policies.heuristics (Tier A)
 - LocalPolicy.act(obs[7], mask[3]) -> int   # action in {0 Accept, 1 Forward, 2 Defer}; may use only the 7 observation features (ADR-012)

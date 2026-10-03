@@ -1,5 +1,5 @@
 # MARL LLM Router — Project Context
-Owner: Arnav · Course: AAI (RL & Multi-Agent Systems) mini project · Group: E035, E032 · Deadline: TBD · Last updated: 2026-10-03
+Owner: Arnav · Course: AAI (RL & Multi-Agent Systems) mini project · Group: E035, E032 · Deadline: 2026-10-27 · Last updated: 2026-10-03 (S.8)
 
 ## One line
 Independent Double-DQN agents, one per heterogeneous LLM server, learn Accept/Forward/Defer routing in a simulator calibrated on real llama.cpp servers. We measure goodput vs strong heuristics, a cost–latency Pareto frontier, the price of partial observability, and the sim-to-real gap; then ship it as a reproducible, demo-able project.
@@ -21,13 +21,13 @@ Profile (real) → Calibrate (profiling/calibration.json) → Train (sim) → De
 - conversation id: BurstGPT Session ID (conversation-mode rows only); Azure 2023 has none, see ADR-009
 - Service: T = a·(P − P_cached) + Σ t_step(B_i), with t_step(B) = t0 + k·B. a, t0, k, cache speedup and interference come only from calibration.json.
 - Capacity = KV token budget. Time = discrete ticks, dt set in config.
-- Entry: each request lands at one entry agent; Forward passes it on.
+- Entry: each request lands at one entry agent chosen uniformly at random (seeded; entry_rule: uniform in configs/sim.yaml, ADR-013); Forward passes it on.
 - Env API: PettingZoo ParallelEnv shape.
 
 ## Agent
 - Observation in [0,1]: own expected wait, own KV fullness, prompt size, slack on this server, hop count, neighbour mean wait within radius k (0 when k=0), prefix-hit fraction (cache variant).
-- Actions: Accept / Forward (max 2 hops) / Defer (max D). Illegal actions masked. No legal action left → drop, charged to the last holder.
-- Reward: r = R_SLA − λ·C − β·B_t. R_SLA: +10 met both targets, −10 missed a target, −5 dropped, −1 per step KV > 80%. C = class price × busy seconds. B_t = cluster breach rate over the last W steps. Outcomes credited at resolution with the decision-time state.
+- Actions: Accept / Forward (max 2 hops) / Defer (max D). Illegal actions masked. No legal action left → drop; it counts against the last holder in per-server metrics.
+- Reward: r = R_SLA − λ·C − KV term − β·B_t, per decision transition (ADR-010, ADR-014). R_SLA: +10 met both targets, −10 missed a target, −5 dropped (shared by every agent that acted on the request, no extra charge). C is per request, charged at resolution to the serving agent's Accept transition: class price × service seconds attributed to the request (prefill in full, each decode step split across the batch), with Σ_j C_j = Σ_i c_i × busy_seconds_i. KV term: −w_kv × fraction of the request's resident ticks with KV > 80%, serving agent, at resolution (replaces "−1 per step"). β·B_t: every transition, B_t = cluster breach rate over the last W steps sampled at its decision tick. Outcomes credited at resolution with the decision-time state.
 - Learner: Independent Double DQN, MLP 7→64→64→3 ReLU, Huber loss, Adam, target net, replay buffer 20–50k, ε 1.0→0.05, γ=0.99, gradient clip 10.
 - Reference: centralised DQN as the upper bound. Future work: VDN.
 
