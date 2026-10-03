@@ -1,4 +1,5 @@
 # Deep-Dive Learning Guide: errata
+Superseded by Deep-Dive Guide v2 (2026-10-03), which folds in every item below; kept for history.
 
 Where the Deep-Dive Learning Guide is superseded by the ADRs. When the guide and an ADR disagree, the ADR applies.
 One line each: guide section · what it says · what applies now · source ADR.
@@ -14,5 +15,4 @@ The guide itself is not in the repo; section references are taken from the S.8 t
 - C2, F3 · cooperation signal "every step" · −β·B_t sampled once per transition at its decision tick · ADR-014
 - G4 · degenerate policy "~100% Reject" · there is no Reject action; the warning sign is ~100% of any one action · ADR-013 (action set)
 - H4 · scale arrivals to ρ via λ/Σμ · ρ = λ_arr / λ_sat · ADR-011
-- §0 · "prove the learned policy on real model servers" · "measure against heuristics over 5 seeds with 95% CIs, and validate on coupled single-chip servers" · docs/context.md
 - Other conflicts: none recorded. The guide text was not available in this session, so no further guide-versus-ADR conflicts could be checked; add lines here as they are found (candidates to check: heuristics as full-state only vs ADR-012 local and global forms, agent timing vs ADR-013, entry rule vs ADR-013).
