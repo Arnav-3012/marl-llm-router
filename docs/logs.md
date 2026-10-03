@@ -25,3 +25,9 @@ Done: Created docs/viva.md and docs/numbers.md; added ADR-008 and an Interview-r
 Learned: The existing S.2 in phase-plans.md is "Configs and docs", so this patch is tracked as S.2b to avoid renumbering. Inserted tasks use letter suffixes (e.g. M2.7a) for the same reason.
 Blockers: None. docs/numbers.md source paths for E6 and E7 are TBD until those experiments define their results/ folders.
 Next: Arnav reviews the new docs, runs ruff and pytest, and commits; then M0.1.
+
+## 2026-10-03 — Phase S: S.4 plan fixes
+Done: Applied the plan fixes to phase-plans.md (cut order and read-the-tests rule at the top; M0.5 sampler renamed M0.6 and takes req/s; M0.3 extended for Session ID checks; ρ → rate helper; conservation test moved before the cluster task and the conservation-fixes task removed; observation-builder and reward (R_SLA, cost) tests and implementations moved into M1; M3 reward reduced to the cooperation term; Little's law and ordering checks; train.py and CSV logging; hyperparameter protocol; M2 gate acceptance; joint-action ADR and wall-time task in M3; learning gates L1–L3). Added ADR-009 (Proposed) and the conversation-id line in context.md. M1–M3 renumbered; no other file referenced those IDs.
+Learned: Several viva/break-it/rewrite tasks, ADR-008, viva.md and numbers.md already existed, so nothing was added for them.
+Blockers: ADR-009 stays Proposed until M0.3. The joint-action ADR will take the next free number when written in M3.
+Next: Arnav reviews the diff, runs ruff, pytest, and commits; then M0.1.

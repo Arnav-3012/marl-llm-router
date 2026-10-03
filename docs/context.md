@@ -18,6 +18,7 @@ Profile (real) → Calibrate (profiling/calibration.json) → Train (sim) → De
 ## Environment
 - N=4 servers, 2 classes: fast-expensive, slow-cheap. Real: llama-server; fast = Qwen2.5-3B Q4 on Metal; slow = 0.5–1.5B or CPU-only (-ngl 0).
 - Request: arrival, prompt tokens P, output tokens O, conversation id, TTFT target, TPOT target, hops, defers. Sampled from Azure LLM Inference Trace 2023; burst tests from BurstGPT.
+- conversation id: BurstGPT Session ID (conversation-mode rows only); Azure 2023 has none, see ADR-009
 - Service: T = a·(P − P_cached) + Σ t_step(B_i), with t_step(B) = t0 + k·B. a, t0, k, cache speedup and interference come only from calibration.json.
 - Capacity = KV token budget. Time = discrete ticks, dt set in config.
 - Entry: each request lands at one entry agent; Forward passes it on.
