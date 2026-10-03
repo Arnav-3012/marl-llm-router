@@ -5,7 +5,7 @@
 
 **Ordering rule (RULES.md #13): nothing from M6 onward starts before M5's charts exist in results/.**
 Tick a task only after Arnav pastes passing test output (RULES.md #10). Each task ≤ 4h. Every Tier A task is followed by a [B] "viva check" task (suffix `a`): 3 questions per CLAUDE.md, answers into docs/viva.md. Rewrite-from-memory tasks use suffix `b`. [B] test tasks come before the [A] task they cover. One task = one commit: "<phase>: <what> (<metric if any>)".
-Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ helper moved after SED; old M1.12 split into three; ADR task inserted before reward tests); M2 and M3 IDs unchanged. No other file references them.
+Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ helper moved after SED; old M1.12 split into three; ADR task inserted before reward tests) and in S.6 (ADR-012 task inserted at M1.21 and prototype run at M1.24; everything from the old M1.21 on shifted, so the S.5 log entry's M1.24–M1.27 are now M1.26–M1.29); M2 and M3 IDs unchanged. No other file references them.
 
 ## Phase S — Setup
 - [ ] S.1 [B] Repo scaffold: folder tree, module docstrings, pyproject, .gitignore — done when: `uv sync` succeeds and `ruff check .` is clean
@@ -14,13 +14,14 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 - [ ] S.3 [B] Git init, commit "S: repo scaffold", private GitHub repo pushed — done when: `git log` shows the commit and the remote exists
 - [ ] S.4 [B] Plan fixes (reward order, observation, conversation source, learning gates, ADR-009) — done when: files reviewed and approved by Arnav
 - [ ] S.5 [B] Plan fixes round 2 (delayed-reward credit ADR-010, ρ definition ADR-011, M1.12 split, break-it and gate wording) — done when: files reviewed and approved by Arnav
+- [ ] S.6 [B] Plan fixes round 3 (ADR-012 heuristic local vs global, first prototype milestone, M3.4 reference) — done when: files reviewed and approved by Arnav
 
 ## Phase M0 — Data
 - [ ] M0.1 [B] Download Azure LLM Inference 2023 and BurstGPT into data/raw (read-only) — done when: files present, row counts printed
 - [ ] M0.2 [B] data/traces.py loaders — done when: tests/test_traces.py passes
 - [ ] M0.3 [B] Notebook 01_trace_eda: arrival rates, P/O distributions, burstiness; also the fraction of BurstGPT rows with a Session ID, whether Request tokens grow within a session (is history included?), the session length distribution, and confirm Azure 2023 has only TIMESTAMP, ContextTokens, GeneratedTokens — done when: notebook runs top to bottom and findings are recorded in ADR-009
 - [ ] M0.4 [B] Normalisation constants to data/processed/normalisation.json, train/held-out split — done when: tests/test_traces.py covers split with no overlap
-- [ ] M0.6 [B] Seeded stream sampler taking an arrival rate in req/s (not ρ; ρ is converted in M1.26) — done when: same seed gives identical stream (test passes)
+- [ ] M0.6 [B] Seeded stream sampler taking an arrival rate in req/s (not ρ; ρ is converted in M1.28) — done when: same seed gives identical stream (test passes)
 
 ## Phase M0.5 — Profiling (timebox 6h)
 - [ ] M0.5.0 [B] Learning gate L1 (before profiling): Deep-Dive Guide videos 1–5, Parts A–B — done when: Arnav answers the relevant self-check questions from the Deep-Dive Guide into docs/viva.md
@@ -62,17 +63,19 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 - [ ] M1.19 [B] tests/test_metrics.py (goodput, percentiles, Jain's index on hand-computed cases) — done when: tests written
 - [ ] M1.20 [A] sim/metrics.py — done when: tests/test_metrics.py passes
 - [ ] M1.20a [B] Viva check for M1.20 (metrics) — done when: 3 answers logged and graded in docs/viva.md
-- [ ] M1.21 [B] tests/test_heuristics.py (each policy on hand-built states) — done when: tests written
-- [ ] M1.22 [A] policies/heuristics.py: Random, Round-robin, JSQ, Po2 — done when: tests for these pass
-- [ ] M1.22a [B] Viva check for M1.22 (Random, Round-robin, JSQ, Po2) — done when: 3 answers logged and graded in docs/viva.md
-- [ ] M1.23 [A] policies/heuristics.py: SED, Cache-aware — done when: tests/test_heuristics.py passes (viva: rewrite SED from memory)
-- [ ] M1.23a [B] Viva check for M1.23 (SED, Cache-aware) — done when: 3 answers logged and graded in docs/viva.md
-- [ ] M1.23b [A] Rewrite SED from memory: blank scratch file, no references, then diff against policies/heuristics.py — done when: diff reviewed and gaps noted in docs/viva.md
-- [ ] M1.24 [B] Saturation sweep script: finds λ_sat for an all-SED cluster (the arrival rate at which waits grow without bound over an episode), on train traffic — done when: script written and a run's output is in results/
-- [ ] M1.25 [B] tests/test_load.py: sweep logic on a synthetic monotone sweep (known λ_sat recovered) — done when: tests written and passing
-- [ ] M1.26 [B] ρ helper in data/load.py: ρ = λ_arr / λ_sat, returning the arrival rate in req/s (data/load.py is Tier B in the architecture.md map) — done when: λ_sat recorded in ADR-011 "Definition of ρ" (Proposed) and in results/
-- [ ] M1.27 [B] eval/evaluate.py + scripts/evaluate.py baseline run on held-out traffic (after M1.26, so ρ is defined) — done when: results/baselines/ written with config copied
-- [ ] M1.28 [B] Sanity checks (M2 gate): (i) SED beats Random at ρ=0.8; (ii) Little's law L ≈ λ_arr·W at ρ = 0.5 and 0.8; (iii) heuristic ordering matches the prediction written in docs/viva.md before the run, and any violation is explained rather than tuned away — done when: numbers in results/ reviewed with Arnav
+- [ ] M1.21 [B] ADR-012: heuristic baselines, local vs global. Status Proposed. SED, JSQ, Po2 and Cache-aware each exist in two forms: local (per-agent policy in {Accept, Forward, Defer} using only the agent's observation and radius k; e.g. SED-local: Accept iff own expected completion ≤ the minimum over visible neighbours, otherwise Forward to the best visible neighbour, and with k=0 always Accept) and global (full cluster state, direct assignment to one server, no Forward/Defer). Random and Round-robin need no state — done when: ADR approved
+- [ ] M1.22 [B] tests/test_heuristics.py (each policy on hand-built states, in both local and global forms where applicable, including SED-local with k=0 always Accepting) — done when: tests written
+- [ ] M1.23 [A] policies/heuristics.py: Random, Round-robin, JSQ, Po2, local and global forms per ADR-012 — done when: tests for these pass
+- [ ] M1.23a [B] Viva check for M1.23 (Random, Round-robin, JSQ, Po2; local vs global) — done when: 3 answers logged and graded in docs/viva.md
+- [ ] M1.24 [B] First end-to-end run (first working prototype): Random, Round-robin, JSQ, Po2 for one episode on train traffic at a fixed arrival rate in req/s (ρ is defined later in M1.28); print goodput, TTFT/TPOT p50/p95 and drop rate; paste the output into docs/logs.md — done when: numbers printed and logged. Celebrate: this is Milestone 2, the working prototype.
+- [ ] M1.25 [A] policies/heuristics.py: SED, Cache-aware, local and global forms per ADR-012 — done when: tests/test_heuristics.py passes (viva: rewrite SED from memory)
+- [ ] M1.25a [B] Viva check for M1.25 (SED, Cache-aware; local vs global) — done when: 3 answers logged and graded in docs/viva.md
+- [ ] M1.25b [A] Rewrite SED from memory: blank scratch file, no references, then diff against policies/heuristics.py — done when: diff reviewed and gaps noted in docs/viva.md
+- [ ] M1.26 [B] Saturation sweep script: finds λ_sat for an all-SED cluster (the arrival rate at which waits grow without bound over an episode), on train traffic — done when: script written and a run's output is in results/
+- [ ] M1.27 [B] tests/test_load.py: sweep logic on a synthetic monotone sweep (known λ_sat recovered) — done when: tests written and passing
+- [ ] M1.28 [B] ρ helper in data/load.py: ρ = λ_arr / λ_sat, returning the arrival rate in req/s (data/load.py is Tier B in the architecture.md map) — done when: λ_sat recorded in ADR-011 "Definition of ρ" (Proposed) and in results/
+- [ ] M1.29 [B] eval/evaluate.py + scripts/evaluate.py baseline run on held-out traffic, all baselines in local and global forms where applicable (after M1.28, so ρ is defined) — done when: results/baselines/ written with config copied
+- [ ] M1.30 [B] Sanity checks (M2 gate): (i) SED-local and SED-global each beat Random at ρ=0.8; (ii) Little's law L ≈ λ_arr·W at ρ = 0.5 and 0.8; (iii) heuristic ordering matches the prediction written in docs/viva.md before the run, and any violation is explained rather than tuned away — done when: numbers in results/ reviewed with Arnav
 
 ## Phase M2 — Single-agent DDQN
 - [ ] M2.0 [B] Learning gate L2 (before M2): Deep-Dive Guide videos 6–10, Parts C–D — done when: Arnav answers the relevant self-check questions from the Deep-Dive Guide into docs/viva.md
@@ -93,7 +96,7 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 - [ ] M2.9a [B] Viva check for M2.9 (single-agent train loop) — done when: 3 answers logged and graded in docs/viva.md
 - [ ] M2.10 [B] scripts/train.py plus per-episode CSV logging (return, TD loss, mean Q, ε, action histogram) into results/<exp>/<timestamp>_seed<k>/ with config copied — done when: a short smoke run (values via a temporary override config, not committed to dqn.yaml) writes the CSV with all five columns
 - [ ] M2.11 [B] ADR: fill lr, batch size, target update, warmup, ε decay in dqn.yaml. Protocol: tune on train traffic, one seed only; held-out untouched until M4; protocol recorded in the ADR — done when: ADR approved
-- [ ] M2.12 [B] Train one DDQN agent replacing one SED agent in an otherwise all-SED cluster; plot return, TD loss, mean Q, ε, action histogram — done when: over 5 seeds, cluster goodput is within the all-SED 95% CI or better AND the action histogram shows more than one action in use (development gate on train traffic, not a reported result)
+- [ ] M2.12 [B] Train one DDQN agent replacing one SED-local agent in an otherwise all-SED-local cluster; plot return, TD loss, mean Q, ε, action histogram — done when: over 5 seeds, cluster goodput is within the all-SED-local 95% CI or better AND the action histogram shows more than one action in use (development gate on train traffic, not a reported result)
 
 Break-its (M2). Rule for all: write the hypothesis in docs/viva.md (Break-it log) first; ablation switches are config flags, 3 seeds (diagnostic runs, not reported in docs/numbers.md), results under results/break_it/. Arnav types any change inside Tier A files; Claude may add the config entries and gives the commands to run; Arnav runs them (RULES.md #1).
 - [ ] M2.13 [A+B] Break-it (a) no target network (online net bootstraps itself): hypothesis in docs/viva.md first — done when: TD loss, mean Q and return curves compared with M2.12 and explained
@@ -107,7 +110,7 @@ Break-its (M2). Rule for all: write the hypothesis in docs/viva.md (Break-it log
 - [ ] M3.2 [A] train/loop.py independent DDQN N=4 — done when: tests pass
 - [ ] M3.2a [B] Viva check for M3.2 (independent DDQN N=4) — done when: 3 answers logged and graded in docs/viva.md
 - [ ] M3.3 [B] tests for the cooperation term only (β, breach window W, cluster breach rate B_t), added to tests/test_reward.py — done when: tests written
-- [ ] M3.4 [A] Cooperation term −β·B_t in cluster (R_SLA and cost already built in M1.16) — done when: tests/test_reward.py passes (viva: rewrite reward from memory)
+- [ ] M3.4 [A] Cooperation term −β·B_t in cluster (R_SLA and cost already built in M1.18) — done when: tests/test_reward.py passes (viva: rewrite reward from memory)
 - [ ] M3.4a [B] Viva check for M3.4 (cooperation term) — done when: 3 answers logged and graded in docs/viva.md
 - [ ] M3.4b [A] Rewrite the full reward from memory (R_SLA − λ·C − β·B_t): blank scratch file, no references, then diff against the real one in cluster — done when: diff reviewed and gaps noted in docs/viva.md
 - [ ] M3.5 [B] ADR: β value and breach window W — done when: ADR approved

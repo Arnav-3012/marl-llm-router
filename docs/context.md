@@ -32,7 +32,7 @@ Profile (real) → Calibrate (profiling/calibration.json) → Train (sim) → De
 - Reference: centralised DQN as the upper bound. Future work: VDN.
 
 ## Baselines (same traffic as RL)
-Random, Round-robin, JSQ, Po2, SED, Cache-aware (overlap − w·load).
+Random, Round-robin, JSQ, Po2, SED, Cache-aware — each in local (per-agent, same observation and k as the agents) and global (full state) form where applicable, see ADR-012. Cache-aware score: overlap − w·load.
 
 ## Metrics
 - Headline: goodput.
