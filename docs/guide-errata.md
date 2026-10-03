@@ -10,4 +10,8 @@ The guide itself is not in the repo; section references are taken from the S.8 t
 - Delayed credit · a delayed-credit scheme different from ADR-010 (wording to be checked against the guide) · s' = the agent's next decision observation, discount γ per decision, not per tick · ADR-010
 - ρ definition · ρ = λ/Σμ from nominal service rates · ρ = λ_arr / λ_sat, λ_sat measured on global-form SED by completion ratio, drop rate and backlog growth · ADR-011
 - Drops · a dropped request is "charged to the last agent" · −5 R_SLA credited once to every agent that acted on it, no extra charge; last holder kept only for per-server metrics · ADR-010 (refines ADR-004)
+- F3 · SLA credit "to the agent that accepted" · R_SLA shared by every acting agent; cost and KV term paid by the serving agent only · ADR-010, ADR-014
+- C2, F3 · cooperation signal "every step" · −β·B_t sampled once per transition at its decision tick · ADR-014
+- G4 · degenerate policy "~100% Reject" · there is no Reject action; the warning sign is ~100% of any one action · ADR-013 (action set)
+- H4 · scale arrivals to ρ via λ/Σμ · ρ = λ_arr / λ_sat · ADR-011
 - Other conflicts: none recorded. The guide text was not available in this session, so no further guide-versus-ADR conflicts could be checked; add lines here as they are found (candidates to check: heuristics as full-state only vs ADR-012 local and global forms, agent timing vs ADR-013, entry rule vs ADR-013).

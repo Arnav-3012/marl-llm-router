@@ -55,3 +55,9 @@ Done: Added ADR-014 (reward terms under per-decision transitions, Proposed: per-
 Learned: Per-step reward terms have no transition to attach to once transitions are per decision; making cost and KV per request keeps credit with the agent that caused it.
 Blockers: ADR-012/013 approved at M1.8.1, ADR-010/014 at M1.16, ADR-011 criterion at M1.25.1; ADR-009 waits on M0.3. The guide-errata list is limited to the items in the brief because the guide was not available.
 Next: Arnav reviews the diff and commits; then M0.1.
+
+## 2026-10-03 — Phase S: S.8 review
+Done: S.8 review: ADR-010..014 accepted (ADR-011 criterion only; λ_sat value TBD, measured in M1.26–M1.28 and recorded under the ADR as a measurement). Fixes: duplicated M1.21 sentence removed from ADR-012; M1.8.1, M1.16, M1.25.1 and S.8 ticked; Δ measurement moved from M1.16 to M1.24; M1.28 and M1.21 done-when reworded; M3.4b formula is now the full ADR-014 transition reward; four lines added to guide-errata.md (F3, C2/F3, G4, H4).
+Learned: Approval tasks can be ticked on Arnav's approval; implementation tasks still wait for passing tests (RULES.md #10).
+Blockers: ADR-009 still proposed (waits on M0.3); the M1.21 ADR-012 amendment needs approval before M1.22.
+Next: Arnav commits; then M0.1.
