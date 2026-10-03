@@ -51,6 +51,9 @@ Signatures below are text contracts, not code. Types are indicative; finalise pe
 
 Observation (7 floats in [0,1]): own expected wait, own KV fullness, prompt size, slack on this server, hop count, neighbour mean wait within radius k (0 if k=0), prefix-hit fraction (0 if cache variant off).
 Actions: 0 Accept, 1 Forward, 2 Defer. Illegal actions masked.
+Decision protocol (ADR-013): each agent decides on at most one request per tick, the oldest it holds (FIFO); other held requests wait (counts toward TTFT, not a Defer, no cost).
+Idle-agent rule (ADR-013): an agent holding no request this tick gets a zero observation (7 zeros) and an all-False mask; it takes no action and no transition is recorded.
+Forward-target rule (ADR-013): the environment sends a forwarded request to the visible neighbour (within radius k) with the lowest expected wait, ties to the lowest index; the agent only decides whether to forward. Forward is masked when k=0 or at the hop limit; Defer is masked at the defer limit.
 
 ### config
 - load_config(path: Path) -> Config
@@ -82,16 +85,21 @@ Actions: 0 Accept, 1 Forward, 2 Defer. Illegal actions masked.
 ### sim.cluster (Tier A, PettingZoo ParallelEnv shape)
 - reset(seed: int | None) -> (obs: dict[agent, ndarray[7]], info: dict)
 - step(actions: dict[agent, int]) -> (obs, rewards: dict[agent, float], terminations, truncations, infos)
-- action_mask(agent) -> ndarray[3] of bool
+- action_mask(agent) -> ndarray[3] of bool   # all-False for an idle agent
+- Direct-assignment mode (for global policies, ADR-012): step_direct(policy: GlobalPolicy) -> (cluster_state, infos); each arriving request is placed on policy.assign(cluster_state, request), bypassing agents, Forward and Defer; same metrics and same conservation invariant.
+- ClusterState: per-server expected wait, KV fullness, queue length, class, and prefix-hit tokens for the request being placed.
 - Invariant: every arrived request ends exactly once as completed or dropped (conservation).
 
 ### sim.metrics (Tier A)
 - MetricsCollector.record(event) -> None ; .summary() -> dict[str, float]   # goodput, ttft/tpot p50/p95, e2e, sla, breach, drop, cost/request, cache hit, utilisation, jain
 
 ### policies.heuristics (Tier A)
-- policy(obs_or_state, mask) -> int ; one callable per baseline: random, round_robin, jsq, po2, sed, cache_aware
+- LocalPolicy.act(obs[7], mask[3]) -> int   # action in {0 Accept, 1 Forward, 2 Defer}; may use only the 7 observation features (ADR-012)
+- GlobalPolicy.assign(cluster_state, request) -> int   # server index, full cluster state, used in direct-assignment mode
+- One per baseline: random, round_robin (stateless), and jsq, po2, sed, cache_aware each in a local and a global form
 
 ### agents (Tier A)
+- Transition(obs[7], mask[3], action: int, decision_tick: int, reward: float, next_obs[7], next_mask[3], truncated: bool)   # ADR-010: next_obs = the agent's next decision observation; discount γ per decision; episode end is truncation (bootstrap)
 - QNetwork(obs_dim=7, hidden=(64,64), n_actions=3).forward(x: Tensor[B,7]) -> Tensor[B,3]
 - ReplayBuffer(capacity).push(transition) ; .sample(batch: int) -> Batch ; len()
 - DQNAgent.act(obs, mask, eps: float) -> int ; .learn(batch) -> dict[str, float] ; .sync_target() ; .save(path) ; .load(path)

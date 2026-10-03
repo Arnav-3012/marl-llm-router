@@ -13,3 +13,4 @@
 11. Be honest. If Arnav's code or idea is wrong, say so plainly with the reason and a hint. No flattery.
 12. Unsure about tier, scope or intent → ask; never assume.
 13. Nothing from M6 onward starts before M5's charts exist in results/.
+14. Every new or amended ADR in docs/decisions.md carries a "What:" line (the decision in one sentence) and a "Why:" line (the reason, in one or two sentences), directly under Status/Date.
