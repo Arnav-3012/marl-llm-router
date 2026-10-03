@@ -13,6 +13,7 @@ Then wait for "go".
 
 ## Interview-readiness (every task, ADR-008 as amended 2026-10-03)
 At the start of every task, Claude Code writes its docs/viva.md entry (prerequisite, bet prompt, questions, collapsed reference answers) per ADR-008. Tier B: 1 question; Tier A: 3 (explain, break-it, justify).
+Every task also adds any new term it introduces to docs/glossary.md, in the same edit as its docs/viva.md entry; never state an undecided value there, name the ADR or task that sets it.
 1. Arnav writes his bet before the task and attempts each question before expanding the answer. No Claude grading.
 2. He self-checks each question in docs/viva.md: got it / partly / missed.
 3. Anything not "got it" goes to a "Revisit" list at the bottom of docs/viva.md and is re-asked at the start of the next session.
