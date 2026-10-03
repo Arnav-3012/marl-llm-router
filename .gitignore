@@ -1,6 +1,7 @@
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
+!data/raw/MANIFEST.json
 !data/processed/.gitkeep
 results/*
 !results/.gitkeep

@@ -1,0 +1,88 @@
+{
+  "azure_conv_2023": {
+    "filename": "AzureLLMInferenceTrace_conv.csv",
+    "url": "https://raw.githubusercontent.com/Azure/AzurePublicDataset/master/data/AzureLLMInferenceTrace_conv.csv",
+    "release": "Azure LLM Inference Trace 2023, collected 2023-11-11 (master branch, not tag-pinned)",
+    "licence": "CC-BY Attribution License (as stated in AzureLLMInferenceDataset2023.md)",
+    "source_page": "https://github.com/Azure/AzurePublicDataset/blob/master/AzureLLMInferenceDataset2023.md",
+    "sha256": "2f1e5b666d4e3055fdbba98598ce2ec307767b9064e03e2fa46676dbcc7d0bf8",
+    "size_bytes": 719188,
+    "rows": 19366,
+    "columns": [
+      "TIMESTAMP",
+      "ContextTokens",
+      "GeneratedTokens"
+    ],
+    "first_timestamp": "2023-11-16 18:15:46.6805900",
+    "last_timestamp": "2023-11-16 19:14:08.4025270",
+    "timestamps_non_decreasing": true,
+    "span_seconds": 3501.7219371795654
+  },
+  "azure_code_2023": {
+    "filename": "AzureLLMInferenceTrace_code.csv",
+    "url": "https://raw.githubusercontent.com/Azure/AzurePublicDataset/master/data/AzureLLMInferenceTrace_code.csv",
+    "release": "Azure LLM Inference Trace 2023, collected 2023-11-11 (master branch, not tag-pinned)",
+    "licence": "CC-BY Attribution License (as stated in AzureLLMInferenceDataset2023.md)",
+    "source_page": "https://github.com/Azure/AzurePublicDataset/blob/master/AzureLLMInferenceDataset2023.md",
+    "sha256": "54e9a6d2a4bd06ba1e060304b900abbc74cbea53de96506e60fe5bb4f2277fb6",
+    "size_bytes": 320117,
+    "rows": 8819,
+    "columns": [
+      "TIMESTAMP",
+      "ContextTokens",
+      "GeneratedTokens"
+    ],
+    "first_timestamp": "2023-11-16 18:17:03.9799600",
+    "last_timestamp": "2023-11-16 19:14:19.9280160",
+    "timestamps_non_decreasing": true,
+    "span_seconds": 3435.9480559825897
+  },
+  "burstgpt_1": {
+    "filename": "BurstGPT_1.csv",
+    "url": "https://raw.githubusercontent.com/HPMLL/BurstGPT/main/data/BurstGPT_1.csv",
+    "release": "HPMLL/BurstGPT repo data/ folder, branch main",
+    "licence": "CC-BY-4.0 (as stated on the repository page)",
+    "source_page": "https://github.com/HPMLL/BurstGPT",
+    "sha256": "46fc9480ef0b748ecb2b51d512ff08c196b031782cbe6f78e28044d768e86d5a",
+    "size_bytes": 50853373,
+    "rows": 1429737,
+    "columns": [
+      "Timestamp",
+      "Model",
+      "Request tokens",
+      "Response tokens",
+      "Total tokens",
+      "Log Type"
+    ],
+    "first_timestamp": "5",
+    "last_timestamp": "5269973",
+    "timestamps_non_decreasing": true,
+    "span_seconds": 5269968.0
+  },
+  "burstgpt_3": {
+    "filename": "BurstGPT_3.csv",
+    "url": "https://github.com/HPMLL/BurstGPT/releases/download/v2.0/BurstGPT_3.csv",
+    "release": "HPMLL/BurstGPT v2.0 (adds Session ID and Elapsed time columns)",
+    "licence": "CC-BY-4.0 (as stated on the repository page)",
+    "source_page": "https://github.com/HPMLL/BurstGPT/releases/tag/v2.0",
+    "sha256": "2299986a07388aa303ec2c41d1131e756db650a39ed6ef9dfe7cc3d7f9a43b8f",
+    "size_bytes": 231682327,
+    "rows": 5344021,
+    "columns": [
+      "Timestamp",
+      "Session ID",
+      "Elapsed time",
+      "Model",
+      "Request tokens",
+      "Response tokens",
+      "Total tokens",
+      "Log Type"
+    ],
+    "first_timestamp": "19440110.0",
+    "last_timestamp": "28943983.0",
+    "timestamps_non_decreasing": true,
+    "span_seconds": 9503873.0,
+    "session_id_non_empty": 233617,
+    "session_id_fraction": 0.04371558420148424
+  }
+}

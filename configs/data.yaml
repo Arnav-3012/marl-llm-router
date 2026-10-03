@@ -1,0 +1,46 @@
+# Raw trace sources for scripts/download_data.py. Files land in raw_dir and are read-only (RULES.md #9).
+# URLs come from the official pages named in source_page; nothing here is guessed.
+# sha256: null = not pinned yet. After the first run, Arnav may paste the sha256 from
+# data/raw/MANIFEST.json to pin it (a mismatch then exits non-zero).
+raw_dir: data/raw
+sources:
+  - name: azure_conv_2023
+    url: https://raw.githubusercontent.com/Azure/AzurePublicDataset/master/data/AzureLLMInferenceTrace_conv.csv
+    # AzureLLMInferenceDataset2023.md links "data/AzureLLMInferenceTrace_conv.csv" (relative);
+    # the URL above is the raw-content form of that path on branch master.
+    filename: AzureLLMInferenceTrace_conv.csv
+    release: "Azure LLM Inference Trace 2023, collected 2023-11-11 (master branch, not tag-pinned)"
+    licence: "CC-BY Attribution License (as stated in AzureLLMInferenceDataset2023.md)"
+    source_page: https://github.com/Azure/AzurePublicDataset/blob/master/AzureLLMInferenceDataset2023.md
+    timestamp_column: TIMESTAMP
+    timestamp_kind: datetime
+    sha256: null
+  - name: azure_code_2023
+    url: https://raw.githubusercontent.com/Azure/AzurePublicDataset/master/data/AzureLLMInferenceTrace_code.csv
+    filename: AzureLLMInferenceTrace_code.csv
+    release: "Azure LLM Inference Trace 2023, collected 2023-11-11 (master branch, not tag-pinned)"
+    licence: "CC-BY Attribution License (as stated in AzureLLMInferenceDataset2023.md)"
+    source_page: https://github.com/Azure/AzurePublicDataset/blob/master/AzureLLMInferenceDataset2023.md
+    timestamp_column: TIMESTAMP
+    timestamp_kind: datetime
+    sha256: null
+  - name: burstgpt_1
+    url: https://raw.githubusercontent.com/HPMLL/BurstGPT/main/data/BurstGPT_1.csv
+    # Repo /data folder (branch main, not tag-pinned). Release v2.0 also ships a BurstGPT_1.csv asset.
+    filename: BurstGPT_1.csv
+    release: "HPMLL/BurstGPT repo data/ folder, branch main"
+    licence: "CC-BY-4.0 (as stated on the repository page)"
+    source_page: https://github.com/HPMLL/BurstGPT
+    timestamp_column: Timestamp
+    timestamp_kind: seconds
+    sha256: null
+  - name: burstgpt_3
+    url: https://github.com/HPMLL/BurstGPT/releases/download/v2.0/BurstGPT_3.csv
+    filename: BurstGPT_3.csv
+    release: "HPMLL/BurstGPT v2.0 (adds Session ID and Elapsed time columns)"
+    licence: "CC-BY-4.0 (as stated on the repository page)"
+    source_page: https://github.com/HPMLL/BurstGPT/releases/tag/v2.0
+    timestamp_column: Timestamp
+    timestamp_kind: seconds
+    session_id_column: "Session ID"   # print the non-empty count and fraction for this column
+    sha256: null
