@@ -81,11 +81,11 @@ Python 3.11 · uv + pyproject.toml · PyTorch (mps→cpu) · numpy, pandas, scip
 Claude never runs commands (gives them instead) and never commits. Tier A default = faded worked examples: predict → explain → code part → Arnav types (no copy-paste) → explain-back → rebuild task. Repeated patterns = skeleton first. "challenge" = spec + skeleton + tests only. Viva-critical pieces (reward, DDQN update, SED, CI) rewritten once from memory.
 
 ## Interview-readiness (ADR-008)
-- After every Tier A task: 3 questions (explain, break-it, justify), answered by Arnav in his own words in docs/viva.md before any answer is shown; Claude grades correct / partly / wrong; "wrong" goes to Revisit and is re-asked next session.
+- Every task has a docs/viva.md entry written by Claude Code at task start: prerequisite, bet prompt, questions and collapsed reference answers (Tier B: 1 question; Tier A: 3 questions: explain, break-it, justify). Arnav attempts each question before expanding the answer and self-checks (got it / partly / missed); anything not "got it" goes to Revisit and is re-asked next session. There is no Claude grading.
 - Headline numbers live in docs/numbers.md, filled only from results/ files with the source path; never from memory.
 - Break-it experiments at M2 and M3 with hypotheses written in docs/viva.md before the run.
 - Reward, DDQN update, SED and CI calculation are rewritten from memory in a blank file, then diffed against the real one.
-- Files: docs/viva.md (viva log, Revisit, Break-it log), docs/numbers.md (numbers table skeleton for the metrics and E1–E7).
+- Files: docs/viva.md (per-step Q&A reference, Revisit, Break-it log), docs/numbers.md (numbers table skeleton for the metrics and E1–E7).
 
 ## Constraints / out of scope
 - Constraints: M4 Pro 24GB, ₹0 budget.

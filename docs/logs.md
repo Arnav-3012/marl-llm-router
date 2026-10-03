@@ -78,3 +78,9 @@ Done: configs/data.yaml (4 sources, URLs from the official pages), scripts/downl
 Learned: <Arnav>
 Blockers: sha256 fields in configs/data.yaml are null until Arnav pins them from MANIFEST.json (optional). Azure and BurstGPT_1 URLs track a branch, not a tag, so the files could change upstream; the manifest sha256 is the record.
 Next: M0.2 once the manifest is committed.
+
+## 2026-10-03 — Process change: viva.md becomes a Q&A reference (ADR-008 amended)
+Done: ADR-008 amended (What/Why added; Claude grading removed; every task gets a viva.md entry written by Claude Code, Arnav self-checks; Tier B = 1 question, Tier A = 3). docs/viva.md rewritten with "How to use this file", entry template, the M0.1 entry (bets: Azure 2023 time span, BurstGPT_3 Session ID fraction; Arnav's lines empty; Q1 justify with collapsed answer), Revisit and Break-it log kept. context.md Interview-readiness, phase-plans.md (every `a` task wording, header note, line 7) and CLAUDE.md Interview-readiness section updated. No task IDs changed.
+Learned: CLAUDE.md's Interview-readiness steps 1–3 also described Claude grading, so they were rewritten rather than adding a single line, to avoid a contradiction.
+Blockers: None.
+Next: Arnav answers the M0.1 bets, then continues M0.1/M0.2.

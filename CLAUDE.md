@@ -11,11 +11,11 @@ Phase: … | Task: … | Tier: A/B
 Plan: one line
 Then wait for "go".
 
-## Interview-readiness (every task)
-At the end of each task, before docs upkeep:
-1. Ask Arnav 3 interview-style questions on what was just built: one explain, one break-it ("what if we removed X?"), one justify/trade-off. Wait for his answers; do not reveal answers first.
-2. He writes his answers in docs/viva.md (dated, his own words). Grade each: correct / partly / wrong, with the missing piece as a hint, not a lecture.
-3. Anything graded "wrong" goes to a "Revisit" list at the bottom of docs/viva.md and is re-asked at the start of the next session.
+## Interview-readiness (every task, ADR-008 as amended 2026-10-03)
+At the start of every task, Claude Code writes its docs/viva.md entry (prerequisite, bet prompt, questions, collapsed reference answers) per ADR-008. Tier B: 1 question; Tier A: 3 (explain, break-it, justify).
+1. Arnav writes his bet before the task and attempts each question before expanding the answer. No Claude grading.
+2. He self-checks each question in docs/viva.md: got it / partly / missed.
+3. Anything not "got it" goes to a "Revisit" list at the bottom of docs/viva.md and is re-asked at the start of the next session.
 4. Results go into docs/numbers.md only from results/ files, with the experiment path.
 Break-it experiments are scheduled at M2 and M3 (see phase-plans.md); never skip them.
 

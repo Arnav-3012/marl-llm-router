@@ -68,11 +68,13 @@ Alternatives considered: Paid GPU hosting (budget is zero); hosted API LLMs (not
 Consequences: The public demo is simulator-only and must say so. Real-server evidence is the video plus E7 results.
 
 ## ADR-008: Interview-readiness process
-Status: accepted · Date: 2026-10-03
+Status: accepted · Date: 2026-10-03 (amended 2026-10-03)
+What: For every task, Claude Code writes a docs/viva.md entry with the prerequisite, a bet prompt, the questions and reference answers; Arnav self-checks. There is no Claude grading step.
+Why: Arnav wants a complete Q&A reference for the end of the project and interviews. Answers are collapsed so he attempts each one before reading it.
 Context: The CV project must be defensible in an interview and in the course viva. Passing tests does not show that Arnav can explain, break or justify what he built.
-Decision: After every Tier A task, a viva check (3 questions: explain, break-it, justify) is answered in Arnav's own words in docs/viva.md before any answer is shown, and graded by Claude; "wrong" items go to a Revisit list. Headline numbers live in docs/numbers.md and come only from results/. Break-it experiments in M2 and M3 have hypotheses written in docs/viva.md BEFORE the run. Viva-critical pieces (reward, DDQN update, SED, CI calculation) are rewritten from memory in a blank file and diffed against the real one.
+Decision: For every task, Claude Code writes a docs/viva.md entry at the start of the task: prerequisite, bet prompt, questions and reference answers. Tier B tasks get prerequisite + bet + 1 question (explain or justify); Tier A tasks get prerequisite + bet + 3 questions (explain, break-it, justify). Each reference answer sits inside `<details><summary>Answer</summary> ... </details>`, is 3–6 lines, and ends with its source (file, ADR or Deep-Dive Guide section). Arnav attempts each question, then marks it himself: got it / partly / missed; anything not "got it" goes to a Revisit list. Reference answers must be correct for the current ADRs and code and never invent numbers (only cite results/ files or sources). Headline numbers live in docs/numbers.md and come only from results/. Break-it experiments in M2 and M3 have hypotheses written in docs/viva.md BEFORE the run. Viva-critical pieces (reward, DDQN update, SED, CI calculation) are rewritten from memory in a blank file and diffed against the real one.
 Alternatives considered: A single viva prep at the end (late, answers forgotten, no debugging stories); a wiki only (reading is passive, answers would not be in his own voice).
-Consequences: About 15 minutes extra per task. Real debugging stories from the break-it experiments. Answers in his own voice. Hypotheses are pre-registered, so a wrong prediction is kept as evidence of learning rather than hidden.
+Consequences: About 15 minutes extra per task. Real debugging stories from the break-it experiments. Bets, attempts and hypotheses stay in his own voice. Hypotheses are pre-registered, so a wrong prediction is kept as evidence of learning rather than hidden.
 
 ## ADR-009: Conversation source for the prefix cache
 Status: proposed · Date: 2026-10-03
