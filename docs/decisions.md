@@ -62,3 +62,10 @@ Context: The project should be demo-able at no cost. Hosting live LLMs publicly 
 Decision: Docker image with compose profiles `cpu` (llama-server CPU containers) and `host` (native llama-servers via host.docker.internal). A Gradio Space on free CPU runs the simulator with trained weights and calibration.json. A 2-minute video shows the real router on the Mac.
 Alternatives considered: Paid GPU hosting (budget is zero); hosted API LLMs (not our servers, no calibration story); video only (not interactive).
 Consequences: The public demo is simulator-only and must say so. Real-server evidence is the video plus E7 results.
+
+## ADR-008: Interview-readiness process
+Status: accepted · Date: 2026-10-03
+Context: The CV project must be defensible in an interview and in the course viva. Passing tests does not show that Arnav can explain, break or justify what he built.
+Decision: After every Tier A task, a viva check (3 questions: explain, break-it, justify) is answered in Arnav's own words in docs/viva.md before any answer is shown, and graded by Claude; "wrong" items go to a Revisit list. Headline numbers live in docs/numbers.md and come only from results/. Break-it experiments in M2 and M3 have hypotheses written in docs/viva.md BEFORE the run. Viva-critical pieces (reward, DDQN update, SED, CI calculation) are rewritten from memory in a blank file and diffed against the real one.
+Alternatives considered: A single viva prep at the end (late, answers forgotten, no debugging stories); a wiki only (reading is passive, answers would not be in his own voice).
+Consequences: About 15 minutes extra per task. Real debugging stories from the break-it experiments. Answers in his own voice. Hypotheses are pre-registered, so a wrong prediction is kept as evidence of learning rather than hidden.
