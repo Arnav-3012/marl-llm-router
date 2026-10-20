@@ -44,6 +44,16 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
   );
 }
 
+/** A jargon word with a dotted underline; hover, focus or tap shows a plain-language explanation. */
+export function Term({ children, tip }: { children: ReactNode; tip: ReactNode }) {
+  return (
+    <span className="term" tabIndex={0}>
+      {children}
+      <span role="tooltip" className="info-pop">{tip}</span>
+    </span>
+  );
+}
+
 /** Page header: small label, the question the page answers, then the short intro passed as children. */
 export function PageHead({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
   return (

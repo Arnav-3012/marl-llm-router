@@ -142,3 +142,20 @@ def test_route_to_fast_spill_accepts_short_requests_on_a_busy_cluster_only():
     assert (
         RouteToFastSpill(["fast", "slow"], 0.0).act_agent(1, o(0.0, 0.5, 0.1, 0.4), legal) == ACCEPT
     )
+
+
+def test_route_to_fast_shed_tau_lets_a_slow_agent_keep_work_only_while_its_queue_is_short():
+    from marl_lb.policies.heuristics import RouteToFastShedTau
+
+    p = RouteToFastShedTau(["fast_expensive", "slow_cheap"], tau=0.1)
+    legal = [True, True, True, True]
+
+    def o(wait, slack):
+        v = np.zeros(7, np.float32)
+        v[0], v[3] = wait, slack
+        return v
+
+    assert p.act_agent(1, o(0.05, 0.5), legal) == ACCEPT  # short queue, slack left
+    assert p.act_agent(1, o(0.30, 0.5), legal) == FORWARD  # queue too long
+    assert p.act_agent(1, o(0.05, 0.0), legal) == FORWARD  # cannot meet the target here
+    assert p.act_agent(0, o(0.05, 0.0), legal) == REJECT  # fast agent still sheds

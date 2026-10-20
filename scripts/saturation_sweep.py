@@ -32,7 +32,7 @@ from marl_lb.eval.saturation import find_lambda_sat, point_criteria
 from marl_lb.policies.heuristics import SEDGlobal
 from marl_lb.sim.cluster import slice_stream
 
-OUT = ROOT / "results" / "saturation"
+OUT = ROOT / "results" / os.environ.get("MARL_SAT_DIR", "saturation")  # ADR-035
 FIELDS = [
     "setting",
     "rate",

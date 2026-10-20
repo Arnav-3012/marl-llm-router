@@ -20,16 +20,14 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 
-import torch
 import yaml
 
-from marl_lb.agents.dqn_agent import DQNAgent
 from marl_lb.config import ROOT
 from marl_lb.data.load import load_lambda_sat, rho_to_rate
 from marl_lb.eval import paired
 from marl_lb.eval.evaluate import World, local_actions, run_episode
 from marl_lb.eval.experiments import suite
-from marl_lb.train.loop import greedy_actions
+from marl_lb.train.loop import greedy_actions, load_agents
 from scripts.evaluate import parse_seeds
 
 _CTX: dict = {}
@@ -39,23 +37,6 @@ def _init(cfg: dict) -> None:
     _CTX["cfg"] = cfg
     _CTX["world"] = World()
     _CTX["agents"] = {}
-
-
-def load_agents(experiment: str, seed: int, n: int) -> tuple:
-    """Agents of the newest results/<experiment>/*_seed<seed>/ run, and that run's config."""
-    runs = sorted((ROOT / "results" / experiment).glob(f"*_seed{seed}"))
-    runs = [r for r in runs if (r / "agents.pt").exists()]
-    if not runs:
-        raise FileNotFoundError(f"no agents.pt for seed {seed} in results/{experiment}")
-    run = runs[-1]
-    cfg = yaml.safe_load((run / "config.yaml").read_text())
-    states = torch.load(run / "agents.pt", map_location="cpu")
-    agents = []
-    for i in range(n):
-        agent = DQNAgent(cfg, seed * 1000 + i)
-        agent.load_state_dict(states[i])
-        agents.append(agent)
-    return agents, cfg
 
 
 def make_runner(name: str):

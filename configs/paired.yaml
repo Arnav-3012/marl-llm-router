@@ -5,7 +5,7 @@ split: heldout                    # never "train": nothing is tuned on this slic
 baselines: [random, sed_global, sed_local_full, cache_aware_global, cache_aware_local_full, route_to_fast, route_to_fast_shed]   # names from eval/experiments.suite
 learned:
   name: ddqn_agents               # policy name in the files
-  experiment: main                # results/<experiment>/*_seed<k>/agents.pt (E1 main configuration)
+  experiment: e8_mix              # results/<experiment>/*_seed<k>/agents.pt: the final agents (Reject action, conversation + code training, ADR-034)
 cache_aware_w: 1.0                # same weight as the baseline evaluation (configs/experiments/baselines.yaml)
 event_seed: 0                     # the replay event log is written for this seed only
 event_cap: 60000                  # max events per replay log (per-tick server snapshots are thinned first)

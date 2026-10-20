@@ -69,6 +69,7 @@ export type TrainingData = {
 export type OverviewData = {
   q1_goodput: Record<string, unknown> | null;
   q2_pareto_available: boolean;
+  real_server_runs?: number;
   q2_frontier?: { learned: string[]; on_frontier: string[] } | null;
   q4_reject?: { rhos: Record<string, Record<string, { goodput: Metric; drop_rate: Metric } | null>> } | null;
   q3_observability_available: boolean;

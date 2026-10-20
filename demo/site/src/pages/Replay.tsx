@@ -3,9 +3,9 @@ import { Card, Loaded, SourceNote, useData, useLoad, useReducedMotion } from "..
 import { ReplayStage } from "../viz/ReplayStage";
 import type { Frame } from "../data/types";
 
-const POLICIES = [["ddqn", "DDQN agents"], ["sed_local", "SED local (k=full)"], ["cache_aware", "Cache-aware local"], ["sed_global", "SED global"], ["random", "Random"]];
+const POLICIES = [["ddqn", "Learned agents (DDQN + Reject)"], ["route_to_fast_shed", "Hand-written rule: route to fast + shed"], ["route_to_fast", "Hand-written rule: route to fast"], ["sed_local", "SED local (k=full)"], ["cache_aware", "Cache-aware local"], ["sed_global", "SED global"], ["random", "Random"]];
 const RHOS = ["0.5", "0.8", "0.95"];
-const ACT = ["Accept", "Forward", "Defer"];
+const ACT = ["Accept", "Forward", "Defer", "Reject"];
 
 export function Replay() {
   const ds = useData();
@@ -93,7 +93,7 @@ export function Replay() {
                 <Card><div className="label">missed ✕</div><div className="stat" style={{ color: "#ffb37a" }}>{tot.missed}</div></Card>
               </div>
               <Card className="flat"><div className="label">recent decisions</div><div className="ticker">{recent.length ? recent.map((l, i) => <div key={i}>{l}</div>) : "nothing yet"}</div></Card>
-              <div className="muted" style={{ fontSize: 12.5 }}>● Accept · → Forward · ⏱ Defer. Fast servers are solid squares, slow ones dashed circles; the ring is KV-cache fullness (red above 80%). Counts are tallies of this recording only.</div>
+              <div className="muted" style={{ fontSize: 12.5 }}>● Accept · → Forward · ⏱ Defer · ✕ Reject. Fast servers are solid squares, slow ones dashed circles; the ring is KV-cache fullness (red above 80%). Counts are tallies of this recording only.</div>
               <SourceNote source={env.source} />
             </div>
           </div>

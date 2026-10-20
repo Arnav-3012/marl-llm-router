@@ -8,6 +8,7 @@ results/saturation/lambda_sat_flat.json. This module only converts; it never inv
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from marl_lb.config import ROOT
@@ -15,8 +16,15 @@ from marl_lb.config import ROOT
 DEFAULT_PATH = ROOT / "results" / "saturation" / "lambda_sat_flat.json"
 
 
-def load_lambda_sat(path: Path = DEFAULT_PATH, key: str = "cache_on") -> float:
-    data = json.loads(Path(path).read_text())
+def default_path() -> Path:
+    """results/<MARL_SAT_DIR or saturation>/lambda_sat_flat.json: another cluster layout has its own
+    saturation rate (ADR-035), selected by the environment so that no script needs a flag.
+    """
+    return ROOT / "results" / os.environ.get("MARL_SAT_DIR", "saturation") / "lambda_sat_flat.json"
+
+
+def load_lambda_sat(path: Path | None = None, key: str = "cache_on") -> float:
+    data = json.loads(Path(path or default_path()).read_text())
     return float(data[key]["lambda_sat_rps"])
 
 

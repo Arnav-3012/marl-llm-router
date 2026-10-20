@@ -172,6 +172,11 @@
     "id": "ADR-034",
     "title": "Train the Reject agents on mixed traffic (conversation + code) to close the code-trace gap (rule fixed before training)",
     "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020; written before any training or result)"
+   },
+   {
+    "id": "ADR-035",
+    "title": "Layout test: one fast and three slow servers (can the agents be re-trained where the hand rule must be rewritten?) (rule fixed before any run)",
+    "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020; written before any run of this layout)"
    }
   ],
   "profiling_fit": {

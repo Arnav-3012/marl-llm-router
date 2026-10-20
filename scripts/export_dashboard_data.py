@@ -25,6 +25,7 @@ from pathlib import Path
 import yaml
 
 from marl_lb.config import ROOT
+from marl_lb.eval.frames import frames_from_events
 from marl_lb.eval.paired import paired_difference, verify_paired
 from marl_lb.eval.pareto import pareto_front
 from marl_lb.eval.stats import aggregate as _aggregate
@@ -57,7 +58,9 @@ def X(name: str) -> str:
 
 
 REPLAY_POLICIES = {  # dashboard name -> where its events live
-    "ddqn": ("main", None),
+    "ddqn": ("e8_mix", None),  # the final agents (Reject action, ADR-034)
+    "route_to_fast_shed": ("baselines_e8", "route_to_fast_shed"),
+    "route_to_fast": ("baselines", "route_to_fast"),
     "random": ("baselines", "random"),
     "sed_local": ("baselines", "sed_local_full"),
     "cache_aware": ("baselines", "cache_aware_local_full"),
@@ -247,7 +250,9 @@ def export_observability(results: Path):
 
 def export_behaviour(results: Path):
     """Action shares of the learned agents by class, wait and prompt size (analyse_behaviour)."""
-    f = results / "behaviour" / f"{X('main')}.json"
+    f = results / "behaviour" / "e8_mix.json"  # the final agents
+    if not f.exists():
+        f = results / "behaviour" / f"{X('main')}.json"
     if not f.exists():
         return envelope(None, reason="no behaviour analysis yet (scripts/analyse_behaviour.py)")
     d = json.loads(f.read_text())
@@ -422,74 +427,17 @@ def export_method(results: Path, root: Path):
     return envelope(data, src)
 
 
-def frames_from_events(events: list, dt: float, cap: int) -> list:
-    """Per-tick frames {t, queue, active, kv, arrivals, acts, resolves}; if more than `cap`, ticks
-    are
-    merged.
-    """
-    by_tick: dict = {}
-    for e in events:
-        f = by_tick.setdefault(
-            e["tick"],
-            {
-                "tick": e["tick"],
-                "t": e["t"],
-                "arrivals": [],
-                "acts": [],
-                "resolves": [],
-                "forwards": [],
-            },
-        )
-        kind = e["e"]
-        if kind == "servers":
-            f.update(queue=e["queue"], active=e["active"], kv=e["kv"])
-        elif kind == "arrive":
-            f["arrivals"].append({"req": e["req"], "entry": e["entry"], "p": e["p"], "o": e["o"]})
-        elif kind == "act":
-            f["acts"].append({"agent": e["agent"], "req": e["req"], "action": e["action"]})
-        elif kind == "forward":
-            f["forwards"].append({"req": e["req"], "src": e["src"], "dst": e["dst"]})
-        elif kind == "resolve":
-            f["resolves"].append(
-                {
-                    "req": e["req"],
-                    "ok": e["ok"],
-                    "status": e["status"],
-                    "server": e.get("server"),
-                    "ttft": e.get("ttft"),  # seconds, None if never served
-                    "cost": e.get("cost"),  # synthetic price x busy seconds
-                }
-            )
-    ticks = sorted(by_tick)
-    step = max(1, -(-len(ticks) // cap))
-    out = []
-    for i in range(0, len(ticks), step):
-        group = [by_tick[t] for t in ticks[i : i + step]]
-        last = group[-1]
-        merged = {
-            "tick": last["tick"],
-            "t": last["t"],
-            "queue": last.get("queue"),
-            "active": last.get("active"),
-            "kv": last.get("kv"),
-            "arrivals": [a for g in group for a in g["arrivals"]],
-            "acts": [a for g in group for a in g["acts"]],
-            # fmt: skip
-            "forwards": [a for g in group for a in g["forwards"]],
-            "resolves": [a for g in group for a in g["resolves"]],
-        }
-        out.append(merged)
-    return out
-
-
 def export_replays(
     results: Path, out: Path, dt: float, cap: int, layout: list | None = None
 ) -> list:
     written = []
     for name, (exp, policy) in REPLAY_POLICIES.items():
-        runs = [r for r in finished_runs(results, X(exp)) if r.name.endswith("_seed0")]
+        folder = X(exp) if exp in VERSIONED else exp
+        runs = [r for r in finished_runs(results, folder) if r.name.endswith("_seed0")]
         for rho in RHOS:
-            fname = f"events_rho{rho}.jsonl" if exp == "main" else f"events_{policy}_rho{rho}.jsonl"
+            fname = (
+                f"events_rho{rho}.jsonl" if policy is None else f"events_{policy}_rho{rho}.jsonl"
+            )
             path = runs[0] / fname if runs else None
             rel = f"replay_{name}_{rho}.json"
             if path is None or not path.exists():
@@ -522,9 +470,10 @@ def export_replays(
 
 
 H2H_LABEL = {
-    "ddqn_agents": "Learned agents (DDQN)",
+    "ddqn_agents": "Learned agents (DDQN + Reject)",
+    "route_to_fast_shed": "Hand-written rule: route to fast + shed",
     "random": "Random (entry rule)",
-    "route_to_fast": "Route-to-fast rule (class-aware, local)",
+    "route_to_fast": "Hand-written rule: route to fast",
     "sed_global": "SED global",
     "sed_local_full": "SED local (k=full)",
     "cache_aware_global": "Cache-aware global",
@@ -690,6 +639,17 @@ def export_overview(results: Path, root: Path, baselines: dict, observability: d
             }
         return out
 
+    def real_runs() -> int:
+        """Finished live runs against REAL servers (mock rehearsals do not count)."""
+        n = 0
+        for d in (results / "live").glob("*/DONE"):
+            try:
+                cfg = yaml.safe_load((d.parent / "config.yaml").read_text())
+            except (OSError, yaml.YAMLError):
+                continue
+            n += int(cfg.get("mode") == "real")
+        return n
+
     experiments = {  # keyed by the plain experiment name; the folder carries the version suffix
         e: len(finished_runs(results, X(e) if e in VERSIONED else e))
         for e in ("baselines", "main", "k0", "lambda0", "lambda2", "prototype", "timing")
@@ -707,6 +667,7 @@ def export_overview(results: Path, root: Path, baselines: dict, observability: d
             },
         ),
         "q3_observability_available": observability["status"] == "ok",
+        "real_server_runs": real_runs(),
         "q4_reject": headline(baselines, reject_headline),
         "experiments_finished_seeds": experiments,
         "exported_at": datetime.now().isoformat(timespec="seconds"),

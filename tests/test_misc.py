@@ -59,3 +59,13 @@ def test_class_balance_separates_fast_sharing_from_cluster_wide_busyness():
     assert jain_index([1, 1, 1, 1]) == pytest.approx(1.0)
     # one fast server doing everything: fast-only Jain is 1/2
     assert class_balance([0.9, 0.0, 0.0, 0.0], layout)["jain_fast"] == pytest.approx(0.5)
+
+
+def test_layout_and_saturation_file_can_be_selected_by_the_environment(monkeypatch, tmp_path):
+    from marl_lb.data import load
+    from marl_lb.eval.evaluate import World
+
+    monkeypatch.setenv("MARL_LAYOUT", "fast_expensive,slow_cheap,slow_cheap,slow_cheap")
+    assert World().params.layout == ["fast_expensive", "slow_cheap", "slow_cheap", "slow_cheap"]
+    monkeypatch.setenv("MARL_SAT_DIR", "no_such_dir")
+    assert load.default_path().parts[-2:] == ("no_such_dir", "lambda_sat_flat.json")

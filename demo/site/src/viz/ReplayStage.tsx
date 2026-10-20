@@ -3,8 +3,8 @@
 import type { Frame } from "../data/types";
 
 const COL = { fast: "#56b4e9", slow: "#e69f00", ok: "#009e73", bad: "#d55e00", accent: "#7170ff" };
-const ACT = ["●", "→", "⏱"]; // Accept, Forward, Defer: shape, not colour
-const ACT_NAME = ["Accept", "Forward", "Defer"];
+const ACT = ["●", "→", "⏱", "✕"]; // Accept, Forward, Defer, Reject: shape, not colour
+const ACT_NAME = ["Accept", "Forward", "Defer", "Reject"];
 
 export function ReplayStage({ frame, layout, queueCap = 16, mode, compact = false }: { frame: Frame; layout: string[]; queueCap?: number; mode: "agents" | "global"; compact?: boolean }) {
   // compact: a narrower drawing with larger text, for two stages side by side

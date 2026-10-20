@@ -12,6 +12,7 @@ import time
 
 import numpy as np
 import torch
+import yaml
 
 from marl_lb.agents.dqn_agent import DQNAgent, epsilon_at
 from marl_lb.config import ROOT
@@ -38,6 +39,23 @@ def load_code_trace():
     data = yaml.safe_load((ROOT / "configs" / "data.yaml").read_text())
     name = next(s["filename"] for s in data["sources"] if s["name"] == "azure_code_2023")
     return load_azure_2023(ROOT / "data" / "raw" / name, drop_failures=True)
+
+
+def load_agents(experiment: str, seed: int, n: int) -> tuple:
+    """Agents of the newest results/<experiment>/*_seed<seed>/ run, and that run's config."""
+    runs = sorted((ROOT / "results" / experiment).glob(f"*_seed{seed}"))
+    runs = [r for r in runs if (r / "agents.pt").exists()]
+    if not runs:
+        raise FileNotFoundError(f"no agents.pt for seed {seed} in results/{experiment}")
+    run = runs[-1]
+    cfg = yaml.safe_load((run / "config.yaml").read_text())
+    states = torch.load(run / "agents.pt", map_location="cpu")
+    agents = []
+    for i in range(n):
+        agent = DQNAgent(cfg, seed * 1000 + i)
+        agent.load_state_dict(states[i])
+        agents.append(agent)
+    return agents, cfg
 
 
 def widen_output(state: dict, n_actions: int) -> dict:

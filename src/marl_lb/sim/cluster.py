@@ -183,6 +183,65 @@ class _Run:
     events: list = field(default_factory=list)
 
 
+def neighbour_ids(k, n: int, i: int) -> list:
+    """Servers agent i can see: none (k=0), all others (k="full") or a ring radius (ADR-013)."""
+    if k == 0:
+        return []
+    if k == "full":
+        return [j for j in range(n) if j != i]
+    ring = {(i + d) % n for d in range(1, int(k) + 1)} | {(i - d) % n for d in range(1, int(k) + 1)}
+    return sorted(ring - {i})
+
+
+def legal_mask(p: SimParams, servers: list, i: int, nb: list, req) -> np.ndarray:
+    """Which of Accept / Forward / Defer (/ Reject) agent i may choose for `req` (ADR-013)."""
+    legal = [
+        servers[i].can_accept(req),
+        bool(nb) and req.hops < p.max_hops,
+        req.defers < p.max_defers,
+    ]
+    if p.reject_enabled:
+        legal.append(True)  # Reject is always available (ADR-029)
+    return np.array(legal, dtype=bool)
+
+
+def observation_vector(
+    p: SimParams, servers: list, i: int, nb: list, req, now: float
+) -> np.ndarray:
+    """The 7-float observation of agent i for `req` at time `now`. Used by the simulator and by the
+    live router, so both build it with the same code.
+    """
+    s = servers[i]
+    wait = s.expected_wait()
+    slack_s = req.ttft_target - (now - req.arrival) - wait - s.prefill_seconds(req)
+    nb_wait = (
+        np.mean([min(servers[j].expected_wait() / p.wait_scale_s, 1.0) for j in nb]) if nb else 0.0
+    )
+    hit = s.cache.hit_tokens(req) / req.prompt_tokens if p.prefix_hit_enabled else 0.0
+    return np.array(
+        [
+            min(wait / p.wait_scale_s, 1.0),
+            s.kv_fullness(),
+            min(req.prompt_tokens / p.prompt_norm, 1.0),
+            float(np.clip(slack_s / req.ttft_target, 0.0, 1.0)),
+            req.hops / p.max_hops,
+            nb_wait,
+            hit,
+        ],
+        dtype=np.float32,
+    )
+
+
+def forward_target(servers: list, nb: list, req) -> int:
+    """Visible neighbour minimising expected wait + estimated service time; ties to the lowest
+    index (ADR-013).
+    """
+    open_ = [j for j in nb if servers[j].can_accept(req)] or nb
+    return min(
+        open_, key=lambda j: (servers[j].expected_wait() + servers[j].est_service_seconds(req), j)
+    )
+
+
 class Cluster:
     def __init__(self, params: SimParams, classes: dict, mode: str = "agents",
                  global_policy=None, record_events: bool = False):  # fmt: skip
@@ -201,15 +260,7 @@ class Cluster:
 
     # ---- neighbourhood --------------------------------------------------------------------------
     def neighbours(self, i: int) -> list:
-        k = self.p.k
-        if k == 0:
-            return []
-        if k == "full":
-            return [j for j in range(self.n) if j != i]
-        ring = {(i + d) % self.n for d in range(1, int(k) + 1)} | {
-            (i - d) % self.n for d in range(1, int(k) + 1)
-        }
-        return sorted(ring - {i})
+        return neighbour_ids(self.p.k, self.n, i)
 
     # ---- episode --------------------------------------------------------------------------------
     def reset(self, stream: list, seed: int = 0):
@@ -275,39 +326,13 @@ class Cluster:
 
     # ---- observation and masks ------------------------------------------------------------------
     def _mask(self, i: int, req) -> np.ndarray:
-        legal = [
-            self.servers[i].can_accept(req),
-            bool(self.neighbours(i)) and req.hops < self.p.max_hops,
-            req.defers < self.p.max_defers,
-        ]
-        if self.p.reject_enabled:
-            legal.append(True)  # Reject is always available (ADR-029)
-        return np.array(legal, dtype=bool)
+        return legal_mask(self.p, self.servers, i, self.neighbours(i), req)
 
     def _wait_norm(self, seconds: float) -> float:
         return min(seconds / self.p.wait_scale_s, 1.0)
 
     def _obs_vector(self, i: int, req) -> np.ndarray:
-        p, s, t = self.p, self.servers[i], self.run.t
-        wait = s.expected_wait()
-        slack_s = req.ttft_target - (t - req.arrival) - wait - s.prefill_seconds(req)
-        nb = self.neighbours(i)
-        nb_wait = (
-            np.mean([self._wait_norm(self.servers[j].expected_wait()) for j in nb]) if nb else 0.0
-        )
-        hit = s.cache.hit_tokens(req) / req.prompt_tokens if p.prefix_hit_enabled else 0.0
-        return np.array(
-            [
-                self._wait_norm(wait),
-                s.kv_fullness(),
-                min(req.prompt_tokens / p.prompt_norm, 1.0),
-                float(np.clip(slack_s / req.ttft_target, 0.0, 1.0)),
-                req.hops / p.max_hops,
-                nb_wait,
-                hit,
-            ],
-            dtype=np.float32,
-        )
+        return observation_vector(self.p, self.servers, i, self.neighbours(i), req, self.run.t)
 
     def _observe(self):
         """Observations for all agents; links each deciding agent's previous decision to this s'."""
@@ -393,19 +418,7 @@ class Cluster:
         self._log("act", agent=i, req=req.id, action=a)
 
     def _forward_target(self, i: int, req) -> int:
-        """Visible neighbour minimising expected wait + estimated service time; ties to the lowest
-        index.
-        """
-        nb = self.neighbours(i)
-        open_ = [j for j in nb if self.servers[j].can_accept(req)] or nb
-        # fmt: skip
-        return min(
-            open_,
-            key=lambda j: (
-                self.servers[j].expected_wait() + self.servers[j].est_service_seconds(req),
-                j,
-            ),
-        )
+        return forward_target(self.servers, self.neighbours(i), req)
 
     def _advance_servers(self) -> None:
         r, dt = self.run, self.p.dt

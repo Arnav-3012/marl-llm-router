@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -36,7 +37,10 @@ class World:
 
     def __init__(self, overrides: dict | None = None, root: Path = ROOT):
         sim = yaml.safe_load((root / "configs" / "sim.yaml").read_text())
-        self.sim = deep_update(sim, overrides or {})
+        overrides = dict(overrides or {})
+        if "layout" not in overrides and os.environ.get("MARL_LAYOUT"):  # ADR-035: other layouts
+            overrides["layout"] = os.environ["MARL_LAYOUT"].split(",")
+        self.sim = deep_update(sim, overrides)
         self.calib = json.loads((root / self.sim["calibration_path"]).read_text())
         norm = json.loads((root / self.sim["traffic"]["normalisation_path"]).read_text())
         data_cfg = yaml.safe_load((root / "configs" / "data.yaml").read_text())["processed"]

@@ -1,0 +1,9 @@
+# lambda_sat sweep for the one-fast-three-slow layout (ADR-035): same method and thresholds as saturation.yaml, one cache setting
+start_s: 1800
+window_s: 300
+seeds: [0, 1, 2]
+grid_rps: {min: 0.05, max: 3.2, n: 13}   # a weaker cluster saturates earlier than the 2 fast + 2 slow one
+refine_steps: 6
+thresholds: {completion_min: 0.95, drop_max: 0.01, backlog_max: 1.5}
+settings: [cache_on]
+reference_fraction: 0.1

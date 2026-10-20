@@ -1,7 +1,8 @@
 import { Link } from "../router";
-import { Card, Loaded, Num, NotRun, Reveal, SourceNote, useData, useLoad, fmt } from "../ui";
+import { Card, Loaded, Num, NotRun, Reveal, SourceNote, Term, useData, useLoad, fmt } from "../ui";
 import type { Metric } from "../data/types";
-import { HeroField } from "../viz/HeroField";
+import { IsoCluster } from "../viz/IsoCluster";
+import { AgentExplainer, useMix } from "../viz/AgentExplainer";
 import { Pipeline, type Stage, type StageStatus } from "../viz/Pipeline";
 import { Lifecycle } from "../viz/Lifecycle";
 import { WhyHard } from "../viz/WhyHard";
@@ -26,6 +27,7 @@ export function Overview() {
   const overview = useLoad(() => ds.getOverview(), []);
   const traces = useLoad(() => ds.getTraces(), []);
   const method = useLoad(() => ds.getMethod(), []);
+  const mix = useMix();
 
   const seeds = overview.env?.data?.experiments_finished_seeds ?? {};
   const m = method.env?.data;
@@ -50,10 +52,19 @@ export function Overview() {
           <div className="controls">
             <Link className="btn primary" to="/baselines">See the results</Link>
             <Link className="btn" to="/replay">Watch a recorded episode</Link>
-            <span className="pill warn" title="what this build did not do"><span className="dot" />demo build: 5-repeat profiling, no break-its, no real-server replay</span>
+            {(() => {
+              const n = overview.env?.data?.real_server_runs ?? 0;
+              const tip = "What this build does not show: the learned agents are trained and compared in a simulator calibrated on real servers (5 repeats of each measurement, one machine). The break-it experiments, a changed hardware mix and a centralised baseline were not run.";
+              return n > 0
+                ? <span className="pill ok" title={tip}><span className="dot" />simulation calibrated on real servers · {n} real-server run{n > 1 ? "s" : ""}</span>
+                : <span className="pill warn" title={tip}><span className="dot" />simulation calibrated on real servers · no real-server run yet</span>;
+            })()}
           </div>
         </div>
-        <HeroField />
+        <div className="hero-stage">
+          <div className="hero-frame"><IsoCluster mode="hero" mixFast={mix.fast} mixSlow={mix.slow} height={430} /></div>
+          <p className="hero-note">Illustration, not measured data. The mix of accept, forward, defer and reject is the trained agents' measured mix; scroll to turn the view and raise the load.</p>
+        </div>
       </section>
 
       <section className="block">
@@ -61,9 +72,9 @@ export function Overview() {
         <div className="grid g2">
           <Reveal><Card>
             <h3>What a request costs</h3>
-            <p className="muted">A request has two phases. <b style={{ color: "var(--text)" }}>Prefill</b> reads the whole prompt at once; it decides the <b style={{ color: "var(--text)" }}>time to first token</b> (TTFT).
-              <b style={{ color: "var(--text)" }}> Decode</b> writes the answer one token at a time, shared with the other requests in the batch; it decides the <b style={{ color: "var(--text)" }}>time per output token</b> (TPOT).</p>
-            <p className="muted">A request is <i>good</i> only if it meets both targets. The headline metric is <b style={{ color: "var(--text)" }}>goodput</b>: good requests per second, not raw throughput.</p>
+            <p className="muted">A request has two phases. <Term tip="Prefill: the model reads the whole prompt in one go before it can say anything. Longer prompts take longer, and the time grows faster than the length.">Prefill</Term> reads the whole prompt at once; it decides the <Term tip="Time to first token: how long the user waits before the first word of the answer appears. Our target is 5 seconds.">time to first token</Term>.{" "}
+              <Term tip="Decode: the model writes the answer one token (roughly a word piece) at a time. Several requests share each step, so a busy server writes more slowly for everyone.">Decode</Term> writes the answer one token at a time, shared with the other requests in the batch; it decides the <Term tip="Time per output token: how long each further word piece takes. Our target is 0.1 seconds, which is 10 tokens per second, about reading speed.">time per output token</Term>.</p>
+            <p className="muted">A request is <i>good</i> only if it meets both targets. The headline metric is <Term tip="Goodput: requests per second that finished and met both targets. Late answers and refused requests do not count, so a policy cannot look good by serving many requests slowly.">goodput</Term>: good requests per second, not raw throughput. Servers also keep a <Term tip="KV cache: the server's working memory for the conversations it is serving. When it is full, new requests must wait. A follow-up message is faster on the server that still holds its conversation in this cache.">KV cache</Term> of open conversations, which is why a follow-up message is fastest on the server that served the previous one.</p>
           </Card></Reveal>
           <Reveal delay={80}><Card>
             <h3>What the cluster looks like</h3>
@@ -84,10 +95,14 @@ export function Overview() {
         <Card className="flat"><Pipeline stages={stages} /></Card>
         <p className="muted" style={{ marginTop: 12 }}>Each stage shows what the result files say, not what was planned. Deploy stays “not run”: the learned policy has not been tried on the real servers.</p>
         <div style={{ marginTop: 32 }}><h3 style={{ marginBottom: 12 }}>The life of one request</h3><Lifecycle /></div>
-        <div className="grid g3" style={{ marginTop: 32 }}>
-          <Reveal><Card><div className="label">what an agent sees</div><p className="muted" style={{ margin: 0 }}>Seven numbers in [0, 1]: its own expected wait and KV-cache fullness, the prompt size, the slack left against the target, hops so far, the neighbours’ mean wait (0 when it cannot see any) and the fraction of the prompt already cached here.</p></Card></Reveal>
-          <Reveal delay={60}><Card><div className="label">what it can do</div><p className="muted" style={{ margin: 0 }}><b style={{ color: "var(--text)" }}>Accept</b> the request on its own server, <b style={{ color: "var(--text)" }}>Forward</b> it (at most twice) to the neighbour with the least expected wait, or <b style={{ color: "var(--text)" }}>Defer</b> it (a limited number of times). Illegal actions are masked.</p></Card></Reveal>
-          <Reveal delay={120}><Card><div className="label">what it is rewarded for</div><p className="muted" style={{ margin: 0 }}>+10 for meeting both targets, −10 for missing one, −5 for a drop, shared by every agent that acted on the request; minus the serving agent’s cost (λ × price × busy seconds) and a KV-pressure term; minus a small cooperation term for the cluster breach rate.</p></Card></Reveal>
+        <div style={{ marginTop: 40 }}>
+          <Reveal><div className="eyebrow">the agents</div><h2>What can an agent do with a request?</h2>
+            <p className="lead">Each of the four servers has one small agent. It looks at its own server and at how busy the others are, and picks one of four actions. Pick one below to watch a request take that path.</p></Reveal>
+          <AgentExplainer />
+        </div>
+        <div className="grid g2" style={{ marginTop: 32 }}>
+          <Reveal><Card><div className="label">what it is rewarded for</div><p className="muted" style={{ margin: 0 }}>+10 when a request meets both targets (first word within 5 seconds, then at least 10 words per second), −10 when it misses one, −5 when it is dropped. Every agent that touched a request shares that reward, plus a small cost for slow or expensive service and for passing a request on. Agents learn only from these outcomes.</p></Card></Reveal>
+          <Reveal delay={60}><Card><div className="label">why the reward matters</div><p className="muted" style={{ margin: 0 }}>Nobody tells an agent which servers are fast or when to refuse a request. If refusing pays better than answering late, it learns to refuse; if passing a request on is cheap, it learns to pass. That is why we also test it against a hand-written rule that was given the answer.</p></Card></Reveal>
         </div>
       </section>
 

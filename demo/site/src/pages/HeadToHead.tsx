@@ -169,8 +169,8 @@ function Summary({ data, rho, learned, baseline }: { data: HeadToHeadData; rho: 
           </table>
         </div>
       ) : <NotRun what="Paired difference" reason="needs at least two shared seeds." />}
-      <h3 style={{ margin: "18px 0 6px" }}>Does it beat SED?</h3>
-      {data.policies.filter((p) => p.kind === "baseline" && p.id.startsWith("sed")).map((p) => {
+      <h3 style={{ margin: "18px 0 6px" }}>Does it beat the strongest rules?</h3>
+      {data.policies.filter((p) => p.kind === "baseline" && (p.id.startsWith("sed") || p.id.startsWith("route_to_fast"))).map((p) => {
         const b = row.summary[p.id]?.goodput_rps;
         if (!lg || !b || lg.mean == null || b.mean == null) return null;
         const lo = lg.mean - (lg.ci ?? 0), hi = lg.mean + (lg.ci ?? 0), blo = b.mean - (b.ci ?? 0), bhi = b.mean + (b.ci ?? 0);

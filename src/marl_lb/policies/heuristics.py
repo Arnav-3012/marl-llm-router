@@ -214,3 +214,22 @@ class RouteToFastSpill(RouteToFast):
         ):
             return ACCEPT
         return super().act_agent(i, obs, mask)
+
+
+class RouteToFastShedTau(RouteToFastShed):
+    """The rule a person would write for a cluster with few fast servers (ADR-035): as
+    RouteToFastShed, but a slow agent keeps a request itself while its own expected wait is at most
+    tau (feature 0) and the request can still meet the target here (feature 3 above 0); otherwise it
+    forwards. tau is chosen on train windows only.
+    """
+
+    name = "route_to_fast_shed_tau"
+
+    def __init__(self, layout: list, tau: float):
+        super().__init__(layout)
+        self.tau = tau
+
+    def act_agent(self, i: int, obs, mask) -> int:
+        if self.slow[i] and mask[ACCEPT] and obs[0] <= self.tau and obs[3] > 0.0:
+            return ACCEPT
+        return super().act_agent(i, obs, mask)

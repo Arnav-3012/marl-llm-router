@@ -9,6 +9,7 @@ export const ROUTES = [
   { path: "/baselines", label: "Baselines & E1" },
   { path: "/training", label: "Training" },
   { path: "/stress", label: "Stress tests" },
+  { path: "/live", label: "Live" },
   { path: "/observability", label: "Observability" },
   { path: "/traces", label: "Traces" },
   { path: "/method", label: "Method" },
