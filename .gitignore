@@ -17,3 +17,6 @@ __pycache__/
 .ruff_cache/
 .pytest_cache/
 .claude/settings.local.json
+
+# Local model weights and llama.cpp scratch (never committed)
+models/

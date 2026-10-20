@@ -188,3 +188,17 @@ Learned: <Arnav>
 Blockers: none.
 Next: M0.5.1 (install llama.cpp, fetch models).
 
+## 2026-10-20 — M0.5.1: llama.cpp installed, both server classes answer
+Done:
+- `brew install llama.cpp`: the first attempt stopped with "Error: llama.cpp: File exists - /opt/homebrew/Cellar/openssl@4/4.0.3/4.0.3" while upgrading a dependency; a second `brew install llama.cpp` succeeded (brew itself unlinked the openssl@3 symlinks to link openssl@4; nothing was deleted by hand). `llama-server --version`: version 0.7.0 (build 11669, commit 620d2225c), AppleClang 21.0.0.21000334 for Darwin arm64. Binary: /opt/homebrew/bin/llama-server.
+- Models (hf download, under models/, git-ignored by `*.gguf` and a new `models/` line in .gitignore; never committed): qwen2.5-3b-instruct-q4_k_m.gguf (Qwen/Qwen2.5-3B-Instruct-GGUF), 2,104,932,768 bytes; qwen2.5-1.5b-instruct-q4_k_m.gguf (Qwen/Qwen2.5-1.5B-Instruct-GGUF), 1,117,320,736 bytes.
+- Fast class: 3B Q4_K_M, `llama-server -ngl 99 -c 32768 -np 4 --port 8081`. Slow class: 1.5B Q4_K_M, `-ngl 0 -t 4 -c 32768 -np 4 --port 8082` (CPU only). Both /health returned {"status":"ok"}.
+- Request to each: `POST /v1/chat/completions {"messages":[{"role":"user","content":"Say hello in five words."}],"max_tokens":24,"temperature":0}`.
+  - port 8081 (fast): content "Hello, how can I assist you?"; usage prompt 35, completion 9; timings prompt_ms 231.47, predicted_per_token_ms 11.23 (89.02 tokens/s).
+  - port 8082 (slow): content "Hello there!"; usage prompt 35, completion 4; timings prompt_ms 226.74, predicted_per_token_ms 12.05 (82.97 tokens/s).
+  These are first requests after start-up (not a measurement).
+- Slow-class choice (the plan allowed 0.5–1.5B or CPU-only): CPU-only 1.5B. Reason: the classes must differ, and a small model on Metal would be faster than the 3B, not slower, so the slow class has to run on the CPU. I picked 1.5B over 0.5B because I expect the 0.5B to decode faster on CPU (less to read per step) and shrink the contrast (an expectation, not measured). Check with longer random prompts, from the llama-server logs (4 threads): fast prefill 770.06 tokens/s (5,839 tokens) and 858.56 (1,943), decode 77.74 and 85.77 tokens/s; slow prefill 102.54 (1,955), 65.64 (5,825) and 103.80 (1,943) tokens/s, decode 60.47, 43.20 and 60.99 tokens/s. So the slow class is roughly 8x slower at prefill and 1.4–1.8x slower at decode on this machine. These came from a few unrepeated calls, only to choose the class; the real numbers come from M0.5.2.
+Learned: <Arnav>
+Blockers: none.
+Next: M0.5.2 (bench_server.py): code written and smoke-tested; the full run is in progress.
+
