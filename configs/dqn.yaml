@@ -21,6 +21,6 @@ device: auto                      # mps if available, else cpu
 centralised:
   enabled: false                  # centralised DQN reference (upper bound, M3)
 reward_scale: 0.1                 # rewards are multiplied by this before they enter the replay buffer (keeps Q near 1; ADR-023)
-epsilon_decay_episodes: 60        # episodes over which epsilon falls from start to end (ADR-023; set from the timing run)
+epsilon_decay_episodes: 200       # episodes over which epsilon falls from start to end (ADR-023; half of the 400-episode budget, ADR-021)
 learn_every: 2                    # gradient step every this many environment ticks, per agent (ADR-023)
 updates_per_learn: 1              # minibatch updates per learning step

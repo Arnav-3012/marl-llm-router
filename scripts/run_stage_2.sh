@@ -7,7 +7,7 @@ W="${WORKERS:-$(( $(sysctl -n hw.ncpu) - 1 ))}"
 mkdir -p results/logs
 TS=$(date +%Y%m%d-%H%M%S)
 echo "== stage 2, step 1/2: M2.12 prototype, one DDQN among SED-local agents (workers $W)"
-uv run python -m scripts.run_experiment --exp prototype --solo 0 --seeds 0-4 --episodes "${PROTO_EPISODES:-40}" \
+uv run python -m scripts.run_experiment --exp prototype --solo 0 --seeds 0-4 --episodes "${PROTO_EPISODES:-150}" \
   --eval-split train --eval-window-s 300 --workers "$W" 2>&1 | tee "results/logs/stage2_prototype_$TS.log"
 echo "== stage 2, step 2/2: M3.12 timing run, independent DDQN N=4, 1 seed, alone"
 uv run python -m scripts.run_experiment --exp timing --seeds 0 --episodes "${TIMING_EPISODES:-20}" \
