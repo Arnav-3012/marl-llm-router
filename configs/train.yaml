@@ -1,0 +1,8 @@
+# Training-run settings shared by scripts/run_experiment.py (ADR-021 sets episodes from the M3.12 timing run).
+episodes: 100                     # training episodes per seed (placeholder until the timing gate, ADR-021)
+window_s: 60                      # simulated seconds of train traffic per episode (a random window of the train stream)
+rho_train: 0.8                    # train once at this load; evaluate at all of rho_eval (ADR-020)
+rho_eval: [0.5, 0.8, 0.95]
+k: full                           # neighbour visibility: 0 | 1 | full
+lambda_cost: 1.0                  # lambda in r = R_SLA - lambda*C ... (E3 sweeps it); main configuration = 1
+beta_coop: 2.0                    # cooperation weight (ADR-022); main configuration = on

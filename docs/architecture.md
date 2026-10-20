@@ -88,14 +88,38 @@ Forward-target rule (ADR-013, SED-style): the environment sends a forwarded requ
 - CLI: `uv run python -m marl_lb.data.processed`; settings from the `processed` block of configs/data.yaml (source_file, out_dir, train_fraction, percentile, features). data/processed/* is gitignored, so the files are regenerated, not committed.
 - The observation builder (M1.14) reads data/processed/normalisation.json → ["constants"][feature].
 
+### profiling
+- bench_server.py (Tier B): `uv run python -m profiling.bench_server [--smoke] [--only prefill,batch,joint,cache,interference]`. Starts the 4 llama-servers from configs/profiling.yaml (2 fast-expensive on Metal, 2 slow-cheap CPU-only), measures, and writes results/profiling/<timestamp>_seed<k>/ with one raw CSV per experiment and class (`prefill_<class>.csv`, `batch_<class>.csv`, `joint_<class>.csv`, `cache_<class>.csv`, `interference_<class>.csv`), `config_resolved.yaml`, `meta.json` (chip, RAM, macOS, llama.cpp version/commit, model files with sha256, server command lines, ctx size, threads, wall time per experiment, row counts) and the llama-server logs. Warm-up runs are discarded, not written. Prompts are token-id lists, so lengths are exact. Pure helpers: make_prompt, ttft_and_tpot, all_active_step_time, neighbour_order.
+- fit_calibration.py (Tier A): `fit_prefill(df) -> {a, c, a_se, c_se, r2, shape{curved, quad_coef, quad_t}, residual_summary, ...}`; `fit_decode(df) -> {t0, k, ..., r2, n_runs}` (one value per run, not per request row); `fit_cache(df, a, c) -> {cached_token_cost_ratio r, cache_speedup = 1/r}`; `fit_interference(df, n_servers) -> {prefill, decode: {s, linear_r2, fixed_multiplier_slowdown, by_level[...]}}` (ADR-015 option A fit, with the per-level table for A/B/C); `fit_run(run_dir) -> dict` writes fit_output.json and fit_residuals.csv in the run directory and does NOT write profiling/calibration.json (M0.5.5, after ADR-015). CLI: `uv run python -m profiling.fit_calibration --run <dir>`.
+
 ### sim.request
-- Request(id: int, arrival: float, prompt_tokens: int, output_tokens: int, conv_id: int, ttft_target: float, tpot_target: float, hops: int, defers: int)
+- Request (sim/request.py, __slots__ class): id, arrival, prompt_tokens, output_tokens, conv_id, turn_index, history_included, ttft_target, tpot_target, hops, defers, plus runtime state (holder, server, status, cached_tokens, pf_left, dec_left, t_enqueue, t_first, t_done, attributed_s, resident_ticks, hot_ticks, decisions). `Request.from_stream(i, StreamRequest, ttft_target, tpot_target)` maps the M0.6 record (ADR-018). Properties ttft, tpot, e2e; `sla_met()`.
 
 ### sim.server (Tier A)
-- Server(class_cfg, calibration: dict)
-- Server.enqueue(req: Request, tick: int) -> None
-- Server.step(tick: int) -> list[CompletedRequest]
-- Server.expected_wait() -> float ; Server.kv_fullness() -> float ; Server.busy_seconds -> float
+- Server(index, class_name, cls: dict, sim: dict, est_output_tokens) with cls from calibration.json classes (a, cached_token_cost_ratio, t0, k, s_prefill, s_decode, kv_token_budget, max_batch, price_per_busy_second).
+- Server.enqueue(req, now) ; Server.advance(t_start, t_end, n_other_busy, n_servers) -> list[Request] finished in the window (exact, not tick-by-tick; result independent of how the window is cut) ; Server.end_of_tick(kv_threshold)
+- Server.expected_wait() (remaining prefill + expected remaining decode, using only router-visible information) ; est_service_seconds(req) ; can_accept(req) ; kv_fullness() ; busy_seconds ; n_present() ; is_busy()
+- Interference (ADR-015): prefill seconds x (1 + s_prefill * n_other_busy/(N-1)), decode step x (1 + s_decode * ...).
+
+### sim.cluster (Tier A)
+- SimParams (typed record of configs/sim.yaml; `SimParams.from_config(sim, layout, est_output_tokens, prompt_norm)`).
+- Cluster(params, classes, mode="agents"|"global", global_policy=None, record_events=False): ParallelEnv shape. reset(stream, seed) -> (obs, infos); step(actions) -> (obs, rewards, terminations, truncations, infos); agents "agent_i"; infos[agent] = {mask (3 bools), decide (bool), req_id}. pop_transitions() -> list[Transition(agent, obs, mask, action, tick, reward, next_obs, next_mask, truncated)] (ADR-010: complete when the request has resolved AND the agent has decided again). `run` holds per-episode state (requests, resolved, events, discarded_end, drops_unacted, drops_by_holder, l_integral).
+- Replay event log (ADR-020): with record_events=True, run.events is a list of {tick, t, e, ...}: e in arrive (req, entry, p, o), act (agent, req, action), forward (req, src, dst), servers (queue[], active[], kv[]), resolve (req, status, ok, server). eval.evaluate.save_events writes it as JSON lines; scripts/export_dashboard_data.py turns it into capped frames.
+- slice_stream(stream, start_s, length_s): a window of a stream, re-zeroed (training episodes).
+
+### sim.metrics (Tier A)
+- summarise(cluster) -> dict: goodput_rps (SLA-met completions / arrival window), throughput_rps, sla_attainment, breach_rate, drop_rate, ttft p50/p95/p99, tpot p50/p95, e2e p50/p95, cost_per_request, cache_hit_rate, utilisation, jain_utilisation, completed_by_class, little_L, little_lambda_W, decisions, discarded_end_transitions, drops_unacted, drops_by_holder. jain_index(x), percentile(v, q).
+
+### policies.heuristics (Tier A)
+- Local (act(obs[7], mask[3]) -> action): AcceptAll (random routing via the uniform entry rule), SEDLocal, CacheAwareLocal(w). Global (assign(cluster, req) -> server | None): RandomGlobal, RoundRobin, JSQ, Po2, SEDGlobal, CacheAwareGlobal(w, wait_scale_s). Local JSQ/Po2 forms are not implemented (demo track).
+
+### agents and train (Tier A)
+- agents.networks: QNetwork(obs_dim=7, hidden=(64,64), n_actions=3), masked_argmax(q, mask). agents.replay_buffer: ReplayBuffer(capacity).add/sample. agents.dqn_agent: DQNAgent(cfg, seed).act(obs, mask, epsilon) / remember(tr) / ready() / learn() -> (loss, mean_q), epsilon_at(episode, cfg). No terminal flag (truncation, ADR-010); reward_scale in dqn.yaml.
+- train.loop: make_agents(cfg, n, seed, solo=None), agent_actions(agents, obs, infos, epsilon, fallback), run_learning_episode(...), train(world, cfg, seed, log_path, progress, solo) (episode = a seeded window of the train stream), greedy_actions(agents, fallback).
+
+### eval
+- eval.evaluate: World (sim.yaml + overrides, calibration.json, normalisation.json, the Azure trace; `.cluster(...)`, `.stream(rate, seed, split)`), run_episode(cluster, stream, seed, act_fn), local_actions(policy), save_events. eval.experiments: suite(world, cache_w), eval_baseline(...), eval_agents(...) (every policy gets the same held-out stream for a given (rate, seed)). eval.saturation: point_criteria, is_saturated, find_lambda_sat (ADR-011). eval.stats: mean_ci (Student t), aggregate. eval.pareto: pareto_front. data.load: rho_to_rate(rho, lambda_sat).
+- scripts (heavy jobs are run by Arnav, docs/RUN.md): saturation_sweep, evaluate, run_experiment, run_stage_{1,2,3}.sh, export_dashboard_data, make_fixture_data.
 
 ### sim.kv_cache / sim.prefix_cache (Tier A)
 - KVCache(budget_tokens: int).can_admit(tokens: int) -> bool ; .admit(req_id, tokens) ; .release(req_id) ; .fullness() -> float

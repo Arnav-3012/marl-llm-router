@@ -1,0 +1,10 @@
+# lambda_sat sweep settings (ADR-011, M1.26). Thresholds and grid are assumptions stated in the ADR.
+start_s: 1800                 # skip the session ramp-up: think times are not rescaled (ADR-009), so few conversations are open
+                              # early and the arrival rate is below its mean (at 0.1 req/s: 0.23x in the first 600 s, ~0.8x by 2400 s)
+window_s: 300                 # arrival window of each sweep episode, simulated seconds (train traffic); ~100 requests near lambda_sat
+seeds: [0, 1, 2]
+grid_rps: {min: 0.1, max: 6.4, n: 13}    # geometric grid of arrival rates (req/s); capacity measured ~0.4-1 req/s (ADR-022)
+refine_steps: 6               # bisection steps between the last passing and the first failing grid rate
+thresholds: {completion_min: 0.95, drop_max: 0.01, backlog_max: 1.5}
+settings: [cache_on, cache_off]          # prefix cache on / off (lambda_sat is recorded per setting)
+reference_fraction: 0.1       # SLA attainment is also recorded at this fraction of lambda_sat

@@ -1,27 +1,32 @@
-# Simulator, traffic, request and reward settings.
-calibration_path: profiling/calibration.json   # sole source of server physics
-dt: null                          # tick length in seconds (discrete-time, ADR-001); set in M1
-episode_ticks: null               # ticks per training episode; set in M1
+# Simulator, traffic, request and reward settings (ADR-022 sets the values marked ADR-022; ADR-020 the demo scope).
+calibration_path: profiling/calibration.json   # sole source of server physics (RULES.md #8)
+layout: [fast_expensive, slow_cheap, fast_expensive, slow_cheap]   # class of server/agent 0..3; alternating so ring neighbours differ
+dt: 0.1                           # tick length in seconds (ADR-001; ADR-022). The servers are simulated exactly inside a tick, so dt only sets decision cadence
 max_hops: 2                       # Forward limit per request
-max_defers: null                  # D: Defer limit per request; set in M1.2 via ADR
+max_defers: 2                     # D: Defer limit per request (ADR-022)
+max_queue: 16                     # requests a server holds waiting for a batch slot; Accept is masked beyond this (ADR-022)
 entry_rule: uniform               # which agent a new request enters at (ADR-013)
+prefix_cache_fraction: 0.5        # share of a server's KV token budget kept as prefix cache (ADR-022; assumption)
+wait_scale_s: 10.0                # an expected wait of this many seconds maps to observation value 1 (ADR-022)
+max_drain_s: 120.0                # seconds after the last arrival before unfinished requests count as dropped (ADR-010)
 traffic:
-  source: azure2023               # azure2023 (conv) | azure2023_code (burst tests, E5, ADR-016)
-  rho: 0.8                        # offered load as fraction of cluster capacity (E1 sweeps 0.5/0.8/0.95)
-  # train/held-out fraction: configs/data.yaml processed.train_fraction (single source, ADR-016)
+  source: azure2023               # azure2023 (conv) | azure2023_code (burst tests, E5, deferred)
+  rho: 0.8                        # offered load as fraction of lambda_sat (ADR-011)
   normalisation_path: data/processed/normalisation.json   # P/O normalisation constants, written by data/processed.py (M0.4)
 sla:
-  ttft_target: null               # seconds; set in M1 from calibration/EDA
-  tpot_target: null               # seconds per output token; set in M1
+  ttft_target: 5.0                # seconds; ADR-022: fast class idle TTFT at 4000 tokens (~p95 prompt) is 5.4 s measured
+  tpot_target: 0.1                # seconds per output token (10 tokens/s); ADR-022
 observation:
-  k: 1                            # neighbour visibility radius: 0 | 1 | full (E4 sweeps)
-  prefix_hit_enabled: false       # cache variant: adds prefix-hit fraction to the observation
+  k: full                         # neighbour visibility radius: 0 | 1 | full (E4 compares 0 and full)
+  prefix_hit_enabled: true        # adds the prefix-hit fraction to the observation (feature 7)
 reward:
   r_sla_met: 10                   # both targets met
   r_sla_missed: -10               # at least one target missed
-  r_drop: -5                      # −5 R_SLA shared by every agent that acted on the request; last holder for per-server metrics only (ADR-010)
-  w_kv: null                      # per-request KV term weight, ADR-014; value set by a later ADR
-  kv_threshold: 0.8               # KV fullness fraction above which the penalty applies
-  lambda_cost: 0.5                # λ weighting cost C (E3 sweeps); default mid-sweep value
-  beta_coop: 0.0                  # β weighting cluster breach rate B_t (E2: 0 = off)
-  breach_window: null             # W: steps over which B_t is averaged; set in M3
+  r_drop: -5                      # shared by every agent that acted on the request (ADR-010)
+  w_kv: 1.0                       # per-request KV term weight, ADR-014 (ADR-022): at most -1 against R_SLA +-10
+  kv_threshold: 0.8               # KV fullness above which the penalty applies
+  forward_cost: 0.1               # immediate cost of a Forward (ADR-010 leaves the value to a later ADR; ADR-022)
+  defer_cost: 0.1                 # immediate cost of a Defer (ADR-022)
+  lambda_cost: 1.0                # lambda weighting cost C (E3 varies it); main configuration = 1
+  beta_coop: 2.0                  # beta weighting the cluster breach rate B_t (ADR-022); 0 = off
+  breach_window_ticks: 100        # W: ticks over which B_t is averaged = 10 s at dt 0.1 (ADR-022)
