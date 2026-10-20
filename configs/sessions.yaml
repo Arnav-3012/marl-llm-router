@@ -1,0 +1,21 @@
+# Synthetic-session parameters (ADR-009, Option B): sessions are layered over Azure conv traffic.
+# Every value is a summary statistic of BurstGPT_3 from the M0.3 EDA; nothing here is tuned.
+# Sources: results/eda/trace_summary.json (sessions block) and the printed output of
+# notebooks/01_trace_eda.ipynb cells (e)-(h), as recorded in the ADR-009 Findings.
+# The session generator that consumes this file is a later task; it must pick a distribution
+# family that reproduces these quantiles and state it (distribution_family stays null until then).
+source_trace: BurstGPT_3
+n_sessions_observed: 55920
+single_turn_share: 0.355           # share of sessions with exactly one turn
+turns_per_session:                 # quantiles of turns per session
+  p50: 2
+  p90: 9
+  p99: 31
+  max: 436
+inter_turn_gap_s:                  # gap between consecutive turns, seconds; user think time (ADR-009)
+  p50: 131
+  p90: 2340
+  p99: 78788
+  compress_with_rate: false        # NOT rescaled when arrival rates are rescaled to reach rho
+history_included_prob: 0.587       # P(prompt >= previous prompt + previous output) for turns that have a predecessor
+distribution_family: null          # set by the session-generator task

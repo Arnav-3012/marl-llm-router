@@ -6,10 +6,10 @@ max_hops: 2                       # Forward limit per request
 max_defers: null                  # D: Defer limit per request; set in M1.2 via ADR
 entry_rule: uniform               # which agent a new request enters at (ADR-013)
 traffic:
-  source: azure2023               # azure2023 | burstgpt (burst tests, E5)
+  source: azure2023               # azure2023 (conv) | azure2023_code (burst tests, E5, ADR-016)
   rho: 0.8                        # offered load as fraction of cluster capacity (E1 sweeps 0.5/0.8/0.95)
-  train_split: null               # fraction of trace for training; held-out remainder for eval; set in M0
-  normalisation_path: data/processed/normalisation.json   # P/O normalisation constants, written in M0
+  # train/held-out fraction: configs/data.yaml processed.train_fraction (single source, ADR-016)
+  normalisation_path: data/processed/normalisation.json   # P/O normalisation constants, written by data/processed.py (M0.4)
 sla:
   ttft_target: null               # seconds; set in M1 from calibration/EDA
   tpot_target: null               # seconds per output token; set in M1

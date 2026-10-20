@@ -3,6 +3,14 @@
 # sha256: null = not pinned yet. After the first run, Arnav may paste the sha256 from
 # data/raw/MANIFEST.json to pin it (a mismatch then exits non-zero).
 raw_dir: data/raw
+# Settings for src/marl_lb/data/processed.py (M0.4). Azure conv for training and held-out,
+# failure rows dropped (ADR-016, ADR-017); constants are fitted on the train part only.
+processed:
+  source_file: AzureLLMInferenceTrace_conv.csv   # inside raw_dir
+  out_dir: data/processed
+  train_fraction: 0.8              # time-ordered split by duration (ADR-016)
+  percentile: 99                   # normalisation constant = this percentile of each feature
+  features: [prompt_tokens, output_tokens]
 sources:
   - name: azure_conv_2023
     url: https://raw.githubusercontent.com/Azure/AzurePublicDataset/master/data/AzureLLMInferenceTrace_conv.csv

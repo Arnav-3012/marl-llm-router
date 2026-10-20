@@ -100,11 +100,11 @@ One row per metric; expand to one value per policy × ρ cell (7 policies × 3 l
 | Metric | Condition | Value ± 95% CI | Source path |
 |---|---|---|---|
 | Goodput | MARL, test ρ=0.95 | | |
-| Goodput | MARL, test BurstGPT | | |
+| Goodput | MARL, test Azure code (burst) | | |
 | Goodput | SED, test ρ=0.95 | | |
-| Goodput | SED, test BurstGPT | | |
+| Goodput | SED, test Azure code (burst) | | |
 | Goodput | Cache-aware, test ρ=0.95 | | |
-| Goodput | Cache-aware, test BurstGPT | | |
+| Goodput | Cache-aware, test Azure code (burst) | | |
 
 ## E6 — Specialisation
 

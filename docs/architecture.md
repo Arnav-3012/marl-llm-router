@@ -30,7 +30,7 @@ Signatures below are text contracts, not code. Types are indicative; finalise pe
 | src/marl_lb/utils/{seeding,logging,io}.py | seeds, CSV logs, run dirs | B |
 | src/marl_lb/data/traces.py | trace loaders and stream sampler | B |
 | src/marl_lb/data/processed.py | normalisation constants (99th percentile, clip to [0,1]), time-ordered train/held-out split | A |
-| notebooks/01_trace_eda.ipynb | trace EDA (analysis cells); skeleton is B | A (temporary exception 2026-10-20: Claude writes cells 9–21, RULES.md #3) |
+| notebooks/01_trace_eda.ipynb | trace EDA (analysis cells); skeleton is B | A (Claude writes since 2026-10-20, RULES.md #3) |
 | src/marl_lb/data/load.py | ρ = λ_arr / λ_sat helper, ρ → arrival rate in req/s (ADR-011) | B |
 | src/marl_lb/sim/request.py | request record | B |
 | src/marl_lb/sim/server.py | service time, batching, queue | A |
@@ -76,7 +76,14 @@ Forward-target rule (ADR-013, SED-style): the environment sends a forwarded requ
   # arrival_rate_rps in req/s. The ρ → rate conversion lives in data/load.py (ADR-011, M1.28), not here.
 
 ### data.processed (Tier A)
-- Function names and signatures are Arnav's to choose in M0.4; tests in tests/test_processed.py (M0.3.1) fix the behaviour: per-feature 99th-percentile constants, clip to [0,1], time-ordered split with no overlap, sizes reported.
+- time_split(df: DataFrame, train_fraction: float) -> TimeSplit(train, heldout, cutoff_s; n_train, n_heldout)
+  # df sorted by arrival_s. Cut = t_min + train_fraction × (t_max − t_min) (split by duration, ADR-016): train is arrival_s < cutoff_s, held-out is arrival_s >= cutoff_s, so the parts are disjoint and same-instant requests stay together. arrival_s is not re-zeroed. ValueError on unsorted input, train_fraction outside (0, 1), or an empty part.
+- fit_normalisation(train: DataFrame, features: list[str], percentile: float) -> dict[str, float]   # np.percentile (linear) per feature; ValueError if a constant is not > 0. Pass the TRAIN part only.
+- normalise(df: DataFrame, constants: dict[str, float]) -> DataFrame   # value / constant clipped to [0, 1]; only the fitted features, float64
+- build_processed(raw_path: Path, out_dir: Path, *, train_fraction: float, percentile: float, features: list[str]) -> dict
+  # load_azure_2023(drop_failures=True) (ADR-017) → time_split → fit_normalisation on train → writes out_dir/train.csv, heldout.csv (canonical schema), normalisation.json {source, percentile, fitted_on: "train", n_fit_rows, constants: {feature: value}} and split.json {source, train_fraction, cutoff_s, n_train, n_heldout, n_failures_dropped}. Returns source, train_fraction, cutoff_s, n_train, n_heldout, n_failures_dropped, constants.
+- CLI: `uv run python -m marl_lb.data.processed`; settings from the `processed` block of configs/data.yaml (source_file, out_dir, train_fraction, percentile, features). data/processed/* is gitignored, so the files are regenerated, not committed.
+- The observation builder (M1.14) reads data/processed/normalisation.json → ["constants"][feature].
 
 ### sim.request
 - Request(id: int, arrival: float, prompt_tokens: int, output_tokens: int, conv_id: int, ttft_target: float, tpot_target: float, hops: int, defers: int)
@@ -132,7 +139,7 @@ Forward-target rule (ADR-013, SED-style): the environment sends a forwarded requ
 ### scripts
 - train.py --config --seed ; evaluate.py --config --policy ; run_experiment.py --experiment ; plot.py --exp ; replay_trace.py --trace --router-url
 
-## Ownership map (Tier A: Arnav types; Tier B: Claude Code writes)
+## Ownership map (since 2026-10-20 Claude Code writes, runs and commits both tiers; the tier marks viva importance)
 
 - Tier A: notebooks/01_trace_eda.ipynb (analysis cells), data/processed.py, profiling/fit_calibration.py, sim/{server,kv_cache,prefix_cache,cluster,metrics}.py, policies/heuristics.py, agents/*, train/loop.py, eval/{stats,pareto}.py, router/{observation,policy_router}.py
 - Tier B: config, utils, data/{traces,load}, download script, stream sampler, sim/request, scripts, plotting, eval/evaluate, router/{app,server_client}, profiling/bench_server, tests, configs, docs, docker/*, demo/*

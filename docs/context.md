@@ -1,5 +1,5 @@
 # MARL LLM Router — Project Context
-Owner: Arnav · Course: AAI (RL & Multi-Agent Systems) mini project · Group: E035, E032 · Deadline: 2026-10-27 · Last updated: 2026-10-03 (S.8)
+Owner: Arnav · Course: AAI (RL & Multi-Agent Systems) mini project · Group: E035, E032 · Deadline: 2026-10-27 · Last updated: 2026-10-20 (M0.3 close, mode change)
 Source of truth for concepts: the Deep-Dive Guide is v2 (2026-10-03), a Claude Doc at https://claude.ai/code/artifact/3cb1eae2-fdc0-4b66-9b1a-71bb5ac56f24. Where it and an ADR disagree, the ADR applies.
 
 ## One line
@@ -19,8 +19,8 @@ Profile (real) → Calibrate (profiling/calibration.json) → Train (sim) → De
 
 ## Environment
 - N=4 servers, 2 classes: fast-expensive, slow-cheap. Real: llama-server; fast = Qwen2.5-3B Q4 on Metal; slow = 0.5–1.5B or CPU-only (-ngl 0).
-- Request: arrival, prompt tokens P, output tokens O, conversation id (source: next line), TTFT target, TPOT target, hops, defers. Sampled from Azure LLM Inference Trace 2023 (trace choice: ADR-016); burst tests from BurstGPT.
-- conversation id: BurstGPT Session ID (conversation-mode rows only); Azure 2023 has none, see ADR-009
+- Request: arrival, prompt tokens P, output tokens O, conversation id (source: next line), TTFT target, TPOT target, hops, defers. Sampled from Azure conv 2023 for training and held-out (ADR-016); burst tests (E5) from Azure code 2023.
+- conversation id: synthetic sessions over Azure conv traffic, parameters from BurstGPT_3 in configs/sessions.yaml (ADR-009, Option B); Azure 2023 has no conversation id
 - Service: T = a·(P − P_cached) + Σ t_step(B_i), with t_step(B) = t0 + k·B. a, t0, k, cache speedup and interference come only from calibration.json.
 - Capacity = KV token budget. Time = discrete ticks, dt set in config.
 - Entry: each request lands at one entry agent chosen uniformly at random (seeded; entry_rule: uniform in configs/sim.yaml, ADR-013); Forward passes it on.
@@ -49,13 +49,13 @@ Random, Round-robin, JSQ, Po2, SED, Cache-aware — each in local (per-agent, sa
 - E2: cooperation term on/off
 - E3: λ ∈ {0, 0.25, 0.5, 1, 2} → Pareto frontier
 - E4: k ∈ {0, 1, full} vs centralised
-- E5: train at ρ=0.8 → test at 0.95 and on BurstGPT
+- E5: train at ρ=0.8 → test at 0.95 and on Azure code 2023 (burst test, ADR-016)
 - E6: specialisation (slack of accepted requests by server class)
 - E7: sim vs real
 
 ## Phases
 - S Setup: repo scaffold, docs, GitHub (private)
-- M0 Data: Azure 2023 + BurstGPT download, EDA, normalisation constants
+- M0 Data: Azure 2023 + BurstGPT download, EDA, normalisation constants (train-part 99th percentile), time-ordered train/held-out split
 - M0.5 Profiling: llama-server benchmarks on M4 Pro → calibration.json (timebox 6h)
 - M1 Simulator + heuristics: request/server/KV/prefix cache/cluster, metrics, all baselines, conservation test
 - M2 Single-agent DDQN
@@ -76,14 +76,14 @@ Ordering rule: nothing from M6+ starts before M5's charts exist.
 Python 3.11 · uv + pyproject.toml · PyTorch (mps→cpu) · numpy, pandas, scipy · YAML configs → dataclasses · CSV logs + matplotlib, tqdm · pytest, ruff · pettingzoo (dev, API test) · llama.cpp llama-server + Qwen2.5 GGUF Q4_K_M · FastAPI, uvicorn, httpx · Docker + compose · Gradio + Hugging Face Spaces · (stretch) vLLM on Kaggle.
 
 ## Ownership map
-- Tier A (Arnav types; Claude Code teaches with faded worked examples): notebooks/01_trace_eda.ipynb (analysis cells), data/processed.py (normalisation, train/held-out split), profiling/fit_calibration.py, sim/{server, kv_cache, prefix_cache, cluster, metrics}.py, policies/heuristics.py, agents/*, train/loop.py, eval/{stats, pareto}.py, router/{observation, policy_router}.py
+- Tier A (core logic; Claude Code writes it with explanatory comments since 2026-10-20; the tier marks what matters most for the viva): notebooks/01_trace_eda.ipynb (analysis cells), data/processed.py (normalisation, train/held-out split), profiling/fit_calibration.py, sim/{server, kv_cache, prefix_cache, cluster, metrics}.py, policies/heuristics.py, agents/*, train/loop.py, eval/{stats, pareto}.py, router/{observation, policy_router}.py
 - Tier B (Claude Code writes): config, utils, data/traces (loaders, sampler), download script, sim/request, scripts, plotting, eval/evaluate, router/{app, server_client}, profiling/bench_server, tests, configs, docs, docker/*, demo/* (Gradio app)
 
 ## Working rules
-Claude never runs commands (gives them instead) and never commits. Tier A default = faded worked examples: predict → explain → code part → Arnav types (no copy-paste) → explain-back → rebuild task. Repeated patterns = skeleton first. "challenge" = spec + skeleton + tests only. Viva-critical pieces (reward, DDQN update, SED, CI) rewritten once from memory.
+Since 2026-10-20 Claude Code writes Tier A and B code, runs commands and tests, and commits and pushes each task once its tests pass (RULES.md #1–#3); Arnav reviews summaries in claude.ai. Teaching mode ("challenge", faded worked examples) returns only if Arnav asks. Viva-critical pieces (reward, DDQN update, SED, CI) still get a rewrite-from-memory task, deferred.
 
 ## Interview-readiness (ADR-008)
-- Every task has a docs/viva.md entry written by Claude Code at task start: prerequisite, bet prompt, questions and collapsed reference answers (Tier B: 1 question; Tier A: 3 questions: explain, break-it, justify). Arnav attempts each question before expanding the answer and self-checks (got it / partly / missed); anything not "got it" goes to Revisit and is re-asked next session. There is no Claude grading.
+- Every task has a docs/viva.md entry written by Claude Code at task start: prerequisite, bet prompt, questions and collapsed reference answers (Tier B: 1 question; Tier A: 3 questions: explain, break-it, justify). Arnav's self-check is optional (ADR-008 amended 2026-10-20): when he does it, he attempts each question before expanding the answer and marks it got it / partly / missed; anything not "got it" goes to Revisit. There is no Claude grading.
 - Headline numbers live in docs/numbers.md, filled only from results/ files with the source path; never from memory.
 - Break-it experiments at M2 and M3 with hypotheses written in docs/viva.md before the run.
 - Reward, DDQN update, SED and CI calculation are rewritten from memory in a blank file, then diffed against the real one.
