@@ -1,0 +1,43 @@
+// The ONLY way pages get data. Swap StaticJsonSource for a live source later without touching a page.
+import {
+  parseEnvelope,
+  type BaselinesData, type Envelope, type Frame, type MethodData, type ObservabilityData,
+  type OverviewData, type ParetoData, type ReplayData, type TracesData, type TrainingData,
+} from "./types";
+
+export interface DataSource {
+  getOverview(): Promise<Envelope<OverviewData>>;
+  getBaselines(): Promise<Envelope<BaselinesData>>;
+  getPareto(): Promise<Envelope<ParetoData>>;
+  getObservability(): Promise<Envelope<ObservabilityData>>;
+  getTraining(): Promise<Envelope<TrainingData>>;
+  getTraces(): Promise<Envelope<TracesData>>;
+  getMethod(): Promise<Envelope<MethodData>>;
+  /** Frames of a recorded episode, delivered in order; meta (policy, rho, dt) comes from getReplayMeta. */
+  getReplayStream(policy: string, rho: string): AsyncGenerator<Frame>;
+  getReplayMeta(policy: string, rho: string): Promise<Envelope<ReplayData>>;
+}
+
+export class StaticJsonSource implements DataSource {
+  constructor(private base: string = import.meta.env.BASE_URL) {}
+
+  private async load<T>(file: string): Promise<Envelope<T>> {
+    const res = await fetch(`${this.base}data/${file}`);
+    if (!res.ok) throw new Error(`${file}: HTTP ${res.status}`);
+    return parseEnvelope<T>(await res.json(), file);
+  }
+
+  getOverview = () => this.load<OverviewData>("overview.json");
+  getBaselines = () => this.load<BaselinesData>("baselines.json");
+  getPareto = () => this.load<ParetoData>("pareto.json");
+  getObservability = () => this.load<ObservabilityData>("observability.json");
+  getTraining = () => this.load<TrainingData>("training.json");
+  getTraces = () => this.load<TracesData>("traces.json");
+  getMethod = () => this.load<MethodData>("method.json");
+  getReplayMeta = (policy: string, rho: string) => this.load<ReplayData>(`replay_${policy}_${rho}.json`);
+
+  async *getReplayStream(policy: string, rho: string): AsyncGenerator<Frame> {
+    const env = await this.getReplayMeta(policy, rho);
+    for (const f of env.data?.frames ?? []) yield f;
+  }
+}
