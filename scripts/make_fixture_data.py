@@ -24,7 +24,6 @@ POLICIES = {
     "sed_local_k1": 0.9,
     "sed_local_k0": 0.78,
     "cache_aware_global": 0.97,
-    # fmt: skip
     "cache_aware_local_full": 0.91,
     "jsq_global": 0.88,
     "po2_global": 0.84,
@@ -43,7 +42,6 @@ def metrics(rng, goodput, cost, rho):
         "ttft_p95": (1.5 + 3 * rho) * jitter(0.05),
         "tpot_p95": 0.04 * jitter(0.03),
         "e2e_p95": (4 + 6 * rho) * jitter(0.05),
-        # fmt: skip
         "cost_per_request": cost * jitter(0.02),
         "cache_hit_rate": 0.2 * jitter(0.05),
         "jain_utilisation": 0.85 * jitter(0.02),
@@ -203,6 +201,63 @@ def main() -> None:
                         f2[f"events_rho{r}.jsonl"] = events(rng)
                 make_run(root, exp, seed, f2)
         write_paired_fixture(root, rng)
+        # layout test and one real-server run (made-up numbers, shown only with the fixture banner)
+        pol = {
+            "agents": 0.30,
+            "route_to_fast_shed_tau": 0.29,
+            "route_to_fast_shed": 0.22,
+            "route_to_fast": 0.18,
+            "sed_global": 0.15,
+            "sed_local_full": 0.10,
+            "random": 0.08,
+        }
+        lay = {
+            "agents_experiment": "l13_agents",
+            "layout": ["fast_expensive", "slow_cheap", "slow_cheap", "slow_cheap"],
+            "seeds": [0],
+            "tau": 0.1,
+            "tau_scores": {},
+            "rhos": {},
+        }
+        for r in ("0.5", "0.8", "0.95"):
+            lay["rhos"][r] = {
+                "arrival_rate": 0.3,
+                "policies": {k: {"goodput": [v, 0.01], "drop_rate": 0.05} for k, v in pol.items()},
+                "agents_minus": {
+                    k: {
+                        "mean": pol["agents"] - v,
+                        "ci": 0.01,
+                        "beats": pol["agents"] - v > 0.02,
+                        "loses": pol["agents"] - v < -0.02,
+                    }
+                    for k, v in pol.items()
+                    if k != "agents"
+                },
+            }
+        (root / "results" / "layout").mkdir(parents=True, exist_ok=True)
+        (root / "results" / "layout" / "l13.json").write_text(json.dumps(lay))
+        live = root / "results" / "live" / "20260101-000000_001_sed_global_seed0"
+        live.mkdir(parents=True)
+        (live / "config.yaml").write_text(
+            "mode: real\npolicy: sed_global\nrho: 0.8\nseed: 0\nseconds: 60\n"
+        )
+        (live / "slice.json").write_text(json.dumps({"slice_id": "fixture0001"}))
+        (live / "machine.json").write_text(json.dumps({"platform": "fixture"}))
+        (live / "metrics.json").write_text(
+            json.dumps(
+                {
+                    "goodput_rps": 0.3,
+                    "sla_attainment": 0.8,
+                    "drop_rate": 0.0,
+                    "ttft_p95": 4.0,
+                    "cost_per_request": 15.0,
+                }
+            )
+        )
+        (live / "DONE").write_text("x")
+        (root / "results" / "live" / "real_lambda_sat.json").write_text(
+            json.dumps({"lambda_sat_rps": 0.5, "quick": True})
+        )
         shares = {"n": 1000, "accept": 0.5, "forward": 0.2, "defer": 0.3}
         entry = {
             "all": shares,

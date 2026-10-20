@@ -9,7 +9,7 @@ from scripts.export_dashboard_data import (
     SCHEMA_VERSION,
     frames_from_events,
     run_export,
-)  # fmt: skip
+)
 
 M = {
     "goodput_rps": 3.0,
@@ -17,7 +17,6 @@ M = {
     "breach_rate": 0.1,
     "drop_rate": 0.0,
     "ttft_p95": 2.0,
-    # fmt: skip
     "tpot_p95": 0.04,
     "e2e_p95": 5.0,
     "cost_per_request": 4.0,
@@ -179,9 +178,17 @@ def make_paired_run(root, seeds=(0, 1, 2), cap=60000):
     run.mkdir(parents=True)
     runners = {"ddqn_agents": RUNNERS["sed_global"], **RUNNERS}
     paired.evaluate_paired(
-        runners, stream_fn, [0.5, 0.8], lambda rho: rho * 2.0, list(seeds), "heldout", "cfg1", run,
-        event_seed=0, event_cap=cap,
-    )  # fmt: skip
+        runners,
+        stream_fn,
+        [0.5, 0.8],
+        lambda rho: rho * 2.0,
+        list(seeds),
+        "heldout",
+        "cfg1",
+        run,
+        event_seed=0,
+        event_cap=cap,
+    )
     cfg = {
         "learned": {"name": "ddqn_agents", "experiment": "main"},
         "baselines": ["random", "sed_global"],
@@ -273,11 +280,94 @@ def test_reject_runs_and_the_shed_rule_appear_on_the_baselines_export_only_when_
     for seed in (0, 1):
         make_run(fixture_root, "e8_scratch", seed, {"eval_metrics.json": {"0.8": scaled(M, 1.5)}})
         make_run(
-            fixture_root, "baselines_e8", seed,
+            fixture_root,
+            "baselines_e8",
+            seed,
             {"metrics.json": {"route_to_fast_shed@0.8": scaled(M, 1.2)}},
-        )  # fmt: skip
+        )
     run_export(fixture_root / "results", out, root=fixture_root, cap=50)
     d = load(out, "baselines.json")["data"]
     assert [x["id"] for x in d["learned_extra"]] == ["ddqn_reject_scratch"]
     shed = d["baselines"]["policies"]["route_to_fast_shed"]["0.8"]["goodput_rps"]
     assert shed["mean"] == pytest.approx(3.0 * 1.2)
+
+
+LAYOUT = {
+    "agents_experiment": "l13_agents",
+    "layout": ["fast_expensive"],
+    "seeds": [0, 1],
+    "tau": 0.1,
+    "rhos": {
+        r: {
+            "arrival_rate": 0.3,
+            "policies": {
+                k: {"goodput": [0.3, 0.01], "drop_rate": 0.05}
+                for k in (
+                    "agents",
+                    "route_to_fast_shed_tau",
+                    "route_to_fast_shed",
+                    "route_to_fast",
+                    "sed_global",
+                )
+            },
+            "agents_minus": {
+                "route_to_fast_shed": {
+                    "mean": 0.1,
+                    "ci": 0.01,
+                    "beats": r == "0.8",
+                    "loses": False,
+                },
+                "route_to_fast_shed_tau": {"mean": 0.0, "ci": 0.01, "beats": False, "loses": False},
+                "route_to_fast": {"mean": 0.1, "ci": 0.01, "beats": True, "loses": False},
+            },
+        }
+        for r in ("0.5", "0.8", "0.95")
+    },
+}
+
+
+def test_layout_and_live_are_not_run_until_their_results_exist(fixture_root):
+    out = fixture_root / "out"
+    run_export(fixture_root / "results", out, root=fixture_root, cap=50)
+    assert (
+        load(out, "layout.json")["status"] == "not_run"
+        and load(out, "live.json")["status"] == "not_run"
+    )
+
+
+def test_layout_export_carries_the_adr_035_verdict_and_live_export_skips_mock_runs(fixture_root):
+    (fixture_root / "results" / "layout").mkdir(parents=True)
+    (fixture_root / "results" / "layout" / "l13.json").write_text(json.dumps(LAYOUT))
+    for name, mode in (("real_run", "real"), ("mock_run", "mock")):
+        d = fixture_root / "results" / "live" / name
+        d.mkdir(parents=True)
+        (d / "config.yaml").write_text(
+            f"mode: {mode}\npolicy: random\nrho: 0.5\nseed: 0\nseconds: 5\n"
+        )
+        (d / "slice.json").write_text(json.dumps({"slice_id": "abc"}))
+        (d / "machine.json").write_text(json.dumps({"platform": "x"}))
+        (d / "metrics.json").write_text(
+            json.dumps({"goodput_rps": 0.2, "sla_attainment": 0.9, "drop_rate": 0.0})
+        )
+        (d / "DONE").write_text("x")
+    out = fixture_root / "out"
+    run_export(fixture_root / "results", out, root=fixture_root, cap=50)
+    lay = load(out, "layout.json")["data"]
+    assert (
+        lay["verdict"]["a"] is True
+        and lay["verdict"]["b"] is True
+        and "Both conditions hold" in lay["verdict"]["head"]
+    )
+    live = load(out, "live.json")["data"]
+    assert [r["run_id"] for r in live["runs"]] == ["real_run"]  # the mock rehearsal is not a result
+
+
+def test_verdict_says_the_hand_rule_wins_when_it_does():
+    from marl_lb.eval.layout_verdict import layout_sentence, layout_verdict
+
+    doc = json.loads(json.dumps(LAYOUT))
+    doc["rhos"]["0.95"]["agents_minus"]["route_to_fast_shed_tau"]["loses"] = True
+    v = layout_verdict(doc)
+    assert v["b"] is False and v["loses_new"] == ["0.95"] and "hand rule wins" in v["head"]
+    s = layout_sentence(doc, 20)
+    assert "hand rule wins" in s and "about 20 minutes" in s and "0.300" in s

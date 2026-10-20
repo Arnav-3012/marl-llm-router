@@ -26,6 +26,7 @@ import yaml
 
 from marl_lb.config import ROOT
 from marl_lb.eval.frames import frames_from_events
+from marl_lb.eval.layout_verdict import layout_verdict
 from marl_lb.eval.paired import paired_difference, verify_paired
 from marl_lb.eval.pareto import pareto_front
 from marl_lb.eval.stats import aggregate as _aggregate
@@ -326,6 +327,65 @@ def export_stress(results: Path):
     files += ["shift/e8_mix.json"] if data["shift"] else []
     return envelope(
         data, {"files": [f"results/{f}" for f in files], "n_seeds": 5, "note": "held-out stream"}
+    )
+
+
+def export_layout(results: Path):
+    """The one-fast-three-slow layout test (ADR-035), with its verdict and the effort numbers."""
+    f = results / "layout" / "l13.json"
+    if not f.exists():
+        return envelope(None, reason="the layout test (ADR-035) has not been run")
+    d = json.loads(f.read_text())
+    d["verdict"] = layout_verdict(d)
+    mins = []
+    for r in (results / "l13_agents").glob("*_seed*/timing.json"):
+        mins.append(json.loads(r.read_text())["train_wall_s"] / 60)
+    d["agents_training_minutes"] = sum(mins) / len(mins) if mins else None
+    sat = results / "saturation_l13" / "lambda_sat_flat.json"
+    d["lambda_sat_rps"] = (
+        json.loads(sat.read_text())["cache_on"]["lambda_sat_rps"] if sat.exists() else None
+    )
+    files = ["results/layout/l13.json"] + (
+        ["results/saturation_l13/lambda_sat_flat.json"] if sat.exists() else []
+    )
+    return envelope(d, {"files": files, "n_seeds": len(d["seeds"]), "note": "held-out stream"})
+
+
+def export_live(results: Path):
+    """Finished live runs on REAL servers (mock rehearsals excluded) and the measured capacity."""
+    runs = []
+    for done in sorted((results / "live").glob("*/DONE")):
+        d = done.parent
+        try:
+            cfg = yaml.safe_load((d / "config.yaml").read_text())
+        except (OSError, yaml.YAMLError):
+            continue
+        if cfg.get("mode") != "real":
+            continue
+        m = json.loads((d / "metrics.json").read_text())
+        runs.append(
+            {
+                "run_id": d.name,
+                "policy": cfg["policy"],
+                "rho": cfg.get("rho"),
+                "seed": cfg.get("seed"),
+                "seconds": cfg.get("seconds"),
+                "slice": json.loads((d / "slice.json").read_text())["slice_id"],
+                "machine": json.loads((d / "machine.json").read_text()).get("platform"),
+                "metrics": m,
+            }
+        )
+    capf = results / "live" / "real_lambda_sat.json"
+    cap = json.loads(capf.read_text()) if capf.exists() else None
+    if not runs and not cap:
+        return envelope(None, reason="no real-server run yet (docs/DEMO.md)")
+    if cap:
+        cap = {k: cap.get(k) for k in ("lambda_sat_rps", "quick", "window_s", "measured")}
+    files = [f"results/live/{r['run_id']}" for r in runs] + (
+        ["results/live/real_lambda_sat.json"] if cap else []
+    )
+    return envelope(
+        {"runs": runs, "capacity": cap}, {"files": files, "note": "real servers, one machine"}
     )
 
 
@@ -710,6 +770,8 @@ def run_export(
         "observability.json": export_observability(results),
         "behaviour.json": export_behaviour(results),
         "stress.json": export_stress(results),
+        "layout.json": export_layout(results),
+        "live.json": export_live(results),
         "training.json": export_training(results),
         "traces.json": export_traces(results),
         "method.json": export_method(results, root),

@@ -487,6 +487,60 @@ export function Stress() {
           );
         }}
       </Loaded>
+      <LayoutSection />
+      <LiveRunsSection />
+    </>
+  );
+}
+
+function LayoutSection() {
+  const ds = useData();
+  const s = useLoad(() => ds.getLayout(), []);
+  return (
+    <>
+      <h2>5 · A different cluster: one fast server and three slow ones</h2>
+      <Loaded state={s} what="Layout test (ADR-035)">
+        {(d, env) => {
+          const rhos = ["0.5", "0.8", "0.95"];
+          const order: [string, string][] = [["agents", "ddqn_reject_mix"], ["route_to_fast_shed_tau", "route_to_fast_shed_tau"], ["route_to_fast_shed", "route_to_fast_shed"], ["route_to_fast", "route_to_fast"], ["sed_global", "sed_global"], ["sed_local_full", "sed_local_full"], ["random", "random"]];
+          const series: BarSeries[] = order.map(([k, id]) => ({ id, label: k === "agents" ? "DDQN agents + Reject (retrained for this layout)" : undefined, values: rhos.map((r) => pair(d.rhos[r].policies[k].goodput)) }));
+          const v = d.verdict;
+          return (
+            <Card className="flat"><ChartFrame title="Goodput with one fast and three slow servers" better="higher"
+              tip={<><b>What this tests.</b> The hand-written rules were designed for two fast and two slow servers. Here the cluster has one fast and three slow ones. The agents were retrained for it with exactly the same recipe and no code changes. The unchanged rules show what happens if nobody touches them; the rewritten rule is what a person would write for this layout, with its one threshold tuned on training traffic only. Load ρ is a share of this cluster's own capacity{d.lambda_sat_rps ? ` (${fmt(d.lambda_sat_rps, 2)} req/s)` : ""}.</>}
+              reading={<><p><b>{v.head}</b></p>
+                <p>Retraining took the agents {d.agents_training_minutes ? `about ${fmt(d.agents_training_minutes, 0)} minutes` : "one training run"} and no code changes; the rewritten rule needed a new rule class and a tuning sweep (best threshold {d.tau}). Pass/fail rule fixed in ADR-035 before the run.</p>
+                <p className="muted" style={{ margin: 0 }}>Drop rates at ρ 0.95: agents {fmt(d.rhos["0.95"].policies.agents.drop_rate * 100, 1)}%, rewritten rule {fmt(d.rhos["0.95"].policies.route_to_fast_shed_tau.drop_rate * 100, 1)}%, unchanged shed rule {fmt(d.rhos["0.95"].policies.route_to_fast_shed.drop_rate * 100, 1)}%.</p></>}>
+              <BarsCI groups={rhos} series={series} xLabel="offered load ρ (share of this cluster's capacity)" yLabel="goodput (req/s)" title="Goodput, one fast and three slow servers" />
+            </ChartFrame><SourceNote source={env.source} /></Card>
+          );
+        }}
+      </Loaded>
+    </>
+  );
+}
+
+function LiveRunsSection() {
+  const ds = useData();
+  const s = useLoad(() => ds.getLiveRuns(), []);
+  return (
+    <>
+      <h2>6 · The real servers</h2>
+      <Loaded state={s} what="Real-server runs">
+        {(d, env) => (
+          <Card className="flat">
+            {d.capacity && <p className="lead" style={{ marginBottom: 12 }}>The measured capacity of the real cluster is <b>{fmt(d.capacity.lambda_sat_rps, 2)} requests per second</b>{d.capacity.quick ? " (a quick estimate)" : ""}; load ρ on the Live page is a share of it.</p>}
+            {d.runs.length > 0 ? (
+              <div className="tablewrap"><table>
+                <thead><tr><th>policy</th><th>ρ</th><th>seed</th><th>slice</th><th>goodput (req/s)</th><th>met both targets</th><th>dropped</th><th>first token p95 (s)</th><th>cost / request</th></tr></thead>
+                <tbody>{d.runs.map((r: any) => <tr key={r.run_id}><td style={{ textAlign: "left" }}>{styleOf(r.policy === "ddqn_agents" ? "ddqn_reject_mix" : r.policy).label}</td><td>{r.rho ?? "n/a"}</td><td>{r.seed}</td><td>{r.slice}</td><td>{fmt(r.metrics.goodput_rps, 3)}</td><td>{fmt(r.metrics.sla_attainment * 100, 0)}%</td><td>{fmt(r.metrics.drop_rate * 100, 1)}%</td><td>{r.metrics.ttft_p95 == null ? "n/a" : fmt(r.metrics.ttft_p95, 2)}</td><td>{r.metrics.cost_per_request == null ? "n/a" : fmt(r.metrics.cost_per_request, 1)}</td></tr>)}</tbody>
+              </table></div>
+            ) : <p className="muted">No finished run yet.</p>}
+            <p className="muted" style={{ marginTop: 10 }}>Real llama-servers on one machine, replaying the same held-out traffic one policy after the other (same slice id = identical requests). One run per policy is an anecdote, not a result; it shows that the system works on real servers and how its live numbers compare with the simulation. Synthetic prices per busy second.</p>
+            <SourceNote source={env.source} />
+          </Card>
+        )}
+      </Loaded>
     </>
   );
 }

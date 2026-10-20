@@ -44,7 +44,7 @@ export function App() {
         </div>
       </header>
       <main className="wrap" key={route}><Page /></main>
-      <footer><div className="wrap">Independent Double-DQN routing in a simulator calibrated on real llama.cpp servers. Every number on this site is read from a results file and carries its source and config hash. Limits: a calibrated simulation on one machine; real-server runs appear only on the Live page, and only if they were made.</div></footer>
+      <footer><div className="wrap">Independent Double-DQN routing in a simulator calibrated on real llama.cpp servers. Every number on this site is read from a results file and carries its source and config hash. Limits: a calibrated simulation on one machine; real-server runs appear only where they were made (Live and Stress tests pages).</div></footer>
     </DataCtx.Provider>
   );
 }

@@ -177,6 +177,7 @@ export const POLICY_STYLE: Record<string, { label: string; color: string; marker
   cache_aware_global: { label: "Cache-aware (global)", color: "#009e73", marker: "triangle" },
   cache_aware_local_full: { label: "Cache-aware local", color: "#33b895", marker: "triangle", dash: "6 4" },
   route_to_fast: { label: "Hand-written rule: route to fast", color: "#9aa4b5", marker: "square", dash: "8 3" },
+  route_to_fast_shed_tau: { label: "Rewritten rule (tuned for this layout)", color: "#e8ecf3", marker: "diamond", dash: "2 3" },
   route_to_fast_shed: { label: "Hand-written rule: route to fast + shed", color: "#c3cad6", marker: "diamond", dash: "8 3" },
   ddqn_reject_ft: { label: "DDQN + Reject (fine-tuned)", color: "#d55e00", marker: "triangle" },
   ddqn_reject_mix: { label: "DDQN agents + Reject", color: "#f28e4b", marker: "circle" },

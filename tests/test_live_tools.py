@@ -96,3 +96,32 @@ def test_demo_live_prints_the_numbers_the_recorded_results_hold_for_the_same_sli
     live = run_policy("sed", 0.5, 0)
     for key in ("goodput_rps", "sla_attainment", "drop_rate", "ttft_p95", "cost_per_request"):
         assert live[key] == pytest.approx(stored[key])
+
+
+def test_fill_presentation_writes_only_between_its_markers_and_never_invents(tmp_path):
+    import json
+
+    from scripts.fill_presentation import layout_block, live_block, numbers_block, splice
+
+    data = tmp_path / "data"
+    data.mkdir()
+    assert "not been run" in layout_block(data) and "no real-server run" in live_block(data)
+    assert "not exported" in numbers_block(data)
+    f = tmp_path / "p.md"
+    f.write_text("keep this\n<!-- AUTO:live -->\nold\n<!-- /AUTO:live -->\nand this\n")
+    live = {
+        "runs": [
+            {
+                "policy": "sed_global",
+                "metrics": {"goodput_rps": 0.3, "sla_attainment": 0.9, "drop_rate": 0.0},
+            }
+        ],
+        "capacity": {"lambda_sat_rps": 0.5, "quick": True},
+    }
+    (data / "live.json").write_text(json.dumps({"status": "ok", "data": live}))
+    splice(f, "live", live_block(data))
+    text = f.read_text()
+    assert text.startswith("keep this\n") and text.endswith("and this\n") and "old" not in text
+    assert "0.50 req/s" in text and "anecdote" in text
+    splice(f, "live", live_block(data))  # idempotent
+    assert f.read_text() == text

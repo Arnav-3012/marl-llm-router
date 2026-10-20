@@ -177,6 +177,11 @@
     "id": "ADR-035",
     "title": "Layout test: one fast and three slow servers (can the agents be re-trained where the hand rule must be rewritten?) (rule fixed before any run)",
     "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020; written before any run of this layout)"
+   },
+   {
+    "id": "ADR-036",
+    "title": "Live router design (amends ADR-026)",
+    "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020)"
    }
   ],
   "profiling_fit": {

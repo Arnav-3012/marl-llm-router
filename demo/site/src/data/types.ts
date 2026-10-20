@@ -58,6 +58,8 @@ export type BehaviourData = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type StressData = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LooseData = Record<string, any>;
 
 export type TrainingData = {
   columns: string[];
