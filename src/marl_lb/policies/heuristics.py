@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import numpy as np
 
-ACCEPT, FORWARD, DEFER = 0, 1, 2
+ACCEPT, FORWARD, DEFER, REJECT = 0, 1, 2, 3
 
 
 # ---- local forms ---------------------------------------------------------------------------------
@@ -171,3 +171,46 @@ class RouteToFast:
     def act_agent(self, i: int, obs, mask) -> int:
         order = (FORWARD, ACCEPT, DEFER) if self.slow[i] else (ACCEPT, DEFER, FORWARD)
         return next(a for a in order if mask[a])
+
+
+class RouteToFastShed(RouteToFast):
+    """RouteToFast plus a hand-written load-shedding rule (ADR-029): an agent on a fast server
+    Rejects a request that can no longer meet the TTFT target even on its own server (observation
+    feature 3, the clipped slack, is 0). A slow agent forwards as before. Runs in the 4-action
+    cluster; the reference for what a simple shed rule achieves, to compare with learned Reject.
+    """
+
+    name = "route_to_fast_shed"
+
+    def act_agent(self, i: int, obs, mask) -> int:
+        if not self.slow[i] and obs[3] <= 0.0 and mask[REJECT]:
+            return REJECT
+        order = (
+            (FORWARD, ACCEPT, DEFER, REJECT) if self.slow[i] else (ACCEPT, DEFER, FORWARD, REJECT)
+        )
+        return next(a for a in order if mask[a])
+
+
+class RouteToFastSpill(RouteToFast):
+    """RouteToFast plus a size-aware spill (ADR-031): a slow agent Accepts a request when it is
+    short (prompt share <= theta), can still meet the TTFT target here (slack > 0) and the
+    neighbours are busier than this server; otherwise it behaves as RouteToFast. Same three
+    actions, same local observation; theta is chosen on train windows only.
+    """
+
+    name = "route_to_fast_spill"
+
+    def __init__(self, layout: list, theta: float):
+        super().__init__(layout)
+        self.theta = theta
+
+    def act_agent(self, i: int, obs, mask) -> int:
+        if (
+            self.slow[i]
+            and mask[ACCEPT]
+            and obs[2] <= self.theta
+            and obs[3] > 0.0
+            and obs[5] > obs[0]
+        ):
+            return ACCEPT
+        return super().act_agent(i, obs, mask)

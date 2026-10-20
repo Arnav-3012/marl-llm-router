@@ -53,6 +53,15 @@ def build_cfg(a) -> dict:
     ):
         if val is not None:
             cfg[key] = val
+    if a.mix_code:  # ADR-034: half the training episodes come from the code trace's train part
+        cfg["mix_code"] = True
+    if a.init_from:  # start from the saved agents of results/<exp> (same seed)
+        cfg["init_from"] = a.init_from
+    if a.eps_start is not None:  # fine-tuning explores less than training from scratch
+        cfg["epsilon"] = {**cfg["epsilon"], "start": a.eps_start}
+    if a.reject:  # fourth action, always legal (ADR-029): the network gets a fourth output
+        cfg["reject_enabled"] = True
+        cfg["network"] = {**cfg["network"], "n_actions": 4}
     if a.rho_train:  # e.g. "0.95" or "0.5,0.8,0.95" (one load drawn per episode)
         loads = [float(x) for x in a.rho_train.split(",")]
         cfg["rho_train"] = loads if len(loads) > 1 else loads[0]
@@ -115,6 +124,7 @@ def run_seed(job) -> str:
             # fmt: skip
             lambda_cost=cfg["lambda_cost"],
             beta_coop=cfg["beta_coop"],
+            reject_enabled=cfg.get("reject_enabled", False),
         )
         if solo is not None:  # reference: the all-SED-local cluster on exactly the same traffic
             out[f"{rho}_all_sed_local"] = eval_baseline(
@@ -148,6 +158,12 @@ def main() -> int:
     ap.add_argument("--cost-credit", choices=["serving", "shared"], dest="cost_credit")
     ap.add_argument("--delay-cost", type=float, dest="delay_cost")
     ap.add_argument("--eps-decay", type=int, dest="eps_decay")
+    ap.add_argument("--mix-code", action="store_true", dest="mix_code", help="train on conv + code")
+    ap.add_argument("--init-from", dest="init_from", help="fine-tune the agents of results/<exp>")
+    ap.add_argument("--eps-start", type=float, dest="eps_start")
+    ap.add_argument(
+        "--reject", action="store_true", help="add the Reject action (4 actions, ADR-029)"
+    )
     ap.add_argument(
         "--rho-train", dest="rho_train", help="training load(s) as fractions of lambda_sat"
     )

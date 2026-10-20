@@ -5,7 +5,7 @@ import pytest
 
 from marl_lb.eval.evaluate import local_actions, run_episode
 from marl_lb.policies.heuristics import AcceptAll, RandomGlobal, SEDGlobal, SEDLocal
-from marl_lb.sim.cluster import ACCEPT, DEFER, FORWARD, OBS_DIM
+from marl_lb.sim.cluster import ACCEPT, DEFER, FORWARD, OBS_DIM, REJECT
 from marl_lb.sim.metrics import summarise
 from tests.helpers import make_cluster, req, stream_of
 
@@ -283,3 +283,56 @@ def test_shared_cost_credit_charges_every_agent_that_acted_not_only_the_server()
     assert fwd_s == pytest.approx(10 - 0.0)  # the forwarder avoids the cost under "serving"
     assert fwd_h == pytest.approx(10 - cost)  # ... and pays it under "shared"
     assert acc_s == pytest.approx(acc_h) == pytest.approx(10 - cost)  # the server pays in both
+
+
+# ---- Reject action (ADR-029) --------------------------------------------------------------------
+def test_reject_adds_a_fourth_always_legal_action_and_default_stays_three():
+    c = make_cluster()
+    _, infos = c.reset(stream_of([(0.0, 200, 20)]), 0)
+    assert c.n_actions == 3 and next(i["mask"] for i in infos.values() if i["decide"]).shape == (3,)
+    c = make_cluster(reject_enabled=True, k=0, max_defers=0)  # only Accept and Reject remain
+    obs, infos = c.reset(stream_of([(0.0, 200, 20)]), 0)
+    m = next(i["mask"] for i in infos.values() if i["decide"])
+    assert c.n_actions == 4 and m.tolist() == [True, False, False, True]
+    idle = [a for a in c.agents if not infos[a]["decide"]]
+    assert infos[idle[0]]["mask"].shape == (4,) and not infos[idle[0]]["mask"].any()
+
+
+def test_reject_drops_the_request_with_the_drop_reward_and_counts_it():
+    c = make_cluster(reject_enabled=True, r_drop=-5.0, beta_coop=0.0)
+    _, infos = c.reset(stream_of([(0.0, 200, 20)]), 0)
+    holder = next(a for a in c.agents if infos[a]["decide"])
+    c.step({a: (REJECT if a == holder else ACCEPT) for a in c.agents})
+    assert c.finished
+    (r,) = c.run.requests
+    assert r.status == "dropped" and [d.action for d in r.decisions] == [REJECT]
+    assert r.decisions[0].reward == pytest.approx(-5.0)  # no cost term, no cost on a drop
+    m = summarise(c)
+    assert m["n_rejected"] == 1 and m["n_dropped"] == 1 and m["drop_rate"] == 1.0
+
+
+def test_reject_after_a_forward_credits_the_drop_to_both_decisions():
+    c = make_cluster(layout=("fast", "fast"), reject_enabled=True, r_drop=-5.0, forward_cost=0.5)
+    _, infos = c.reset(stream_of([(0.0, 200, 20)]), 0)
+    holder = next(a for a in c.agents if infos[a]["decide"])
+    _, _, _, _, infos = c.step({a: (FORWARD if a == holder else ACCEPT) for a in c.agents})
+    new_holder = next(a for a in c.agents if infos[a]["decide"])
+    c.step({a: (REJECT if a == new_holder else ACCEPT) for a in c.agents})
+    (r,) = c.run.requests
+    fwd, rej = r.decisions
+    assert fwd.reward == pytest.approx(-5.0 - 0.5) and rej.reward == pytest.approx(-5.0)
+
+
+def test_conservation_with_reject_every_request_is_counted_once():
+    rng = np.random.default_rng(0)
+    c = make_cluster(reject_enabled=True)
+    obs, infos = c.reset(random_stream(150, rate=6.0), 1)
+    while not c.finished:
+        acts = {
+            a: int(rng.choice(np.flatnonzero(infos[a]["mask"]))) if infos[a]["decide"] else 0
+            for a in c.agents
+        }
+        obs, _, _, _, infos = c.step(acts)
+    m = summarise(c)
+    assert m["n_arrived"] == 150 and m["n_completed"] + m["n_dropped"] == 150
+    assert 0 < m["n_rejected"] <= m["n_dropped"]

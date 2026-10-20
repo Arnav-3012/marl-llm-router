@@ -238,3 +238,46 @@ def test_headtohead_refuses_a_paired_folder_whose_policies_saw_different_traffic
     f.write_text(json.dumps(doc))
     with pytest.raises(ValueError, match="slice_id"):
         run_export(fixture_root / "results", fixture_root / "out", root=fixture_root, dt=0.1)
+
+
+def test_training_export_has_one_series_per_seed(fixture_root):
+    out = fixture_root / "out"
+    run_export(fixture_root / "results", out, root=fixture_root, cap=50)
+    d = load(out, "training.json")["data"]
+    assert d["n_seeds"] == len(d["seeds"]) >= 1
+    assert sorted(s["seed"] for s in d["seeds"]) == [s["seed"] for s in d["seeds"]]
+    assert len(d["seeds"][0]["episodes"]) == len(d["episodes"])
+
+
+def test_balance_metrics_are_derived_from_the_stored_utilisation(fixture_root):
+    from scripts.export_dashboard_data import aggregate
+
+    layout = ["fast_expensive", "slow_cheap", "fast_expensive", "slow_cheap"]
+    runs = [{"utilisation": [0.9, 0.0, 0.9, 0.0]}, {"utilisation": [0.8, 0.1, 0.8, 0.1]}]
+    out = aggregate(runs, ["util_fast", "util_slow", "jain_fast"])
+    assert out["util_fast"]["mean"] == pytest.approx(0.85) and out["util_slow"]["mean"] == 0.05
+    assert out["jain_fast"]["mean"] == pytest.approx(1.0) and len(layout) == 4
+
+
+def test_behaviour_export_is_not_run_without_the_analysis_file(fixture_root):
+    out = fixture_root / "out"
+    run_export(fixture_root / "results", out, root=fixture_root, cap=50)
+    assert load(out, "behaviour.json")["status"] == "not_run"
+
+
+def test_reject_runs_and_the_shed_rule_appear_on_the_baselines_export_only_when_run(fixture_root):
+    out = fixture_root / "out"
+    run_export(fixture_root / "results", out, root=fixture_root, cap=50)
+    d = load(out, "baselines.json")["data"]
+    assert d["learned_extra"] == [] and "route_to_fast_shed" not in d["baselines"]["policies"]
+    for seed in (0, 1):
+        make_run(fixture_root, "e8_scratch", seed, {"eval_metrics.json": {"0.8": scaled(M, 1.5)}})
+        make_run(
+            fixture_root, "baselines_e8", seed,
+            {"metrics.json": {"route_to_fast_shed@0.8": scaled(M, 1.2)}},
+        )  # fmt: skip
+    run_export(fixture_root / "results", out, root=fixture_root, cap=50)
+    d = load(out, "baselines.json")["data"]
+    assert [x["id"] for x in d["learned_extra"]] == ["ddqn_reject_scratch"]
+    shed = d["baselines"]["policies"]["route_to_fast_shed"]["0.8"]["goodput_rps"]
+    assert shed["mean"] == pytest.approx(3.0 * 1.2)

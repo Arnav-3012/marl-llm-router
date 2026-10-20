@@ -35,10 +35,10 @@ body::after {
 a { color: var(--accent); text-decoration: none; } a:hover { color: var(--accent-hover); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 h1, h2, h3 { color: var(--text); margin: 0; font-weight: 510; letter-spacing: -0.02em; }
-h1 { font-size: clamp(30px, 5.2vw, 52px); line-height: 1.05; letter-spacing: -0.035em; }
-h2 { font-size: clamp(22px, 3vw, 28px); line-height: 1.2; margin-bottom: 12px; }
+h1 { font-size: clamp(30px, 5.2vw, 52px); line-height: 1.1; letter-spacing: -0.028em; font-weight: 590; }
+h2 { font-size: clamp(22px, 3vw, 28px); line-height: 1.25; margin-bottom: 12px; font-weight: 590; }
 h3 { font-size: 17px; font-weight: 590; letter-spacing: -0.01em; }
-p { margin: 0 0 12px; } .lead { font-size: 18px; color: var(--text-2); max-width: 62ch; }
+p { margin: 0 0 12px; } .lead { font-size: 17px; line-height: 1.65; color: var(--text-2); max-width: 66ch; margin-bottom: 22px; }
 .mono { font-family: var(--mono); font-size: 12.5px; } .muted { color: var(--text-3); }
 .eyebrow { font: 510 11px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
 
@@ -175,3 +175,48 @@ tr.learned-row td { background: rgba(230, 159, 0, 0.08); }
 .seg button { border: 0; border-radius: 0; background: transparent; }
 .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
 
+
+/* behaviour of the learned agents (Observability page): stacked action-share bars */
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+.sharerow { display: grid; grid-template-columns: 110px 1fr 56px; gap: 10px; align-items: center; margin: 5px 0; font-size: 12px; }
+.sharelabel { color: var(--text-2); }
+.sharebar { display: flex; height: 20px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, 0.04); }
+.sharebar > span { display: flex; align-items: center; justify-content: center; color: #fff; font: 510 11px/1 Inter, system-ui, sans-serif; min-width: 0; overflow: hidden; }
+.sharen { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* info tips and chart frames: self-explanatory charts */
+.info { position: relative; display: inline-flex; }
+.info-btn { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.04); color: var(--text-2); font: 600 11px/1 Inter, system-ui, sans-serif; cursor: help; display: inline-grid; place-items: center; }
+.info-btn:hover, .info-btn:focus-visible { color: var(--text); border-color: var(--accent); outline: none; }
+.info-pop { position: absolute; z-index: 20; left: 50%; top: calc(100% + 8px); transform: translateX(-50%); width: min(340px, 78vw); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #14161a; color: var(--text-2); font: 400 12.5px/1.5 Inter, system-ui, sans-serif; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); visibility: hidden; opacity: 0; transition: opacity 120ms; pointer-events: none; text-align: left; }
+.info:hover .info-pop, .info:focus-within .info-pop { visibility: visible; opacity: 1; }
+.chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+.chart-head h3 { margin: 0; font: 590 15px/1.3 Inter, system-ui, sans-serif; color: var(--text); }
+.better { font: 510 11px/1.4 Inter, system-ui, sans-serif; padding: 2px 8px; border-radius: 9999px; border: 1px solid var(--border); color: var(--text-2); }
+.better.higher { color: #7be0c3; border-color: rgba(0, 158, 115, 0.5); } .better.lower { color: #8fc7f5; border-color: rgba(86, 180, 233, 0.5); }
+.reading { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--accent); background: rgba(113, 112, 255, 0.07); border-radius: 0 8px 8px 0; color: var(--text-2); font-size: 13.5px; line-height: 1.55; }
+.reading b { color: var(--text); }
+.reading p { margin: 0 0 4px; }
+
+/* data tables and sources: tidy, not scrap */
+details > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-2); font-size: 12.5px; margin-top: 10px; background: rgba(255, 255, 255, 0.03); }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "\25B8"; font-size: 10px; transition: transform 120ms; }
+details[open] > summary::before { transform: rotate(90deg); }
+details > summary:hover { color: var(--text); border-color: var(--accent); }
+.tablewrap { margin-top: 10px; border: 1px solid var(--border-subtle); border-radius: 8px; }
+.tablewrap table th { color: var(--text-2); font-weight: 590; background: rgba(255, 255, 255, 0.03); position: sticky; top: 0; }
+.tablewrap table tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
+.tablewrap table td:first-child, .tablewrap table th:first-child { text-align: left; }
+.tablewrap table td { font-variant-numeric: tabular-nums; }
+.source { font: 400 12px/1.5 Inter, system-ui, sans-serif; color: var(--text-3); margin-top: 12px; word-break: normal; }
+.source .source-more { display: inline-block; margin-left: 8px; }
+.source .source-more > summary { margin: 0; padding: 0 8px; font-size: 11.5px; border-radius: 9999px; }
+.source .source-more div { margin-top: 6px; font: 400 11px/1.5 var(--mono); word-break: break-all; color: var(--text-3); }
+
+/* page headers: label, question, short intro */
+.pagehead { margin: 8px 0 18px; }
+.pagehead h1 { font-size: clamp(30px, 4.4vw, 44px); margin-bottom: 14px; }
+.pagehead .eyebrow { margin-bottom: 10px; }
+main h2 { margin-top: 44px; }

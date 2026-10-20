@@ -1,7 +1,7 @@
 // The ONLY way pages get data. Swap StaticJsonSource for a live source later without touching a page.
 import {
   parseEnvelope,
-  type BaselinesData, type Envelope, type Frame, type H2HReplay, type HeadToHeadData, type MethodData, type ObservabilityData,
+  type BaselinesData, type BehaviourData, type StressData, type Envelope, type Frame, type H2HReplay, type HeadToHeadData, type MethodData, type ObservabilityData,
   type OverviewData, type ParetoData, type ReplayData, type TracesData, type TrainingData,
 } from "./types";
 
@@ -10,6 +10,8 @@ export interface DataSource {
   getBaselines(): Promise<Envelope<BaselinesData>>;
   getPareto(): Promise<Envelope<ParetoData>>;
   getObservability(): Promise<Envelope<ObservabilityData>>;
+  getBehaviour(): Promise<Envelope<BehaviourData>>;
+  getStress(): Promise<Envelope<StressData>>;
   getTraining(): Promise<Envelope<TrainingData>>;
   getTraces(): Promise<Envelope<TracesData>>;
   getMethod(): Promise<Envelope<MethodData>>;
@@ -34,6 +36,8 @@ export class StaticJsonSource implements DataSource {
   getBaselines = () => this.load<BaselinesData>("baselines.json");
   getPareto = () => this.load<ParetoData>("pareto.json");
   getObservability = () => this.load<ObservabilityData>("observability.json");
+  getBehaviour = () => this.load<BehaviourData>("behaviour.json");
+  getStress = () => this.load<StressData>("stress.json");
   getTraining = () => this.load<TrainingData>("training.json");
   getTraces = () => this.load<TracesData>("traces.json");
   getMethod = () => this.load<MethodData>("method.json");

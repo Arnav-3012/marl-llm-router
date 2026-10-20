@@ -203,6 +203,16 @@ def main() -> None:
                         f2[f"events_rho{r}.jsonl"] = events(rng)
                 make_run(root, exp, seed, f2)
         write_paired_fixture(root, rng)
+        shares = {"n": 1000, "accept": 0.5, "forward": 0.2, "defer": 0.3}
+        entry = {
+            "all": shares,
+            "by_wait": {"0.00-0.10": shares},
+            "by_prompt": {"0.00-0.05": shares},
+        }
+        rhos = {r: {"fast": entry, "slow": entry} for r in ("0.5", "0.8", "0.95")}
+        beh = {"agents_experiment": "main", "seeds": [0], "split": "heldout", "rhos": rhos}
+        (root / "results" / "behaviour").mkdir(parents=True, exist_ok=True)
+        (root / "results" / "behaviour" / "main.json").write_text(json.dumps(beh))
         eda = ROOT / "results" / "eda" / "trace_summary.json"
         (root / "results" / "eda").mkdir(parents=True, exist_ok=True)
         if eda.exists():  # the EDA summary is a real result file; reuse it as is

@@ -50,6 +50,10 @@ class Server:
         self.partial = 0.0  # seconds already spent on the decode step in progress
         self.busy_seconds = 0.0
         self.completed = 0
+        # >1 slows every prefill and decode step (a degraded server, ADR-032). The router-side
+        # estimates (expected_wait, est_service) deliberately do not know about it: a router
+        # sees the queue growing, not the cause.
+        self.slowdown = 1.0
 
     # ---- what the router can know -------------------------------------------------------------
     def n_present(self) -> int:
@@ -135,7 +139,8 @@ class Server:
     def advance(self, t_start: float, t_end: float, n_other_busy: int, n_servers: int) -> list:
         """Run the server from t_start to t_end; return the requests that finished."""
         scale = n_other_busy / max(n_servers - 1, 1)
-        mult_pf, mult_dec = 1.0 + self.s_prefill * scale, 1.0 + self.s_decode * scale
+        mult_pf = (1.0 + self.s_prefill * scale) * self.slowdown
+        mult_dec = (1.0 + self.s_decode * scale) * self.slowdown
         done: list = []
         t = t_start
         while t < t_end - EPS:

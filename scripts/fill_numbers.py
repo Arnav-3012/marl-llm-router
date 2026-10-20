@@ -22,6 +22,12 @@ from marl_lb.config import ROOT
 RHOS = ["0.5", "0.8", "0.95"]
 LABEL = {
     "ddqn": "DDQN agents (k=full, λ=1)",
+    "ddqn_reject_ft": "DDQN + Reject (v2 agents fine-tuned)",
+    "ddqn_reject_mix": "DDQN + Reject (final: conversation + code training)",
+    "ddqn_reject_scratch": "DDQN + Reject (conversation traffic only)",
+    "ddqn_ft_ctrl": "DDQN fine-tuned without Reject (control)",
+    "route_to_fast": "Route-to-fast rule (class-aware, local)",
+    "route_to_fast_shed": "Route-to-fast + shed rule (class-aware, local, drops requests)",
     "sed_global": "SED global",
     "sed_local_full": "SED local k=full",
     "sed_local_k0": "SED local k=0",
@@ -57,12 +63,16 @@ def e1_table(data: Path) -> str:
     rows = []
     if d.get("learned"):
         rows.append(("ddqn", d["learned"]["rows"], src.get("learned")))
+    for extra in d.get("learned_extra") or []:
+        rows.append((extra["id"], extra["rows"], src.get(extra["id"])))
     for p, table in (d.get("baselines") or {"policies": {}})["policies"].items():
-        rows.append((p, table, src.get("baselines")))
+        rows.append(
+            (p, table, src.get("route_to_fast_shed" if p == "route_to_fast_shed" else "baselines"))
+        )
     out = [
         "| Policy | goodput ρ=0.5 | goodput ρ=0.8 | goodput ρ=0.95 | SLA attainment ρ=0.8 "
-        "| cost/request ρ=0.8 | seeds | Source (results/ files, config hash) |",
-        "|---|---|---|---|---|---|---|---|",
+        "| cost/request ρ=0.8 | drop rate ρ=0.95 | seeds | Source (results/ files, config hash) |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for name, table, s in rows:
         g = [cell(table.get(r, {}).get("goodput_rps")) for r in RHOS]
@@ -73,12 +83,60 @@ def e1_table(data: Path) -> str:
         out.append(
             f"| {LABEL.get(name, name)} | {g[0]} | {g[1]} | {g[2]} "
             f"| {cell(at08.get('sla_attainment'))} | {cell(at08.get('cost_per_request'))} "
+            f"| {cell(table.get('0.95', {}).get('drop_rate'))} "
             f"| {(s or {}).get('n_seeds', '')} | `{files}` · {(s or {}).get('config_hash', '')} |"
         )
     return (
         "\n".join(out) + "\n\nGoodput in requests/s that met both targets; "
-        "mean ± 95% interval over seeds (Student t).\n"
+        "mean ± 95% interval over seeds (Student t). A policy that rejects requests is judged by "
+        "its drop rate next to its goodput. The agents are the v2 agents (ADR-027).\n"
     )
+
+
+def v1_table() -> str:
+    """The stage-3 (v1) agents, kept next to v2 because the reward was changed after a diagnosis
+    that looked at held-out behaviour of v1 (ADR-027).
+    """
+    from scripts.export_dashboard_data import learned_rows
+
+    rows, src = learned_rows(ROOT / "results", "main", "DDQN v1")
+    if not rows:
+        return "_v1 results not found._\n"
+    g = [cell(rows["rows"].get(r, {}).get("goodput_rps")) for r in RHOS]
+    return (
+        "**v1 agents (stage 3, cost paid by the serving agent only; "
+        "kept for comparison, ADR-027)**\n\n"
+        "| Policy | goodput ρ=0.5 | goodput ρ=0.8 | goodput ρ=0.95 | seeds | Source |\n"
+        "|---|---|---|---|---|---|\n"
+        f"| DDQN v1 | {g[0]} | {g[1]} | {g[2]} | {src.get('n_seeds', '')} "
+        f"| `{src['files'][0]}` · {src.get('config_hash', '')} |\n"
+    )
+
+
+def balance_table(data: Path) -> str:
+    env = load(data, "baselines.json")
+    if not env:
+        return ""
+    d = env["data"]
+    keys = ("util_fast", "util_slow", "jain_fast", "jain_utilisation")
+    rows = [("ddqn", d["learned"]["rows"])] if d.get("learned") else []
+    pol = (d.get("baselines") or {"policies": {}})["policies"]
+    rows += [
+        (p, pol[p]) for p in ("sed_global", "route_to_fast", "sed_local_full", "random") if p in pol
+    ]
+    out = [
+        "**Balance by server class, ρ = 0.8 (ADR-030)**\n",
+        "| Policy | utilisation fast servers | utilisation slow servers "
+        "| Jain over the fast servers "
+        "| Jain over all servers (not a routing-quality measure) |",
+        "|---|---|---|---|---|",
+    ]
+    for name, table in rows:
+        m = table.get("0.8", {})
+        out.append(
+            f"| {LABEL.get(name, name)} | " + " | ".join(cell(m.get(k)) for k in keys) + " |"
+        )
+    return "\n".join(out) + "\n"
 
 
 def e34_table(data: Path) -> str:
@@ -132,7 +190,11 @@ def main() -> None:
         "### Demo track results (generated from results/; do not edit by hand)\n\n"
         + e1_table(a.data)
         + "\n"
+        + v1_table()
+        + "\n"
         + e34_table(a.data)
+        + "\n"
+        + balance_table(a.data)
     )
     splice(ROOT / "docs" / "numbers.md", "demo", body)
     splice(ROOT / "README.md", "results", body)

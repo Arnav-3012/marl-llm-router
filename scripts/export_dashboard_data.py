@@ -22,10 +22,13 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import yaml
+
 from marl_lb.config import ROOT
 from marl_lb.eval.paired import paired_difference, verify_paired
 from marl_lb.eval.pareto import pareto_front
-from marl_lb.eval.stats import aggregate
+from marl_lb.eval.stats import aggregate as _aggregate
+from marl_lb.sim.metrics import class_balance
 
 SCHEMA_VERSION = 1
 METRICS = [
@@ -39,8 +42,12 @@ METRICS = [
     "cost_per_request",
     "cache_hit_rate",
     "jain_utilisation",
+    "util_fast",
+    "util_slow",
+    "jain_fast",
 ]
 RHOS = ["0.5", "0.8", "0.95"]
+VERSIONED = {"baselines", "main", "k0", "lambda0", "lambda2"}  # have *_v2 folders (ADR-027)
 SUFFIX = ""  # "_v2" reads results/main_v2, baselines_v2, ... (ADR-027); set by --suffix
 
 
@@ -56,6 +63,24 @@ REPLAY_POLICIES = {  # dashboard name -> where its events live
     "cache_aware": ("baselines", "cache_aware_local_full"),
     "sed_global": ("baselines", "sed_global"),
 }
+
+
+def _layout() -> list:
+    return yaml.safe_load((ROOT / "configs" / "sim.yaml").read_text())["layout"]
+
+
+def aggregate(runs: list, keys: list) -> dict:
+    """stats.aggregate after adding the class balance metrics (ADR-030) to each per-seed metric
+    dict that has a per-server utilisation (they are derived, so older results get them too).
+    """
+    layout = _layout()
+    runs = [
+        {**r, **class_balance(r["utilisation"], layout)}
+        if len(r.get("utilisation", [])) == len(layout)
+        else r
+        for r in runs
+    ]
+    return _aggregate(runs, keys)
 
 
 def envelope(data, source: dict | None = None, reason: str | None = None) -> dict:
@@ -115,8 +140,8 @@ def learned_rows(results: Path, exp: str, label: str):
     )
 
 
-def baseline_rows(results: Path):
-    runs = finished_runs(results, X("baselines"))
+def baseline_rows(results: Path, exp: str | None = None):
+    runs = finished_runs(results, exp or X("baselines"))
     if not runs:
         return None, None
     per_seed = [json.loads((r / "metrics.json").read_text()) for r in runs]
@@ -133,8 +158,24 @@ def export_baselines(results: Path):
     learned, lsrc = learned_rows(results, X("main"), "DDQN independent, k=full, lambda=1")
     if data is None and learned is None:
         return envelope(None, reason="neither results/baselines nor results/main exist yet")
-    out = {"metrics": METRICS, "baselines": data, "learned": learned}
-    return envelope(out, {"baselines": src, "learned": lsrc})
+    out = {"metrics": METRICS, "baselines": data, "learned": learned, "learned_extra": []}
+    sources = {"baselines": src, "learned": lsrc}
+    # E8 (ADR-029): agents with the Reject action and the hand shed rule, when they have been run
+    shed, ssrc = baseline_rows(results, "baselines_e8")
+    if shed and data is not None and "route_to_fast_shed" in shed["policies"]:
+        data["policies"]["route_to_fast_shed"] = shed["policies"]["route_to_fast_shed"]
+        sources["route_to_fast_shed"] = ssrc
+    for ident, exp, label in (
+        ("ddqn_reject_mix", "e8_mix", "DDQN + Reject (trained on conversation + code traffic)"),
+        ("ddqn_reject_ft", "e8_ft", "DDQN + Reject (v2 agents fine-tuned)"),
+        ("ddqn_reject_scratch", "e8_scratch", "DDQN + Reject (trained on conversation traffic)"),
+        ("ddqn_ft_ctrl", "e8_ft_ctrl", "DDQN fine-tuned without Reject (control)"),
+    ):
+        rows, rsrc = learned_rows(results, exp, label)
+        if rows:
+            out["learned_extra"].append({"id": ident, **rows})
+            sources[ident] = rsrc
+    return envelope(out, sources)
 
 
 def export_pareto(results: Path):
@@ -156,7 +197,14 @@ def export_pareto(results: Path):
                     }
                 )
     base, bsrc = baseline_rows(results)
-    for policy in ("sed_global", "sed_local_full", "cache_aware_global", "random", "jsq_global"):
+    for policy in (
+        "sed_global",
+        "route_to_fast",
+        "sed_local_full",
+        "cache_aware_global",
+        "random",
+        "jsq_global",
+    ):
         m = (base or {"policies": {}})["policies"].get(policy, {}).get("0.8")
         if m and m["cost_per_request"]["mean"] is not None and m["ttft_p95"]["mean"] is not None:
             points.append(
@@ -197,6 +245,85 @@ def export_observability(results: Path):
     )
 
 
+def export_behaviour(results: Path):
+    """Action shares of the learned agents by class, wait and prompt size (analyse_behaviour)."""
+    f = results / "behaviour" / f"{X('main')}.json"
+    if not f.exists():
+        return envelope(None, reason="no behaviour analysis yet (scripts/analyse_behaviour.py)")
+    d = json.loads(f.read_text())
+    data = {k: d[k] for k in ("agents_experiment", "seeds", "split", "rhos")}
+    sim = yaml.safe_load((ROOT / "configs" / "sim.yaml").read_text())
+    norm = json.loads((ROOT / sim["traffic"]["normalisation_path"]).read_text())
+    # the bins are fractions of these constants; the page converts them to seconds and tokens
+    data["units"] = {
+        "wait_s": sim["wait_scale_s"],
+        "prompt_tokens": norm["constants"]["prompt_tokens"],
+    }
+    return envelope(
+        data,
+        {"files": [f"behaviour/{f.name}"], "n_seeds": len(d["seeds"]), "note": "held-out stream"},
+    )
+
+
+def _sweep(results: Path, folder: str, refs: list) -> dict | None:
+    """Load sweep (ADR-032): goodput per policy and load; paired differences agents minus each."""
+    runs = sorted(d for d in (results / folder).glob("*") if (d / "DONE").exists())
+    if not runs:
+        return None
+    d = runs[-1]
+    rhos = sorted({float(f.stem.split("_rho")[-1]) for f in d.glob("ddqn_agents_rho*.json")})
+    out = {"folder": f"{folder}/{d.name}", "rhos": rhos, "policies": {}, "diff": {}}
+    for pol in ["ddqn_agents", *refs]:
+        out["policies"][pol] = []
+        for rho in rhos:
+            f = d / f"{pol}_rho{rho}.json"
+            if not f.exists():
+                out["policies"][pol].append(None)
+                continue
+            per = json.loads(f.read_text())["per_seed"]
+            out["policies"][pol].append(
+                _aggregate([m for m in per.values()], ["goodput_rps"])["goodput_rps"]
+            )
+    for ref in refs:
+        out["diff"][ref] = []
+        for rho in rhos:
+            a = json.loads((d / f"ddqn_agents_rho{rho}.json").read_text())["per_seed"]
+            b = json.loads((d / f"{ref}_rho{rho}.json").read_text())["per_seed"]
+            diffs = [a[s]["goodput_rps"] - b[s]["goodput_rps"] for s in sorted(a) if s in b]
+            out["diff"][ref].append(_aggregate([{"x": x} for x in diffs], ["x"])["x"])
+    return out
+
+
+def export_stress(results: Path):
+    """ADR-032 tests: load sweep, server degradation, feature shuffling (v2 and Reject agents)."""
+    data = {
+        "sweep_reject": _sweep(
+            results, "paired_sweep_mix", ["route_to_fast", "route_to_fast_shed", "sed_global"]
+        ),
+        "sweep_v2": _sweep(results, "paired_sweep", ["route_to_fast", "sed_global"]),
+        "degradation": {},
+        "shuffle": {},
+    }
+    for exp in ("main_v2", "e8_mix"):
+        f = results / "degradation" / f"{exp}.json"
+        if f.exists():
+            data["degradation"][exp] = json.loads(f.read_text())
+        f = results / "shuffle" / f"{exp}.json"
+        if f.exists():
+            data["shuffle"][exp] = json.loads(f.read_text())
+    f = results / "shift" / "e8_mix.json"
+    data["shift"] = json.loads(f.read_text()) if f.exists() else None
+    if not (data["sweep_reject"] or data["sweep_v2"] or data["degradation"] or data["shuffle"]):
+        return envelope(None, reason="the stress tests (ADR-032) have not been run")
+    files = [x["folder"] for x in (data["sweep_reject"], data["sweep_v2"]) if x]
+    files += [f"degradation/{e}.json" for e in data["degradation"]]
+    files += [f"shuffle/{e}.json" for e in data["shuffle"]]
+    files += ["shift/e8_mix.json"] if data["shift"] else []
+    return envelope(
+        data, {"files": [f"results/{f}" for f in files], "n_seeds": 5, "note": "held-out stream"}
+    )
+
+
 def export_training(results: Path, max_points: int = 200):
     runs = finished_runs(results, X("main"))
     if not runs:
@@ -225,8 +352,21 @@ def export_training(results: Path, max_points: int = 200):
             vals = [float(x[i][c]) for x in per_seed if x[i][c] not in ("", "nan")]
             row[c] = sum(vals) / len(vals) if vals else None
         eps.append(row)
+
+    def num(v):
+        return None if v in ("", "nan") else float(v)
+
+    seeds = [  # one thinned series per seed, so the page can show every seed (ADR-001)
+        {
+            "seed": int(re.search(r"_seed(\d+)$", r.name).group(1)),
+            "episodes": [
+                {"episode": i, **{c: num(rows[i][c]) for c in cols}} for i in range(0, n, step)
+            ],
+        }
+        for r, rows in zip(runs, per_seed, strict=True)
+    ]
     return envelope(
-        {"columns": cols, "n_seeds": len(runs), "episodes": eps},
+        {"columns": cols, "n_seeds": len(runs), "episodes": eps, "seeds": seeds},
         source_of(results, runs, ["train_log.csv", "config.yaml"]),
     )
 
@@ -516,27 +656,58 @@ def export_overview(results: Path, root: Path, baselines: dict, observability: d
             "ddqn": d["learned"]["rows"]["0.8"]["goodput_rps"] if d["learned"] else None,
             "sed_local_full": d["baselines"]["policies"]["sed_local_full"]["0.8"]["goodput_rps"],
             "sed_global": d["baselines"]["policies"]["sed_global"]["0.8"]["goodput_rps"],
+            "route_to_fast": d["baselines"]["policies"]
+            .get("route_to_fast", {})
+            .get("0.8", {})
+            .get("goodput_rps"),
             "cache_aware_local_full": d["baselines"]["policies"]["cache_aware_local_full"]["0.8"][
                 "goodput_rps"
             ],
         },
     )
-    experiments = {
-        e: len(finished_runs(results, e))
-        for e in (
-            X("baselines"),
-            X("main"),
-            X("k0"),
-            X("lambda0"),
-            X("lambda2"),
-            "prototype",
-            "timing",
-        )
+
+    def reject_headline(d):
+        extra = {x["id"]: x["rows"] for x in d.get("learned_extra") or []}
+        pol = d["baselines"]["policies"]
+        if "ddqn_reject_mix" not in extra or "route_to_fast_shed" not in pol:
+            return None
+
+        def at(table, rho):
+            m = table[rho]
+            return {"goodput": m["goodput_rps"], "drop_rate": m["drop_rate"]}
+
+        out = {"rhos": {}}
+        for rho in ("0.8", "0.95"):
+            out["rhos"][rho] = {
+                "reject_scratch": at(extra["ddqn_reject_mix"], rho),
+                "reject_ft": at(extra["ddqn_reject_ft"], rho)
+                if "ddqn_reject_ft" in extra
+                else None,
+                "v2": at(d["learned"]["rows"], rho),
+                "sed_global": at(pol["sed_global"], rho),
+                "route_to_fast": at(pol["route_to_fast"], rho),
+                "route_to_fast_shed": at(pol["route_to_fast_shed"], rho),
+            }
+        return out
+
+    experiments = {  # keyed by the plain experiment name; the folder carries the version suffix
+        e: len(finished_runs(results, X(e) if e in VERSIONED else e))
+        for e in ("baselines", "main", "k0", "lambda0", "lambda2", "prototype", "timing")
     }
     data = {
         "q1_goodput": q1,
         "q2_pareto_available": pareto["status"] == "ok",
+        "q2_frontier": headline(  # which learned settings sit on the cost-latency frontier
+            pareto,
+            lambda d: {
+                "learned": [p["label"] for p in d["points"] if p["kind"] == "learned"],
+                "on_frontier": [
+                    p["label"] for p in d["points"] if p["kind"] == "learned" and p["on_frontier"]
+                ],
+            },
+        ),
         "q3_observability_available": observability["status"] == "ok",
+        "q4_reject": headline(baselines, reject_headline),
         "experiments_finished_seeds": experiments,
         "exported_at": datetime.now().isoformat(timespec="seconds"),
         "not_done": [
@@ -576,6 +747,8 @@ def run_export(
         "baselines.json": export_baselines(results),
         "pareto.json": export_pareto(results),
         "observability.json": export_observability(results),
+        "behaviour.json": export_behaviour(results),
+        "stress.json": export_stress(results),
         "training.json": export_training(results),
         "traces.json": export_traces(results),
         "method.json": export_method(results, root),

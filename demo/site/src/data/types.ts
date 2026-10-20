@@ -27,6 +27,7 @@ export type BaselinesData = {
   metrics: string[];
   baselines: { policies: PolicyTable } | null;
   learned: { label: string; rows: Record<string, MetricRow> } | null;
+  learned_extra?: { id: string; label: string; rows: Record<string, MetricRow> }[];
 };
 
 export type ParetoPoint = {
@@ -45,15 +46,31 @@ export type ObservabilityData = {
   references: Record<string, Record<string, MetricRow> | null>;
 };
 
+export type ActionShares = { n: number; accept?: number; forward?: number; defer?: number; reject?: number };
+export type ClassBehaviour = { all: ActionShares; by_wait: Record<string, ActionShares>; by_prompt: Record<string, ActionShares> };
+export type BehaviourData = {
+  agents_experiment: string;
+  seeds: number[];
+  split: string;
+  rhos: Record<string, { fast: ClassBehaviour; slow: ClassBehaviour }>;
+  units: { wait_s: number; prompt_tokens: number };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type StressData = Record<string, any>;
+
 export type TrainingData = {
   columns: string[];
   n_seeds: number;
   episodes: Record<string, number | null>[];
+  seeds?: { seed: number; episodes: Record<string, number | null>[] }[];
 };
 
 export type OverviewData = {
   q1_goodput: Record<string, unknown> | null;
   q2_pareto_available: boolean;
+  q2_frontier?: { learned: string[]; on_frontier: string[] } | null;
+  q4_reject?: { rhos: Record<string, Record<string, { goodput: Metric; drop_rate: Metric } | null>> } | null;
   q3_observability_available: boolean;
   experiments_finished_seeds: Record<string, number>;
   exported_at: string;

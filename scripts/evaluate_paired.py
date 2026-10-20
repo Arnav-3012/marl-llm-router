@@ -73,6 +73,7 @@ def make_runner(name: str):
                 record_events=record,
                 lambda_cost=train_cfg["lambda_cost"],
                 beta_coop=train_cfg["beta_coop"],
+                reject_enabled=train_cfg.get("reject_enabled", False),
             )
             metrics, _ = run_episode(cluster, stream, seed, greedy_actions(agents, None))
             return metrics, (cluster.run.events if record else [])
@@ -112,6 +113,14 @@ def main() -> int:
         help="results/<exp> with agents.pt (default: paired.yaml)",
     )
     ap.add_argument("--rhos")
+    ap.add_argument("--policies", help="comma-separated subset of the policies in paired.yaml")
+    ap.add_argument(
+        "--out-name",
+        dest="out_name",
+        default="paired",
+        help="results/<out-name>/<timestamp>; the head-to-head page reads only results/paired",
+    )
+    ap.add_argument("--no-events", action="store_true", dest="no_events", help="no replay logs")
     ap.add_argument(
         "--smoke", action="store_true", help="1 seed, 1 load, small cap, *_smoke folder"
     )
@@ -123,6 +132,8 @@ def main() -> int:
         cfg["learned"]["experiment"] = a.agents_exp
     if a.rhos:
         cfg["rhos"] = [float(x) for x in a.rhos.split(",")]
+    if a.no_events:
+        cfg["event_seed"] = -1  # no seed matches: no replay logs are recorded
     if a.smoke:
         cfg.update(seeds=[0], rhos=[0.5], event_cap=2000)
     if cfg["split"] != "heldout":
@@ -143,7 +154,12 @@ def main() -> int:
         }
     )
     names = [*cfg["baselines"], cfg["learned"]["name"]]
-    out_dir = ROOT / "results" / ("paired_smoke" if a.smoke else "paired")
+    if a.policies:
+        names = [n.strip() for n in a.policies.split(",")]
+        unknown = [n for n in names if n not in [*cfg["baselines"], cfg["learned"]["name"]]]
+        if unknown:
+            raise ValueError(f"unknown policies {unknown}; add them to configs/paired.yaml")
+    out_dir = ROOT / "results" / ("paired_smoke" if a.smoke else a.out_name)
     out_dir = out_dir / datetime.now().strftime("%Y%m%d-%H%M%S")
     out_dir.mkdir(parents=True, exist_ok=False)
     (out_dir / "config.yaml").write_text(yaml.safe_dump({**cfg, "config_hash": cfg_hash}))

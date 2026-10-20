@@ -19,7 +19,7 @@ export type BarSeries = { id: string; label?: string; color?: string; marker?: s
 export function BarsCI({ groups, series, xLabel, yLabel, digits = 2, height = 330, title }: {
   groups: string[]; series: BarSeries[]; xLabel: string; yLabel: string; digits?: number; height?: number; title: string;
 }) {
-  const [ref, seen] = useInView<HTMLDivElement>();
+  const [ref] = useInView<HTMLDivElement>(); // bars are always drawn: data must never wait for a scroll observer
   const H = height;
   const pw = W - M.l - M.r, ph = H - M.t - M.b;
   const top = Math.max(...series.flatMap((s) => s.values.map((v) => (v?.mean ?? 0) + (v?.ci ?? 0))), 0);
@@ -43,7 +43,7 @@ export function BarsCI({ groups, series, xLabel, yLabel, digits = 2, height = 33
         {groups.map((g, gi) => (
           <text key={g} className="strong" x={M.l + gi * gw + gw / 2} y={y(0) + 20} textAnchor="middle">{g}</text>
         ))}
-        {seen && series.map((s, si) => {
+        {series.map((s, si) => {
           const st = styleOf(s.id);
           const color = s.color ?? st.color, marker = s.marker ?? st.marker;
           return s.values.map((v, gi) => {
@@ -76,7 +76,7 @@ export function BarsCI({ groups, series, xLabel, yLabel, digits = 2, height = 33
 function DataTable({ groups, series, digits }: { groups: string[]; series: BarSeries[]; digits: number }) {
   return (
     <details>
-      <summary>Show data table</summary>
+      <summary>Show the numbers (mean ± 95% interval)</summary>
       <div className="tablewrap">
         <table>
           <thead><tr><th>series</th>{groups.map((g) => <th key={g}>{g}</th>)}</tr></thead>
@@ -96,7 +96,7 @@ export type LineSeries = { id: string; label: string; color: string; dash?: stri
 export function LineChart({ series, xLabel, yLabel, title, height = 280, yMin }: {
   series: LineSeries[]; xLabel: string; yLabel: string; title: string; height?: number; yMin?: number;
 }) {
-  const [ref, seen] = useInView<HTMLDivElement>();
+  const [ref] = useInView<HTMLDivElement>(); // lines are always drawn, no in-view gate
   const H = height;
   const pw = W - M.l - M.r, ph = H - M.t - M.b;
   const all = series.flatMap((s) => s.points.filter((p) => p.y != null) as { x: number; y: number }[]);
@@ -114,16 +114,16 @@ export function LineChart({ series, xLabel, yLabel, title, height = 280, yMin }:
         {ticks(ymax - lo).map((t) => (
           <g key={t}><line className="grid" x1={M.l} x2={W - M.r} y1={y(lo + t)} y2={y(lo + t)} /><text x={M.l - 8} y={y(lo + t) + 4} textAnchor="end">{fmt(lo + t, ymax - lo < 5 ? 1 : 0)}</text></g>
         ))}
-        {ticks(xmax, 4).map((t) => <text key={t} x={x(t)} y={H - M.b + 18} textAnchor="middle">{Math.round(t)}</text>)}
+        {ticks(xmax, 4).map((t) => <text key={t} x={x(t)} y={H - M.b + 18} textAnchor="middle">{xmax < 5 ? fmt(t, 1) : Math.round(t)}</text>)}
         <text x={14} y={M.t + ph / 2} transform={`rotate(-90 14 ${M.t + ph / 2})`} textAnchor="middle">{yLabel}</text>
         <text x={M.l + pw / 2} y={H - 8} textAnchor="middle">{xLabel}</text>
-        {seen && series.map((s) => {
+        {series.map((s) => {  // always drawn (no in-view gate): robust for screenshots, print and reduced motion
           const pts = s.points.filter((p) => p.y != null) as { x: number; y: number }[];
           const d = pts.map((p, i) => `${i ? "L" : "M"}${x(p.x).toFixed(1)},${y(p.y).toFixed(1)}`).join(" ");
           const every = Math.max(1, Math.floor(pts.length / 8));
           return (
             <g key={s.id}>
-              <path d={d} fill="none" stroke={s.color} strokeWidth={2} strokeDasharray={s.dash} pathLength={s.dash ? undefined : 1} className={s.dash ? undefined : "draw"} />
+              <path d={d} fill="none" stroke={s.color} strokeWidth={2} strokeDasharray={s.dash} />
               {pts.filter((_, i) => i % every === 0).map((p, i) => <Marker key={i} kind={s.marker ?? "circle"} x={x(p.x)} y={y(p.y)} r={3.5} color={s.color} />)}
             </g>
           );
@@ -158,6 +158,18 @@ export function ParetoScatter({ points, xLabel, yLabel, title }: { points: Paret
   const yTicks = logY ? Array.from({ length: Math.round(Math.log10(yHi / yLo)) + 1 }, (_, i) => yLo * 10 ** i) : ticks(ymax);
   const front = points.filter((p) => p.on_frontier).sort((a, b) => (a.cost.mean ?? 0) - (b.cost.mean ?? 0));
   const d = front.map((p, i) => `${i ? "L" : "M"}${x(p.cost.mean ?? 0)},${y(p.latency.mean ?? 0)}`).join(" ");
+  // label positions: start above-right of the marker and step down until no earlier label is close
+  const labelY: number[] = [];
+  points.forEach((p, i) => {
+    const cx = x(p.cost.mean ?? 0);
+    let ly = y(p.latency.mean ?? 0) - 8;
+    for (let tries = 0; tries < 12; tries++) {
+      const clash = labelY.some((oy, j) => Math.abs(oy - ly) < 12 && Math.abs(x(points[j].cost.mean ?? 0) - cx) < 130);
+      if (!clash) break;
+      ly += 12;
+    }
+    labelY[i] = ly;
+  });
   return (
     <div ref={ref}>
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>
@@ -181,13 +193,13 @@ export function ParetoScatter({ points, xLabel, yLabel, title }: { points: Paret
                 {p.on_frontier && <circle cx={cx} cy={cy} r={11} fill="none" stroke="#f7f8f8" strokeOpacity={0.5} />}
                 <Marker kind={st.marker} x={cx} y={cy} r={p.kind === "learned" ? 6 : 5} color={st.color} />
               </g>
-              <text x={cx + 12} y={cy - 8} fontSize="10.5" className="strong">{p.label}</text>
+              <text x={cx + 12} y={labelY[i]} fontSize="10.5" className="strong">{p.label}</text>
             </g>
           );
         })}
       </svg>
       <details>
-        <summary>Show data table</summary>
+        <summary>Show the numbers (mean ± 95% interval)</summary>
         <div className="tablewrap"><table><thead><tr><th>policy</th><th>cost / request</th><th>{yLabel}</th><th>goodput (req/s)</th><th>frontier</th></tr></thead>
           <tbody>{points.map((p, i) => <tr key={i}><td>{p.label}</td><td>{fmt(p.cost.mean)} ± {fmt(p.cost.ci)}</td><td>{fmt(p.latency.mean)} ± {fmt(p.latency.ci)}</td><td>{fmt(p.goodput.mean)} ± {fmt(p.goodput.ci)}</td><td>{p.on_frontier ? "yes" : "no"}</td></tr>)}</tbody></table></div>
       </details>

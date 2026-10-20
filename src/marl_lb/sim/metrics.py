@@ -32,6 +32,22 @@ def jain_index(x) -> float:
     return float(x.sum() ** 2 / denom) if denom > 0 else 1.0
 
 
+def class_balance(utilisation, layout) -> dict:
+    """Balance that fits servers of different speed (ADR-030), from the per-server utilisation of a
+    finished run. util_fast / util_slow: mean utilisation of the servers whose class starts with
+    "fast" / not; jain_fast: Jain's index over the fast servers only (do the equal servers share
+    the work evenly?). The index over ALL servers calls a cluster with every server saturated
+    "balanced", so it is kept as a reported metric but not read as a quality of routing.
+    """
+    u = np.asarray(utilisation, dtype=float)
+    fast = np.array([str(c).startswith("fast") for c in layout])
+    return {
+        "util_fast": float(u[fast].mean()) if fast.any() else float("nan"),
+        "util_slow": float(u[~fast].mean()) if (~fast).any() else float("nan"),
+        "jain_fast": jain_index(u[fast]) if fast.sum() > 1 else float("nan"),
+    }
+
+
 def summarise(cluster) -> dict:
     """Metrics of the episode a Cluster has just played."""
     run, servers = cluster.run, cluster.servers
@@ -85,5 +101,6 @@ def summarise(cluster) -> dict:
         "decisions": run.decisions_made,
         "discarded_end_transitions": run.discarded_end,
         "drops_unacted": run.drops_unacted,
+        "n_rejected": run.rejected,
         "drops_by_holder": list(run.drops_by_holder),
     }

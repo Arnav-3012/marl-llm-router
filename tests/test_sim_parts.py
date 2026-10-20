@@ -183,3 +183,40 @@ def test_can_accept_respects_the_queue_cap_and_kv_size():
     s = Server(0, "fast", FAST, {"max_queue": 1, "prefix_cache_fraction": 0.5}, 50.0)
     s.enqueue(req(0), 0.0)
     assert not s.can_accept(req(1))
+
+
+def test_a_degraded_server_takes_proportionally_longer_and_the_router_estimate_does_not_know():
+    from marl_lb.sim.server import Server
+    from tests.helpers import CLASSES, SIM
+
+    def finish_time(slowdown):
+        s = Server(0, "fast", CLASSES["fast"], SIM, est_output_tokens=50.0)
+        s.slowdown = slowdown
+        r = req(id=0, p=500, o=30)
+        s.enqueue(r, 0.0)
+        t = 0.0
+        while not r.status == "done" and t < 100:
+            s.advance(t, t + 0.1, 0, 2)
+            t += 0.1
+        return r.t_done, s.expected_wait()
+
+    (t1, w1), (t3, w3) = finish_time(1.0), finish_time(3.0)
+    assert t3 == pytest.approx(3 * t1, rel=0.12)  # 3x the service time (tick granularity aside)
+    assert w1 == w3  # the estimate a router sees is unchanged by the hidden slowdown
+
+
+def test_cluster_degrades_the_chosen_server_from_the_set_fraction_of_the_window():
+    from tests.helpers import make_cluster, stream_of
+
+    c = make_cluster(
+        layout=("fast", "fast"), degrade={"server": 0, "factor": 3.0, "at_fraction": 0.5}
+    )
+    c.reset(stream_of([(0.0, 200, 5), (10.0, 200, 5)]), 0)
+    for _ in range(40):  # 4 s: before half of the 10 s arrival window
+        c.step({a: 0 for a in c.agents})
+    assert [s.slowdown for s in c.servers] == [1.0, 1.0]
+    for _ in range(70):  # past 5 s
+        if c.finished:
+            break
+        c.step({a: 0 for a in c.agents})
+    assert [s.slowdown for s in c.servers] == [3.0, 1.0]

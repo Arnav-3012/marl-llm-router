@@ -2,7 +2,7 @@
 // on the IDENTICAL held-out slice. Nothing is simulated here: every tile is computed from the recorded event
 // log of one seed up to the current time, and the final summary is read from the paired evaluation files.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Card, Loaded, NotRun, Num, SourceNote, fmt, styleOf, useData, useLoad, useReducedMotion } from "../ui";
+import { Card, Loaded, NotRun, PageHead, Num, SourceNote, fmt, styleOf, useData, useLoad, useReducedMotion } from "../ui";
 import { ReplayStage } from "../viz/ReplayStage";
 import type { Envelope, Frame, H2HPolicy, H2HReplay, HeadToHeadData, PairedDiff } from "../data/types";
 
@@ -285,8 +285,7 @@ export function HeadToHead() {
   const state = useLoad(() => ds.getHeadToHead(), []);
   return (
     <>
-      <div className="eyebrow">replay of recorded runs on identical traffic</div>
-      <h1 style={{ fontSize: "clamp(28px,4vw,40px)" }}>Learned agents against the baselines</h1>
+      <PageHead eyebrow="Recorded replay · identical traffic" title="Watch two policies handle the same requests"></PageHead>
       <p className="lead">Each pane replays one policy on the very same held-out requests. These are recordings of the calibrated simulation of the cluster, not real servers and not a live run. The tiles count up from the event log; the table below them is the result over all seeds.</p>
       <Loaded state={state} what="Head-to-head comparison">
         {(data, env) => {

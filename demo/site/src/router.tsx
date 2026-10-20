@@ -7,6 +7,8 @@ export const ROUTES = [
   { path: "/headtohead", label: "Head to head" },
   { path: "/pareto", label: "Pareto" },
   { path: "/baselines", label: "Baselines & E1" },
+  { path: "/training", label: "Training" },
+  { path: "/stress", label: "Stress tests" },
   { path: "/observability", label: "Observability" },
   { path: "/traces", label: "Traces" },
   { path: "/method", label: "Method" },

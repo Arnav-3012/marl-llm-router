@@ -145,3 +145,21 @@ def test_transition_record_has_the_adr_010_fields():
     assert {"obs", "mask", "action", "tick", "reward", "next_obs", "next_mask", "truncated"} <= set(
         Transition.__slots__
     )
+
+
+def test_widen_output_keeps_old_actions_and_new_one_is_never_preferred():
+    import torch
+
+    from marl_lb.agents.networks import QNetwork
+    from marl_lb.train.loop import widen_output
+
+    torch.manual_seed(0)
+    old, new = QNetwork(7, (16, 16), 3), QNetwork(7, (16, 16), 4)
+    new.load_state_dict(widen_output(old.state_dict(), 4))
+    x = torch.randn(200, 7)
+    qo, qn = old(x), new(x)
+    assert torch.allclose(qn[:, :3], qo, atol=1e-6)  # the three old outputs are unchanged
+    assert torch.allclose(qn[:, 3], qo.mean(dim=1), atol=1e-5)  # the new one starts as their mean
+    assert (qn.argmax(dim=1) == qo.argmax(dim=1)).all()  # so the greedy action does not change
+    same = widen_output(old.state_dict(), 3)  # no new outputs: identical weights
+    assert all(torch.equal(same[k], v) for k, v in old.state_dict().items())

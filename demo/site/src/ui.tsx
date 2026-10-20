@@ -44,6 +44,42 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
   );
 }
 
+/** Page header: small label, the question the page answers, then the short intro passed as children. */
+export function PageHead({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
+  return (
+    <header className="pagehead">
+      <div className="eyebrow">{eyebrow}</div>
+      <h1>{title}</h1>
+      {children}
+    </header>
+  );
+}
+
+/** An "i" button with an explanation that opens on hover, keyboard focus or tap. */
+export function Info({ text, label = "More information" }: { text: ReactNode; label?: string }) {
+  return (
+    <span className="info">
+      <button type="button" className="info-btn" aria-label={label}>i</button>
+      <span role="tooltip" className="info-pop">{text}</span>
+    </span>
+  );
+}
+
+/** Chart header: title, which direction is better, an info tip on how to read it, and an optional one-line reading. */
+export function ChartFrame({ title, better, tip, reading, children }: { title: string; better?: "higher" | "lower"; tip: ReactNode; reading?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="chartframe">
+      <div className="chart-head">
+        <h3>{title}</h3>
+        {better && <span className={`better ${better}`} title={`${better} is better`}>{better === "higher" ? "↑ higher is better" : "↓ lower is better"}</span>}
+        <Info text={tip} label={`How to read: ${title}`} />
+      </div>
+      {children}
+      {reading && <div className="reading" aria-live="polite">{reading}</div>}
+    </div>
+  );
+}
+
 export function Card({ children, className = "", style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -83,17 +119,23 @@ export function Loaded<T>({ state, what, children }: { state: { env?: Envelope<T
 
 export function SourceNote({ source }: { source: Source | Record<string, Source> | undefined }) {
   if (!source) return null;
-  const parts: { name: string; s: Source }[] = "files" in (source as object) || "config_hash" in (source as object) || "note" in (source as object)
-    ? [{ name: "", s: source as Source }]
-    : Object.entries(source as Record<string, Source>).map(([name, s]) => ({ name, s }));
+  const parts: Source[] = "files" in (source as object) || "config_hash" in (source as object) || "note" in (source as object)
+    ? [source as Source]
+    : Object.values(source as Record<string, Source>);
+  const live = parts.filter(Boolean) as NonNullable<Source>[];
+  if (!live.length) return null;
+  const folders = [...new Set(live.flatMap((s) => (s.files ?? []).map((f) => /^results\/([^/]+)\//.exec(f)?.[1] ?? f.split("/")[0])))];
+  const seeds = [...new Set(live.map((s) => s.n_seeds).filter(Boolean))];
+  const notes = [...new Set(live.map((s) => s.note).filter(Boolean))];
   return (
     <div className="source">
-      {parts.map(({ name, s }, i) => s && (
-        <div key={i}>
-          source{name ? ` (${name})` : ""}: {(s.files ?? []).slice(0, 3).join(", ")}{(s.files?.length ?? 0) > 3 ? ` +${(s.files?.length ?? 0) - 3} more` : ""}
-          {s.config_hash ? ` · config ${s.config_hash}` : ""}{s.n_seeds ? ` · ${s.n_seeds} seeds` : ""}{s.note ? ` · ${s.note}` : ""}
-        </div>
-      ))}
+      <span>Data: {folders.length ? folders.join(", ") : "results files"}{seeds.length ? ` · ${seeds.join("/")} seeds` : ""}{notes.length ? ` · ${notes.join(", ")}` : ""}</span>
+      <details className="source-more">
+        <summary>files and config hashes</summary>
+        {live.map((s, i) => (
+          <div key={i}>{s.config_hash ? `config ${s.config_hash}: ` : ""}{(s.files ?? []).slice(0, 2).join(", ")}{(s.files?.length ?? 0) > 2 ? ` and ${(s.files?.length ?? 0) - 2} more` : ""}</div>
+        ))}
+      </details>
     </div>
   );
 }
@@ -116,7 +158,7 @@ export function Num({ m, digits = 2, unit = "", title }: { m: Metric | null | un
 }
 
 export const POLICY_STYLE: Record<string, { label: string; color: string; marker: "circle" | "square" | "triangle" | "diamond" | "cross"; dash?: string }> = {
-  ddqn: { label: "DDQN agents", color: "#e69f00", marker: "circle" },
+  ddqn: { label: "DDQN agents (3 actions)", color: "#e69f00", marker: "circle" },
   ddqn_agents: { label: "Learned agents (DDQN)", color: "#e69f00", marker: "circle" },
   sed_global: { label: "SED (global)", color: "#56b4e9", marker: "square" },
   sed_local_full: { label: "SED local, k=full", color: "#0072b2", marker: "square", dash: "6 4" },
@@ -124,7 +166,12 @@ export const POLICY_STYLE: Record<string, { label: string; color: string; marker
   sed_local_k0: { label: "SED local, k=0", color: "#6b7fa8", marker: "square", dash: "1 4" },
   cache_aware_global: { label: "Cache-aware (global)", color: "#009e73", marker: "triangle" },
   cache_aware_local_full: { label: "Cache-aware local", color: "#33b895", marker: "triangle", dash: "6 4" },
-  route_to_fast: { label: "Route-to-fast rule", color: "#9aa4b5", marker: "square", dash: "8 3" },
+  route_to_fast: { label: "Hand-written rule: route to fast", color: "#9aa4b5", marker: "square", dash: "8 3" },
+  route_to_fast_shed: { label: "Hand-written rule: route to fast + shed", color: "#c3cad6", marker: "diamond", dash: "8 3" },
+  ddqn_reject_ft: { label: "DDQN + Reject (fine-tuned)", color: "#d55e00", marker: "triangle" },
+  ddqn_reject_mix: { label: "DDQN agents + Reject", color: "#f28e4b", marker: "circle" },
+  ddqn_reject_scratch: { label: "DDQN + Reject (conversation traffic only)", color: "#b86b3a", marker: "diamond" },
+  ddqn_ft_ctrl: { label: "DDQN fine-tuned, no Reject", color: "#b57700", marker: "square", dash: "3 3" },
   random: { label: "Random", color: "#cc79a7", marker: "diamond", dash: "1 4" },
   round_robin: { label: "Round-robin", color: "#b5668f", marker: "diamond", dash: "3 3" },
   jsq_global: { label: "JSQ (global)", color: "#f0e442", marker: "cross" },

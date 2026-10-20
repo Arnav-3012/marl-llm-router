@@ -6,7 +6,7 @@ import { Pipeline, type Stage, type StageStatus } from "../viz/Pipeline";
 import { Lifecycle } from "../viz/Lifecycle";
 import { WhyHard } from "../viz/WhyHard";
 
-type Q1 = { rho: string; ddqn: Metric | null; sed_local_full: Metric; sed_global: Metric; cache_aware_local_full: Metric } | null;
+type Q1 = { rho: string; ddqn: Metric | null; sed_local_full: Metric; sed_global: Metric; route_to_fast?: Metric | null; cache_aware_local_full: Metric } | null;
 
 /** Plain-language verdict from means and 95% CIs only; never claims more than the intervals allow. */
 function verdict(ddqn: Metric | null, others: Record<string, Metric>): string {
@@ -99,29 +99,51 @@ export function Overview() {
             return (
               <div className="grid g3">
                 <Reveal><Card>
-                  <div className="label">Q1 · do learned agents match or beat SED and cache-aware?</div>
+                  <div className="label">Q1 · do learned agents match or beat SED, the simple rule and cache-aware?</div>
                   {q ? (
                     <>
                       <div className="stat"><Num m={q.ddqn} /> <small>req/s goodput at ρ 0.8, DDQN</small></div>
                       <table><tbody>
                         <tr><td>SED local, k=full</td><td><Num m={q.sed_local_full} /></td></tr>
                         <tr><td>SED global</td><td><Num m={q.sed_global} /></td></tr>
+                        {q.route_to_fast && <tr><td>Route-to-fast rule</td><td><Num m={q.route_to_fast} /></td></tr>}
                         <tr><td>Cache-aware local</td><td><Num m={q.cache_aware_local_full} /></td></tr>
                       </tbody></table>
-                      <p style={{ marginTop: 12 }}>{verdict(q.ddqn, { "SED local": q.sed_local_full, "SED global": q.sed_global, "cache-aware local": q.cache_aware_local_full })}</p>
+                      <p style={{ marginTop: 12 }}>{verdict(q.ddqn, { "SED local": q.sed_local_full, "SED global": q.sed_global, ...(q.route_to_fast ? { "route-to-fast rule": q.route_to_fast } : {}), "cache-aware local": q.cache_aware_local_full })}</p>
                       <Link to="/baselines">Full table and all loads →</Link>
                     </>
                   ) : <NotRun what="Q1 goodput comparison" reason="baselines or the learned runs are not finished." />}
                 </Card></Reveal>
                 <Reveal delay={70}><Card>
-                  <div className="label">Q2 · does λ trace a cost–latency frontier?</div>
-                  {d.q2_pareto_available ? <p>Yes, there are λ runs to compare against fixed rules.</p> : <NotRun what="Cost–latency frontier (E3)" reason="the λ sweep has not been run." />}
+                  <div className="label">Q2 · does λ trade cost against latency?</div>
+                  {d.q2_pareto_available ? <p>{d.q2_frontier ? (d.q2_frontier.on_frontier.length <= 1 ? `No trade-off found: only ${d.q2_frontier.on_frontier.length ? d.q2_frontier.on_frontier[0] : "none of the learned settings"} of the ${d.q2_frontier.learned.length} learned settings is on the cost–latency frontier.` : `${d.q2_frontier.on_frontier.length} of the ${d.q2_frontier.learned.length} learned settings are on the cost–latency frontier.`) : "The λ runs are compared with fixed rules on the Pareto page."}</p> : <NotRun what="Cost–latency frontier (E3)" reason="the λ sweep has not been run." />}
                   <Link to="/pareto">Pareto page →</Link>
                 </Card></Reveal>
                 <Reveal delay={140}><Card>
                   <div className="label">Q3 · price of partial observability</div>
                   {d.q3_observability_available ? <p>k = 0 (blind) versus k = full (all neighbours) is on the observability page. The centralised reference was not built.</p> : <NotRun what="k=0 vs k=full (E4)" reason="the k ablation has not been run." />}
                   <Link to="/observability">Observability page →</Link>
+                </Card></Reveal>
+                <Reveal delay={210}><Card>
+                  <div className="label">Q4 · what if the agents may refuse requests? (E8)</div>
+                  {d.q4_reject ? (() => {
+                    const r = d.q4_reject.rhos["0.95"];
+                    const s = r.reject_scratch!;
+                    return (
+                      <>
+                        <div className="stat"><Num m={s.goodput} /> <small>req/s goodput at ρ 0.95, agents with Reject</small></div>
+                        <table><tbody>
+                          <tr><td>Agents without Reject (v2)</td><td><Num m={r.v2!.goodput} /></td></tr>
+                          <tr><td>SED global</td><td><Num m={r.sed_global!.goodput} /></td></tr>
+                          <tr><td>Route-to-fast rule</td><td><Num m={r.route_to_fast!.goodput} /></td></tr>
+                          <tr><td>Route-to-fast + shed rule</td><td><Num m={r.route_to_fast_shed!.goodput} /></td></tr>
+                          <tr><td>Share of requests dropped (agents)</td><td><Num m={s.drop_rate} digits={3} /></td></tr>
+                        </tbody></table>
+                        <p style={{ marginTop: 12 }}>{verdict(s.goodput, { "SED global": r.sed_global!.goodput, "route-to-fast rule": r.route_to_fast!.goodput, "route-to-fast + shed rule": r.route_to_fast_shed!.goodput })} The agents refuse about {((s.drop_rate.mean ?? 0) * 100).toFixed(0)}% of requests to get there, as the shed rule does.</p>
+                        <Link to="/baselines">Full table and all loads →</Link>
+                      </>
+                    );
+                  })() : <NotRun what="Reject experiment (E8)" reason="the E8 runs have not been made." />}
                 </Card></Reveal>
                 <div style={{ gridColumn: "1 / -1" }}><SourceNote source={env.source} /></div>
               </div>

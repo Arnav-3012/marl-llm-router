@@ -45,3 +45,17 @@ def test_jain_index_and_percentile():
     assert jain_index([1, 1, 1, 1]) == pytest.approx(1.0)
     assert jain_index([1, 0, 0, 0]) == pytest.approx(0.25)
     assert percentile([1, 2, 3, 4, 5], 50) == 3
+
+
+def test_class_balance_separates_fast_sharing_from_cluster_wide_busyness():
+    from marl_lb.sim.metrics import class_balance
+
+    layout = ["fast_expensive", "slow_cheap", "fast_expensive", "slow_cheap"]
+    # fast servers busy and equal, slow idle: all-server Jain is low, fast-only Jain is 1
+    b = class_balance([0.9, 0.0, 0.9, 0.0], layout)
+    assert b == {"util_fast": pytest.approx(0.9), "util_slow": 0.0, "jain_fast": pytest.approx(1.0)}
+    assert jain_index([0.9, 0.0, 0.9, 0.0]) == pytest.approx(0.5)
+    # every server saturated: all-server Jain is 1 although the cluster is overloaded
+    assert jain_index([1, 1, 1, 1]) == pytest.approx(1.0)
+    # one fast server doing everything: fast-only Jain is 1/2
+    assert class_balance([0.9, 0.0, 0.0, 0.0], layout)["jain_fast"] == pytest.approx(0.5)

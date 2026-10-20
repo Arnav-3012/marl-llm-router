@@ -2,7 +2,7 @@
 seeds: [0, 1, 2, 3, 4]            # >= 5 seeds (mean +/- 95% CI); the same list for every policy
 rhos: [0.5, 0.8, 0.95]            # load as a fraction of lambda_sat (ADR-011)
 split: heldout                    # never "train": nothing is tuned on this slice
-baselines: [random, sed_global, sed_local_full, cache_aware_global, cache_aware_local_full, route_to_fast]   # names from eval/experiments.suite
+baselines: [random, sed_global, sed_local_full, cache_aware_global, cache_aware_local_full, route_to_fast, route_to_fast_shed]   # names from eval/experiments.suite
 learned:
   name: ddqn_agents               # policy name in the files
   experiment: main                # results/<experiment>/*_seed<k>/agents.pt (E1 main configuration)

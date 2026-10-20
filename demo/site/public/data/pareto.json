@@ -155,6 +155,43 @@
     "on_frontier": false
    },
    {
+    "label": "route_to_fast",
+    "kind": "baseline",
+    "lambda": null,
+    "cost": {
+     "mean": 14.820299785208226,
+     "ci": 0.1431447440472772,
+     "n": 5
+    },
+    "latency": {
+     "mean": 7.195661756326262,
+     "ci": 0.2971891506793724,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.4085047087456447,
+     "ci": 0.0023980874934252374,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/baselines_v2/20261020-215629-618717_seed0/config.yaml",
+      "results/baselines_v2/20261020-215629-618717_seed0/metrics.json",
+      "results/baselines_v2/20261020-215629-621231_seed1/config.yaml",
+      "results/baselines_v2/20261020-215629-621231_seed1/metrics.json",
+      "results/baselines_v2/20261020-215629-626457_seed2/config.yaml",
+      "results/baselines_v2/20261020-215629-626457_seed2/metrics.json",
+      "results/baselines_v2/20261020-215629-627983_seed3/config.yaml",
+      "results/baselines_v2/20261020-215629-627983_seed3/metrics.json",
+      "results/baselines_v2/20261020-215629-630735_seed4/config.yaml",
+      "results/baselines_v2/20261020-215629-630735_seed4/metrics.json"
+     ],
+     "config_hash": "13417f43f7af",
+     "n_seeds": 5
+    },
+    "on_frontier": true
+   },
+   {
     "label": "sed_local_full",
     "kind": "baseline",
     "lambda": null,

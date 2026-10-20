@@ -13,7 +13,7 @@ from marl_lb.policies.heuristics import (
     SEDGlobal,
     SEDLocal,
 )  # fmt: skip
-from marl_lb.sim.cluster import ACCEPT, DEFER, FORWARD
+from marl_lb.sim.cluster import ACCEPT, DEFER, FORWARD, REJECT
 from tests.helpers import make_cluster, req, stream_of
 
 ALL = np.array([True, True, True])
@@ -106,3 +106,39 @@ def test_route_to_fast_forwards_from_slow_agents_and_accepts_on_fast_ones():
     assert p.act_agent(1, obs, [True, False, True]) == ACCEPT  # cannot forward: accept
     assert p.act_agent(0, obs, [False, True, True]) == DEFER  # fast agent cannot accept: wait
     assert p.act_agent(0, obs, [False, True, False]) == FORWARD
+
+
+def test_route_to_fast_shed_rejects_only_on_a_fast_agent_when_slack_is_gone():
+    from marl_lb.policies.heuristics import RouteToFastShed
+
+    p = RouteToFastShed(["fast_expensive", "slow_cheap"])
+    legal = [True, True, True, True]
+    late, ok = np.zeros(7, np.float32), np.zeros(7, np.float32)
+    ok[3] = 0.5  # slack left
+    assert p.act_agent(0, late, legal) == REJECT  # fast agent, no slack: shed
+    assert p.act_agent(0, ok, legal) == ACCEPT  # fast agent with slack: accept
+    assert p.act_agent(1, late, legal) == FORWARD  # slow agent never sheds, it forwards
+    assert p.act_agent(1, late, [True, False, True, True]) == ACCEPT
+
+
+def test_route_to_fast_spill_accepts_short_requests_on_a_busy_cluster_only():
+    from marl_lb.policies.heuristics import RouteToFastSpill
+
+    p = RouteToFastSpill(["fast_expensive", "slow_cheap"], theta=0.1)
+    legal = [True, True, True]
+
+    def o(prompt, slack, own, nb):
+        v = np.zeros(7, np.float32)
+        v[2], v[3], v[0], v[5] = prompt, slack, own, nb
+        return v
+
+    assert (
+        p.act_agent(1, o(0.05, 0.5, 0.1, 0.4), legal) == ACCEPT
+    )  # short, slack, neighbours busier
+    assert p.act_agent(1, o(0.30, 0.5, 0.1, 0.4), legal) == FORWARD  # too long
+    assert p.act_agent(1, o(0.05, 0.0, 0.1, 0.4), legal) == FORWARD  # cannot meet the target here
+    assert p.act_agent(1, o(0.05, 0.5, 0.5, 0.4), legal) == FORWARD  # neighbours not busier
+    assert p.act_agent(0, o(0.05, 0.5, 0.1, 0.4), legal) == ACCEPT  # fast agent: as route-to-fast
+    assert (
+        RouteToFastSpill(["fast", "slow"], 0.0).act_agent(1, o(0.0, 0.5, 0.1, 0.4), legal) == ACCEPT
+    )

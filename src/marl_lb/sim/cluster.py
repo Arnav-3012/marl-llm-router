@@ -13,7 +13,9 @@ are
 with the
   least expected wait + estimated service time; masked when k=0 or at the hop limit), 2 Defer
   (masked at
-  the defer limit). If no action is legal the request is dropped.
+  the defer limit). If no action is legal the request is dropped. With reject_enabled (ADR-029) a
+  fourth action, 3 Reject, is always legal: it drops the request on purpose (reward r_drop, as any
+  drop), so shedding load is a decision the agent learns instead of a silent drop.
 * Rewards are credited at resolution with the decision-time state. A transition (obs, mask, action,
   tick, reward, next_obs, next_mask) is complete when the request has resolved AND the agent has
   made
@@ -38,7 +40,7 @@ import numpy as np
 from marl_lb.sim.request import Request
 from marl_lb.sim.server import Server
 
-ACCEPT, FORWARD, DEFER = 0, 1, 2
+ACCEPT, FORWARD, DEFER, REJECT = 0, 1, 2, 3
 OBS_DIM = 7
 EPS = 1e-9
 
@@ -83,6 +85,10 @@ class SimParams:
     kv_threshold: float = 0.8
     forward_cost: float = 0.0
     defer_cost: float = 0.0
+    reject_enabled: bool = False  # ADR-029: adds the always-legal Reject action (3 -> 4 actions)
+    # ADR-032: {"server": i, "factor": f, "at_fraction": x} slows server i by f from fraction x of
+    # the arrival window on (None: no degradation)
+    degrade: dict | None = None
 
     @classmethod
     def from_config(cls, sim: dict, layout: list, est_output_tokens: float, prompt_norm: float):
@@ -99,7 +105,7 @@ class SimParams:
             cost_scale=rw.get("cost_scale", 1.0), cost_credit=rw.get("cost_credit", "serving"),
             beta_coop=rw["beta_coop"], breach_window_ticks=rw["breach_window_ticks"],
             w_kv=rw["w_kv"], kv_threshold=rw["kv_threshold"], forward_cost=rw["forward_cost"],
-            defer_cost=rw["defer_cost"],
+            defer_cost=rw["defer_cost"], reject_enabled=sim.get("reject_enabled", False),
         )  # fmt: skip
 
 
@@ -172,6 +178,7 @@ class _Run:
     decisions_made: int = 0
     discarded_end: int = 0
     drops_unacted: int = 0
+    rejected: int = 0  # requests dropped by an explicit Reject action (ADR-029)
     drops_by_holder: list = field(default_factory=list)
     events: list = field(default_factory=list)
 
@@ -186,6 +193,7 @@ class Cluster:
         self.p, self.classes, self.mode = params, classes, mode
         self.global_policy, self.record = global_policy, record_events
         self.n = len(params.layout)
+        self.n_actions = 4 if params.reject_enabled else 3
         self.agents = [f"agent_{i}" for i in range(self.n)]
         self.possible_agents = list(self.agents)
         self.servers: list[Server] = []
@@ -267,14 +275,14 @@ class Cluster:
 
     # ---- observation and masks ------------------------------------------------------------------
     def _mask(self, i: int, req) -> np.ndarray:
-        return np.array(
-            [
-                self.servers[i].can_accept(req),
-                bool(self.neighbours(i)) and req.hops < self.p.max_hops,
-                req.defers < self.p.max_defers,
-            ],
-            dtype=bool,
-        )
+        legal = [
+            self.servers[i].can_accept(req),
+            bool(self.neighbours(i)) and req.hops < self.p.max_hops,
+            req.defers < self.p.max_defers,
+        ]
+        if self.p.reject_enabled:
+            legal.append(True)  # Reject is always available (ADR-029)
+        return np.array(legal, dtype=bool)
 
     def _wait_norm(self, seconds: float) -> float:
         return min(seconds / self.p.wait_scale_s, 1.0)
@@ -320,7 +328,11 @@ class Cluster:
                 infos[name] = {"mask": m, "decide": True, "req_id": req.id}
             else:
                 obs[name] = np.zeros(OBS_DIM, dtype=np.float32)
-                infos[name] = {"mask": np.zeros(3, dtype=bool), "decide": False, "req_id": None}
+                infos[name] = {
+                    "mask": np.zeros(self.n_actions, dtype=bool),
+                    "decide": False,
+                    "req_id": None,
+                }
         return obs, infos
 
     # ---- stepping -------------------------------------------------------------------------------
@@ -369,6 +381,11 @@ class Cluster:
             req.holder = j
             r.held[j].append(req)
             self._log("forward", req=req.id, src=i, dst=j)
+        elif a == REJECT:
+            r.rejected += 1
+            self._log("act", agent=i, req=req.id, action=a)
+            self._drop(req)  # credits r_drop to every decision on this request, this one included
+            return
         else:
             rec.reward -= self.p.defer_cost
             req.defers += 1
@@ -392,6 +409,9 @@ class Cluster:
 
     def _advance_servers(self) -> None:
         r, dt = self.run, self.p.dt
+        d = self.p.degrade
+        if d and r.t >= d["at_fraction"] * r.arrival_end:
+            self.servers[d["server"]].slowdown = d["factor"]
         busy = [s.is_busy() for s in self.servers]
         n_busy = sum(busy)
         for s, b in zip(self.servers, busy, strict=True):

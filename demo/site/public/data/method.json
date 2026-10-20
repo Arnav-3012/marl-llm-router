@@ -137,6 +137,41 @@
     "id": "ADR-027",
     "title": "Reward credit fix for the independent agents (shared cost, delay cost) and a class-aware reference rule",
     "status": "accepted (accepted 2026-10-20 by Claude Code under ADR-020; amends ADR-014's cost credit and ADR-022's forward/defer cost)"
+   },
+   {
+    "id": "ADR-028",
+    "title": "Overload training variants not adopted; rho 0.95 reported as a limitation",
+    "status": "accepted (accepted 2026-10-20 by Claude Code under ADR-020)"
+   },
+   {
+    "id": "ADR-029",
+    "title": "Reject action (fourth action) as a separate experiment E8",
+    "status": "accepted (accepted 2026-10-20 by Claude Code under ADR-020; amends ADR-013's action set for E8 only)"
+   },
+   {
+    "id": "ADR-030",
+    "title": "Balance reported by server class; Jain over all servers is not read as routing quality",
+    "status": "accepted (accepted 2026-10-20 by Claude Code under ADR-020; amends the metric list of context.md)"
+   },
+   {
+    "id": "ADR-031",
+    "title": "A stronger hand-written reference (route-to-fast with a size-aware spill) and a behaviour analysis",
+    "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020; fixed BEFORE any result of the new rule was read)"
+   },
+   {
+    "id": "ADR-032",
+    "title": "Tests of whether the agents are smarter than the rules: feature shuffling, load sweep, server degradation (pass/fail rules fixed before any result)",
+    "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020; amends the experiment list of context.md; written before any of these results exists)"
+   },
+   {
+    "id": "ADR-033",
+    "title": "Do the agents hold up under conditions they were not trained for? (shift test, rule fixed before any result)",
+    "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020; written before any run)"
+   },
+   {
+    "id": "ADR-034",
+    "title": "Train the Reject agents on mixed traffic (conversation + code) to close the code-trace gap (rule fixed before training)",
+    "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020; written before any training or result)"
    }
   ],
   "profiling_fit": {
