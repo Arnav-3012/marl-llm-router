@@ -182,3 +182,9 @@ Learned: <Arnav>
 Blockers: ADR-018 is proposed (Arnav accepts or changes it). Open: a stream is one pass over the part (held-out 2,871 requests = 143.5 s at 20 req/s); ADR-016's "longer stream" point is deferred to M1.2 (episode length) and needs an ADR then. Across seeds only conversation structure varies, not arrivals or lengths.
 Next: M0.6a viva entry (next commit), then M0.5.0.
 
+## 2026-10-20 — M0.6a and M0.5.0: viva entries
+Done: M0.6a viva entry (arrival-rate rescaling; numbers 51.3% and 29.2% from the sample_stream run in the M0.6 entry). M0.5.0 viva entry for L1 (3 questions on prefill vs decode, warm-up and cache contamination, interference), written after reading Deep-Dive Guide v2 Parts A, B and H via the Claude Docs connector (the guide is not in the repo). Both ticked: their done-when is "entry written by Claude Code" (ADR-008 as amended). Arnav's self-checks are not done.
+Learned: <Arnav>
+Blockers: none.
+Next: M0.5.1 (install llama.cpp, fetch models).
+

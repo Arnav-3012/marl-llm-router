@@ -161,6 +161,45 @@ Source: src/marl_lb/data/traces.py `sample_stream`, `session_plan`; tests/test_s
 
 </details>
 
+## M0.5.0 Learning gate L1: profiling prerequisites (Guide Parts A–B) [B] 2026-10-20
+Prerequisite: Deep-Dive Guide v2 Part A (A4 prefill vs decode, A5 continuous batching, A6 prefix caching, A7 the service-time model) and Part B (B2 utilisation, B3 Little's law); the profiling protocol H1 and the fitting notes H2/H6 are what M0.5.2 and M0.5.4 implement. docs/glossary.md → LLM serving → "prefill", "decode", "TTFT", "TPOT", "interference".
+
+Bet (Arnav, before): on one Mac server, if you double the prompt length from 1,000 to 2,000 tokens, TTFT will (less than double / about double / more than double): _______
+Outcome (after, from the M0.5.2 CSVs and the M0.5.4 fit): _______ ✔/✘
+
+Q1 (explain): Why is TTFT roughly a straight line in prompt length P with slope a, while TPOT stays nearly flat and rises with batch size B? Name what limits each phase.
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+Prefill pushes all P prompt tokens through the model in one parallel pass; the work is about 2 × parameters × P operations, mostly big matrix multiplies, so it is compute-bound and the time grows linearly with P (slope a, plus a fixed cost). Decode makes one token per step and each step has to read every weight from memory for very little arithmetic, so it is memory-bandwidth-bound; with B requests decoding together the weights are read once and shared, so a step costs t_step(B) = t_0 + k·B: t_0 is the weight read, k the extra attention work per request. The Guide's example: a 3B model at 4 bits is about 1.8 GB, and at roughly 273 GB/s one step takes at least about 6.6 ms (a ceiling near 150 tokens/s; real speed is lower; these are the Guide's approximate figures, not measurements). Batching raises total throughput but slows each user, which is why the router cares about goodput, not throughput.
+
+Source: Deep-Dive Guide v2 A4, A5, A7, H1; docs/context.md Environment (service-time formula).
+
+</details>
+
+Q2 (break-it): You profile a server but forget to discard the first runs and you reuse the same prompt text for every repeat. Which two measurements are corrupted, in which direction, and how would you see it in the CSV?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+(1) The first runs are slower than steady state (model weights and caches are still being loaded, the GPU clocks are not up), so the early rows inflate TTFT and TPOT; they show up as a few high outliers at the start of each point and a larger spread. (2) Reusing identical prompt text lets the server's prefix cache answer later repeats from stored KV, so prefill is skipped: TTFT looks far too small and nearly flat in P, which would make the fitted slope a too small. You would see repeat 1 high and repeats 2..N low at the same P. The fix is the protocol: discard warm-up runs, use fresh text per repeat for the cold measurements, and measure the cold-versus-warm cache effect deliberately as its own experiment.
+
+Source: Deep-Dive Guide H1 (cold vs warm cache, repeats), A6; docs/glossary.md "warm-up".
+
+</details>
+
+Q3 (justify): Part H1 measures slowdown with 0, 1, ..., N−1 other servers busy instead of profiling each server alone. Why, and what would the simulator get wrong without it?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+All the servers share one chip and one memory bandwidth, so a busy neighbour slows both prefill and decode. A server profiled alone gives the best case; the simulator would then predict latencies that no loaded cluster can reach, and every policy (including the learned one) would be tuned for a cluster that is faster than the real one, inflating goodput and hiding that spreading load across servers costs something. Measuring slowdown against the number of busy neighbours gives the data ADR-015 needs to choose how interference enters the equation (a multiplier growing with busy neighbours, a fixed multiplier, or no term, with the gap reported). It is also a stated limit: a real cluster would not share one chip.
+
+Source: Deep-Dive Guide A7 (Interference), H1, H5; docs/decisions.md ADR-015; docs/context.md Positioning.
+
+</details>
+
 ## Revisit
 Questions marked partly or missed. Re-ask at the start of the next session; move a line to "cleared" once you get it.
 
