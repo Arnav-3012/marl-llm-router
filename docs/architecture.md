@@ -72,8 +72,11 @@ Forward-target rule (ADR-013, SED-style): the environment sends a forwarded requ
 - load_azure_2023(path: Path, drop_failures: bool = False) -> DataFrame
 - load_burstgpt(path: Path, drop_failures: bool = False) -> DataFrame
   # Canonical schema: arrival_s (float64, s from the file's first request), prompt_tokens (int64), output_tokens (int64), session_id (nullable string), source (file stem), then BurstGPT extras (Model, Log Type, Elapsed time if present). df.attrs["n_failures"] = rows with output_tokens == 0, counted before any dropping. ValueError names the file on missing column, decreasing time or negative tokens.
-- sample_stream(trace: DataFrame, arrival_rate_rps: float, seed: int, split: str) -> list[Request]   # split: "train" | "heldout"
-  # arrival_rate_rps in req/s. The ρ → rate conversion lives in data/load.py (ADR-011, M1.28), not here.
+- sample_stream(trace: DataFrame, arrival_rate_rps: float, seed: int, split: str, *, train_fraction: float | None = None, sessions: dict | None = None) -> list[StreamRequest]   # split: "train" | "heldout"
+  # trace = canonical Azure conv DataFrame without failure rows (ValueError otherwise, ADR-017); the part is cut with processed.time_split (train_fraction defaults to configs/data.yaml processed.train_fraction, sessions to configs/sessions.yaml). arrival_rate_rps in req/s: one factor rescales the clock so (n − 1) / (last − first) equals it; the first arrival is 0. The ρ → rate conversion lives in data/load.py (ADR-011, M1.28), not here. Same arguments give an identical list; inputs are not modified. The seed drives the conversation layer only (ADR-018, proposed).
+- StreamRequest(arrival_s: float, prompt_tokens: int, output_tokens: int, conversation_id: int, turn_index: int, history_included: bool)   # frozen dataclass defined in data/traces.py because sim/request.py does not exist until M1.2; M1.2 maps it to sim.request.Request (id, arrival, conv_id, ... plus the fields the simulator adds). history_included: this turn re-sends the previous turn, so up to previous prompt + previous output tokens of its prompt are cacheable (M1.6 takes the min with its own prompt).
+- session_plan(seed: int, index: int, sessions: dict) -> SessionPlan(n_turns, gaps_s, history_included)   # (seed, row index) only; no rate argument, so think times are never compressed (ADR-009)
+- load_sessions_config(path=configs/sessions.yaml) -> dict ; summarise_stream(stream) -> dict   # realised follow-up share etc.
 
 ### data.processed (Tier A)
 - time_split(df: DataFrame, train_fraction: float) -> TimeSplit(train, heldout, cutoff_s; n_train, n_heldout)

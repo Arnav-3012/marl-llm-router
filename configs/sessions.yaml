@@ -2,8 +2,8 @@
 # Every value is a summary statistic of BurstGPT_3 from the M0.3 EDA; nothing here is tuned.
 # Sources: results/eda/trace_summary.json (sessions block) and the printed output of
 # notebooks/01_trace_eda.ipynb cells (e)-(h), as recorded in the ADR-009 Findings.
-# The session generator that consumes this file is a later task; it must pick a distribution
-# family that reproduces these quantiles and state it (distribution_family stays null until then).
+# Consumed by sample_stream in src/marl_lb/data/traces.py (M0.6), which draws turns and gaps by
+# inverse-transform sampling through the anchors below (see distribution_family).
 source_trace: BurstGPT_3
 n_sessions_observed: 55920
 single_turn_share: 0.355           # share of sessions with exactly one turn
@@ -16,6 +16,10 @@ inter_turn_gap_s:                  # gap between consecutive turns, seconds; use
   p50: 131
   p90: 2340
   p99: 78788
+  min: 1                           # ASSUMPTION, not measured: BurstGPT timestamps have 1 s resolution (the smallest non-zero gap in the EDA is 1.0 s); the session-gap minimum itself was not recorded
+  max: 4825463                     # printed by the M0.3 notebook, session-gap cell (turn_gaps.max())
   compress_with_rate: false        # NOT rescaled when arrival rates are rescaled to reach rho
 history_included_prob: 0.587       # P(prompt >= previous prompt + previous output) for turns that have a predecessor
-distribution_family: null          # set by the session-generator task
+distribution_family: piecewise_log_linear_quantile   # inverse CDF linear in log(value) between the anchors; reproduces the listed quantiles exactly, no fitted parameters
+# turns: T=1 with probability single_turn_share, else anchors (single_turn_share, 1), (0.5, p50), (0.9, p90), (0.99, p99), (1.0, max), value rounded up to an integer
+# gap:   anchors (0, min), (0.5, p50), (0.9, p90), (0.99, p99), (1.0, max)

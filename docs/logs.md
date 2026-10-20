@@ -171,3 +171,14 @@ Done: Arnav ran the checks and pasted the output. `uv run pytest -q`: all tests 
 Learned: the train-only p99 of prompt tokens (4143.0) is close to the whole-trace p99 in trace_summary.json (4142.0); output p99 is 598.0 against 601.0 whole-trace.
 Blockers: the E501 lint error (acceptance criterion "ruff check clean" not met); fix is wrapping the comment on tests/test_processed.py line 151.
 Next: commit and push; then M0.6 (not started).
+
+## 2026-10-20 — M0 housekeeping and M0.6: ruff fix, seeded stream sampler
+Done:
+- Housekeeping (commit 7c4c3e0): wrapped the E501 comment at tests/test_processed.py:151 (moved onto its own line); `uv run ruff check .` All checks passed, `ruff format --check .` 63 files already formatted, pytest all passed. docs/decisions.md now says "80/20 by time" with 16,495 train / 2,871 held-out (about 85/15 by count, 16,495 / 19,366 = 85.2%, because the arrival rate is not uniform) in ADR-016's What line, Findings line and Decision line; logs and viva.md left as they were (the viva line is about a random shuffle).
+- M0.6: `sample_stream(trace, arrival_rate_rps, seed, split, *, train_fraction=None, sessions=None)` in src/marl_lb/data/traces.py returning StreamRequest records (arrival_s, prompt_tokens, output_tokens, conversation_id, turn_index, history_included); session layer per ADR-009 with `session_plan`, inverse-CDF draws through the configs/sessions.yaml quantiles (distribution_family set to piecewise_log_linear_quantile; two added anchors, gap max 4,825,463 s from the M0.3 notebook output and gap min 1 s as a flagged assumption); `summarise_stream`; ADR-018 written as proposed; architecture.md and glossary updated. tests/test_sampler.py written first (collection failed with ImportError: StreamRequest not defined), then the code; the old stub test in tests/test_traces.py was removed. One bug caught by the quantile test: exp(log(9)) = 9.000000000000002 and ceil gave 10 for the p90 of turns; fixed by rounding to 9 decimals before ceil.
+- Result: `uv run pytest`: 56 passed in 0.61s; `ruff check .` All checks passed; `ruff format --check .` 64 files already formatted.
+- Measured by running sample_stream on data/raw Azure conv (seed 0; printed output, not yet in results/): follow-up share (requests that are turn 2 or later) train 64.8% / 57.4% / 43.8% at 2 / 5 / 20 req/s; held-out 51.3% / 41.2% / 29.2%. Same seed twice gave identical streams (True), seed 0 vs seed 1 differ (False).
+Learned: <Arnav>
+Blockers: ADR-018 is proposed (Arnav accepts or changes it). Open: a stream is one pass over the part (held-out 2,871 requests = 143.5 s at 20 req/s); ADR-016's "longer stream" point is deferred to M1.2 (episode length) and needs an ADR then. Across seeds only conversation structure varies, not arrivals or lengths.
+Next: M0.6a viva entry (next commit), then M0.5.0.
+

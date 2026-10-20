@@ -2,10 +2,9 @@
 
 from pathlib import Path
 
-import pandas as pd
 import pytest
 
-from marl_lb.data.traces import CANONICAL_COLUMNS, load_azure_2023, load_burstgpt, sample_stream
+from marl_lb.data.traces import CANONICAL_COLUMNS, load_azure_2023, load_burstgpt
 
 FIXTURES = Path(__file__).parent / "fixtures"
 AZURE = FIXTURES / "azure_conv_sample.csv"
@@ -135,8 +134,3 @@ def test_loader_never_writes_next_to_input(tmp_path):
     before = sorted(p.name for p in tmp_path.iterdir())
     load_burstgpt(path)
     assert sorted(p.name for p in tmp_path.iterdir()) == before
-
-
-def test_sample_stream_is_a_stub_until_m0_6():
-    with pytest.raises(NotImplementedError):
-        sample_stream(pd.DataFrame(), arrival_rate_rps=1.0, seed=0, split="train")
