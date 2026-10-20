@@ -148,7 +148,8 @@ def test_constants_use_the_train_part_only(tmp_path):
     summary = build_processed(
         raw, tmp_path / "out", train_fraction=0.8, percentile=99, features=FEATURES
     )
-    assert summary["constants"]["prompt_tokens"] == pytest.approx(100.0)  # not pulled up by held-out
+    # the huge held-out values must not pull the constant up: it is fitted on train only
+    assert summary["constants"]["prompt_tokens"] == pytest.approx(100.0)
     assert (summary["n_train"], summary["n_heldout"]) == (80, 20)
 
 
