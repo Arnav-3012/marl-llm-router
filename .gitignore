@@ -18,6 +18,10 @@ __pycache__/
 .pytest_cache/
 .claude/settings.local.json
 
+# Markdown files are local notes only; README.md files are the exception
+*.md
+!README.md
+
 # Local model weights and llama.cpp scratch (never committed)
 models/
 

@@ -72,6 +72,7 @@ class SimParams:
     r_missed: float = -10.0
     r_drop: float = -5.0
     lambda_cost: float = 0.0
+    cost_scale: float = 1.0  # cost enters the reward as lambda * C / cost_scale (a unit, ADR-022)
     beta_coop: float = 0.0
     breach_window_ticks: int = 100
     w_kv: float = 0.0
@@ -91,6 +92,7 @@ class SimParams:
             wait_scale_s=sim["wait_scale_s"], max_drain_s=sim["max_drain_s"], k=ob["k"],
             prefix_hit_enabled=ob["prefix_hit_enabled"], r_met=rw["r_sla_met"],
             r_missed=rw["r_sla_missed"], r_drop=rw["r_drop"], lambda_cost=rw["lambda_cost"],
+            cost_scale=rw.get("cost_scale", 1.0),
             beta_coop=rw["beta_coop"], breach_window_ticks=rw["breach_window_ticks"],
             w_kv=rw["w_kv"], kv_threshold=rw["kv_threshold"], forward_cost=rw["forward_cost"],
             defer_cost=rw["defer_cost"],
@@ -433,7 +435,7 @@ class Cluster:
         kv_frac = req.hot_ticks / req.resident_ticks if req.resident_ticks else 0.0
         for rec in req.decisions:
             if rec.serving:
-                rec.reward -= self.p.lambda_cost * cost + self.p.w_kv * kv_frac
+                rec.reward -= self.p.lambda_cost * cost / self.p.cost_scale + self.p.w_kv * kv_frac
         self._credit(req, self.p.r_met if ok else self.p.r_missed, not ok)
         self._emit_all(req)
 

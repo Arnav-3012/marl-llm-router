@@ -28,5 +28,6 @@ reward:
   forward_cost: 0.1               # immediate cost of a Forward (ADR-010 leaves the value to a later ADR; ADR-022)
   defer_cost: 0.1                 # immediate cost of a Defer (ADR-022)
   lambda_cost: 1.0                # lambda weighting cost C (E3 varies it); main configuration = 1
+  cost_scale: 3.0                 # reward uses lambda * C / cost_scale (ADR-022): a typical request costs C ~ 15 (SED global, rho 0.8), so at lambda 1 it is ~5 points, a quarter of the 20-point SLA swing; the cost METRIC stays in raw units
   beta_coop: 2.0                  # beta weighting the cluster breach rate B_t (ADR-022); 0 = off
   breach_window_ticks: 100        # W: ticks over which B_t is averaged = 10 s at dt 0.1 (ADR-022)

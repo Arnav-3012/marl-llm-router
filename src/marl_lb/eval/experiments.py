@@ -14,16 +14,19 @@ from marl_lb.policies import heuristics as H
 from marl_lb.sim.cluster import slice_stream
 from marl_lb.train.loop import greedy_actions
 
+# Development windows on TRAIN traffic start after the stream's session ramp-up (ADR-022): think
+# times are not rescaled, so the first ~1800 s have far fewer arrivals than the mean rate.
+DEV_WINDOW_START_S = 1800.0
+
 
 def stream_for(
     world: World, rate: float, seed: int, split: str, window_s: float | None = None
 ) -> list:
-    """Held-out traffic for the final numbers. split='train' (with a window) is for development
-    checks
-    only.
+    """Held-out traffic for the final numbers (the whole stream). split='train' with a window is
+    for development checks only: [1800 s, 1800 s + window_s) of the train stream, re-zeroed.
     """
     s = world.stream(rate, seed, split)
-    return s if window_s is None else slice_stream(s, 0.0, window_s)
+    return s if window_s is None else slice_stream(s, DEV_WINDOW_START_S, window_s)
 
 
 def suite(world: World, cache_w: float) -> dict:

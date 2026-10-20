@@ -79,7 +79,7 @@ export type Frame = {
   arrivals: { req: number; entry: number; p: number | null; o: number | null }[];
   acts: { agent: number; req: number; action: number }[];
   forwards: { req: number; src: number; dst: number }[];
-  resolves: { req: number; ok: boolean; status: string }[];
+  resolves: { req: number; ok: boolean; status: string; server: number | null }[];
 };
 export type ReplayData = { policy: string; rho: number; dt: number; layout?: string[]; frames: Frame[] };
 

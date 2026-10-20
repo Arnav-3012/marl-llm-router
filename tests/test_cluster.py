@@ -235,3 +235,20 @@ def test_replay_events_are_recorded_when_asked():
     run_episode(c, stream_of([(0.0, 100, 5)]), 0, local_actions(AcceptAll()))
     kinds = {e["e"] for e in c.run.events}
     assert {"arrive", "act", "servers", "resolve"} <= kinds
+
+
+def test_cost_scale_divides_the_cost_term_in_the_reward_only():
+    def run(scale):
+        c = make_cluster(
+            layout=("fast",), k=0, ttft_target=100.0, tpot_target=100.0,
+            lambda_cost=1.0, cost_scale=scale,
+        )  # fmt: skip
+        c.reset(stream_of([(0.0, 200, 20)]), 0)
+        while not c.finished:
+            c.step({"agent_0": ACCEPT})
+        (r,) = c.run.requests
+        return r.decisions[0].reward, c.servers[r.server].price * r.attributed_s
+
+    (reward1, cost1), (reward4, cost4) = run(1.0), run(4.0)
+    assert cost1 == pytest.approx(cost4)  # the cost metric stays in raw units
+    assert reward1 == pytest.approx(10 - cost1) and reward4 == pytest.approx(10 - cost1 / 4)

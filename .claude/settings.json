@@ -1,8 +1,54 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(uv:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(pytest:*)",
+      "Bash(ruff:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git branch:*)",
+      "Bash(brew install:*)",
+      "Bash(brew list:*)",
+      "Bash(cmake:*)",
+      "Bash(make:*)",
+      "Bash(llama-server:*)",
+      "Bash(llama-cli:*)",
+      "Bash(curl:*)",
+      "Bash(huggingface-cli:*)",
+      "Bash(hf:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(pkill llama-server:*)",
+      "Bash(lsof:*)",
+      "Bash(sysctl:*)",
+      "Bash(system_profiler:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "WebSearch"
+    ],
     "deny": [
-      "Bash",
-      "Edit(data/raw/**)"
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Write(./data/raw/**)",
+      "Edit(./data/raw/**)"
     ]
   }
 }
