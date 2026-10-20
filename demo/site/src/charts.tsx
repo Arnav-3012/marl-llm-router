@@ -142,24 +142,32 @@ export function LineChart({ series, xLabel, yLabel, title, height = 280, yMin }:
 }
 
 export function ParetoScatter({ points, xLabel, yLabel, title }: { points: ParetoPoint[]; xLabel: string; yLabel: string; title: string }) {
-  const [ref, seen] = useInView<HTMLDivElement>();
+  const [ref] = useInView<HTMLDivElement>(); // points are always drawn: data must never wait for a scroll observer
   const H = 380;
   const pw = W - M.l - M.r, ph = H - M.t - M.b;
   const xs = points.map((p) => (p.cost.mean ?? 0) + (p.cost.ci ?? 0)), ys = points.map((p) => (p.latency.mean ?? 0) + (p.latency.ci ?? 0));
-  const xmax = niceMax(Math.max(...xs) * 1.1), ymax = niceMax(Math.max(...ys) * 1.1);
-  const x = (v: number) => M.l + (v / xmax) * pw, y = (v: number) => M.t + ph - (v / ymax) * ph;
+  // log y-axis when the latencies span more than a factor of 30 (here 7 s to 500 s), else linear
+  const yPos = points.map((p) => p.latency.mean ?? 0).filter((v) => v > 0);
+  const logY = yPos.length > 1 && Math.max(...yPos) / Math.min(...yPos) > 30;
+  const xmax = niceMax(Math.max(...xs) * 1.1);
+  const yLo = logY ? 10 ** Math.floor(Math.log10(Math.min(...yPos))) : 0;
+  const yHi = logY ? 10 ** Math.ceil(Math.log10(Math.max(...ys))) : niceMax(Math.max(...ys) * 1.1);
+  const ymax = yHi;
+  const x = (v: number) => M.l + (v / xmax) * pw;
+  const y = (v: number) => (logY ? M.t + ph - ((Math.log10(Math.max(v, yLo)) - Math.log10(yLo)) / (Math.log10(yHi) - Math.log10(yLo))) * ph : M.t + ph - (v / ymax) * ph);
+  const yTicks = logY ? Array.from({ length: Math.round(Math.log10(yHi / yLo)) + 1 }, (_, i) => yLo * 10 ** i) : ticks(ymax);
   const front = points.filter((p) => p.on_frontier).sort((a, b) => (a.cost.mean ?? 0) - (b.cost.mean ?? 0));
   const d = front.map((p, i) => `${i ? "L" : "M"}${x(p.cost.mean ?? 0)},${y(p.latency.mean ?? 0)}`).join(" ");
   return (
     <div ref={ref}>
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>
         <title>{title}</title>
-        {ticks(ymax).map((t) => <g key={`y${t}`}><line className="grid" x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} /><text x={M.l - 8} y={y(t) + 4} textAnchor="end">{fmt(t, ymax < 5 ? 1 : 0)}</text></g>)}
+        {yTicks.map((t) => <g key={`y${t}`}><line className="grid" x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} /><text x={M.l - 8} y={y(t) + 4} textAnchor="end">{fmt(t, ymax < 5 ? 1 : 0)}</text></g>)}
         {ticks(xmax).map((t) => <text key={`x${t}`} x={x(t)} y={H - M.b + 18} textAnchor="middle">{fmt(t, xmax < 5 ? 1 : 0)}</text>)}
-        <text x={14} y={M.t + ph / 2} transform={`rotate(-90 14 ${M.t + ph / 2})`} textAnchor="middle">{yLabel}</text>
+        <text x={14} y={M.t + ph / 2} transform={`rotate(-90 14 ${M.t + ph / 2})`} textAnchor="middle">{yLabel}{logY ? " (log scale)" : ""}</text>
         <text x={M.l + pw / 2} y={H - 8} textAnchor="middle">{xLabel}</text>
-        {seen && front.length > 1 && <path d={d} fill="none" stroke="#f7f8f8" strokeOpacity={0.55} strokeWidth={1.5} strokeDasharray="4 4" className="flow-line" />}
-        {seen && points.map((p, i) => {
+        {front.length > 1 && <path d={d} fill="none" stroke="#f7f8f8" strokeOpacity={0.55} strokeWidth={1.5} strokeDasharray="4 4" className="flow-line" />}
+        {points.map((p, i) => {
           const st = p.kind === "learned" ? styleOf("ddqn") : styleOf(p.label);
           const cx = x(p.cost.mean ?? 0), cy = y(p.latency.mean ?? 0);
           return (

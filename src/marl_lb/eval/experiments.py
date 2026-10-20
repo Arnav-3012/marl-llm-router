@@ -45,6 +45,7 @@ def suite(world: World, cache_w: float) -> dict:
             {"k": "full"},
             lambda seed: H.CacheAwareLocal(cache_w),
         ),
+        "route_to_fast": ("agents", {"k": "full"}, lambda seed: H.RouteToFast(world.params.layout)),
         "round_robin": ("global", {}, lambda seed: H.RoundRobin()),
         "jsq_global": ("global", {}, lambda seed: H.JSQ()),
         "po2_global": ("global", {}, lambda seed: H.Po2(seed)),

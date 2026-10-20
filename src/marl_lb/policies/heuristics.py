@@ -153,3 +153,21 @@ class CacheAwareGlobal:
             return (-(overlap - self.w * min(s.expected_wait() / self.scale, 1.0)), s.index)
 
         return min(open_, key=score).index
+
+
+class RouteToFast:
+    """Class-aware local rule: an agent on a slow server Forwards every request to a fast neighbour,
+    an agent on a fast server Accepts. Uses only the three local actions (no global view), but it
+    is GIVEN which server class each agent sits on, which SED-local never sees; the learned agents
+    can discover the class implicitly because each has its own network. A reference for what local
+    actions can achieve (ADR-027), not a like-for-like information baseline.
+    """
+
+    name = "route_to_fast"
+
+    def __init__(self, layout: list):
+        self.slow = [not c.startswith("fast") for c in layout]
+
+    def act_agent(self, i: int, obs, mask) -> int:
+        order = (FORWARD, ACCEPT, DEFER) if self.slow[i] else (ACCEPT, DEFER, FORWARD)
+        return next(a for a in order if mask[a])

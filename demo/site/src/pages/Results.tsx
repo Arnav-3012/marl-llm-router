@@ -18,9 +18,21 @@ export function Pareto() {
   return (
     <>
       <div className="eyebrow">Q2 · E3</div><h1 style={{ fontSize: "clamp(28px,4vw,40px)" }}>Cost against latency</h1>
-      <p className="lead">λ weighs money against speed in the reward. Sweeping it should trace a frontier that no fixed rule reaches. Points on the frontier are circled; error bars are 95% intervals over seeds.</p>
+      <p className="lead">λ weighs cost against service quality in the reward; the three learned points are λ = 0, 1 and 2, trained and evaluated the same way, next to the fixed rules, all at load 0.8 on held-out traffic. Points on the frontier (no other point is both cheaper and faster) are circled; error bars are 95% intervals over seeds.</p>
       <Loaded state={s} what="Cost–latency frontier (E3)">
-        {(d, env) => (<Card className="flat"><ParetoScatter points={d.points} xLabel="cost per request (synthetic units, lower is better)" yLabel="TTFT p95 (s)" title="Cost per request against TTFT p95 at load 0.8" /><SourceNote source={env.source} /></Card>)}
+        {(d, env) => {
+          const learned = d.points.filter((p) => p.kind === "learned");
+          const onFront = learned.filter((p) => p.on_frontier);
+          const note = onFront.length <= 1
+            ? `Only ${onFront.length ? onFront[0].label : "none of the learned settings"} of the ${learned.length} learned settings is on the frontier. The other settings cost more and are slower, so this λ sweep does not trace a cost-versus-latency trade-off here. A likely reason, found in the diagnosis rather than shown by this chart (ADR-027): the slow “cheap” class costs more per completed request than the fast class in this calibration.`
+            : `${onFront.length} of the ${learned.length} learned settings are on the frontier: raising λ trades latency for cost along it.`;
+          return (
+            <>
+              <Card className="flat"><ParetoScatter points={d.points} xLabel="cost per request (synthetic units, lower is better)" yLabel="TTFT p95 (s)" title="Cost per request against TTFT p95 at load 0.8" /><SourceNote source={env.source} /></Card>
+              <div className="verdict tie" style={{ marginTop: 12 }}><b>Reading:</b> {note}</div>
+            </>
+          );
+        }}
       </Loaded>
     </>
   );

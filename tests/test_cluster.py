@@ -262,3 +262,24 @@ def test_cost_scale_divides_the_cost_term_in_the_reward_only():
     (reward1, cost1), (reward4, cost4) = run(1.0), run(4.0)
     assert cost1 == pytest.approx(cost4)  # the cost metric stays in raw units
     assert reward1 == pytest.approx(10 - cost1) and reward4 == pytest.approx(10 - cost1 / 4)
+
+
+def test_shared_cost_credit_charges_every_agent_that_acted_not_only_the_server():
+    def run(credit):
+        c = make_cluster(layout=("fast", "fast"), k="full", ttft_target=100.0, tpot_target=100.0,
+                         lambda_cost=1.0, cost_credit=credit)  # fmt: skip
+        _, infos = c.reset(stream_of([(0.0, 100, 5)]), 0)
+        holder = next(a for a in c.agents if infos[a]["decide"])
+        c.step({a: (FORWARD if a == holder else ACCEPT) for a in c.agents})
+        while not c.finished:
+            c.step({a: ACCEPT for a in c.agents})
+        (r,) = c.run.requests
+        fwd, acc = r.decisions
+        return fwd.reward, acc.reward, c.servers[r.server].price * r.attributed_s
+
+    fwd_s, acc_s, cost = run("serving")
+    fwd_h, acc_h, cost_h = run("shared")
+    assert cost == pytest.approx(cost_h) and cost > 0
+    assert fwd_s == pytest.approx(10 - 0.0)  # the forwarder avoids the cost under "serving"
+    assert fwd_h == pytest.approx(10 - cost)  # ... and pays it under "shared"
+    assert acc_s == pytest.approx(acc_h) == pytest.approx(10 - cost)  # the server pays in both

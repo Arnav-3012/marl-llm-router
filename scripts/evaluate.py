@@ -65,13 +65,14 @@ def main() -> int:
     ap.add_argument("--rhos", default="0.5,0.8,0.95")
     ap.add_argument("--setting", default="cache_on")
     ap.add_argument("--smoke", action="store_true", help="1 seed, 1 load (fast plumbing check)")
+    ap.add_argument("--exp", default=EXP, help="results folder name, e.g. baselines_v2 (ADR-027)")
     a = ap.parse_args()
     cfg = yaml.safe_load((ROOT / "configs" / "experiments" / "baselines.yaml").read_text()) or {}
     cfg.setdefault("cache_aware_w", 1.0)
     seeds, rhos = parse_seeds(a.seeds), [float(x) for x in a.rhos.split(",")]
     if a.smoke:
         seeds, rhos = [0], [0.5]
-    exp = EXP + ("_smoke" if a.smoke else "")  # smoke runs never touch real results/baselines
+    exp = a.exp + ("_smoke" if a.smoke else "")  # smoke runs never touch real results/baselines
     todo = [(s, rhos, cfg, a.setting, exp) for s in seeds if not finished(exp, s)]
     print(f"seeds to run: {[j[0] for j in todo]} (skipping finished)", flush=True)
     with ProcessPoolExecutor(a.workers) as pool:

@@ -102,15 +102,24 @@ def train(
     """
     torch.set_num_threads(1)
     rng = np.random.default_rng(seed)
+    reward_opts = {
+        key: cfg[key] for key in ("cost_credit", "forward_cost", "defer_cost") if key in cfg
+    }
     cluster = world.cluster(
-        k=cfg.get("k", "full"), lambda_cost=cfg["lambda_cost"], beta_coop=cfg["beta_coop"]
+        k=cfg.get("k", "full"),
+        lambda_cost=cfg["lambda_cost"],
+        beta_coop=cfg["beta_coop"],
+        **reward_opts,
     )
     agents = make_agents(cfg, cluster.n, seed, solo)
     fallback = SEDLocal() if solo is not None else None
-    full = world.stream(cfg["rate_rps"], seed, "train")
-    span = full[-1].arrival_s - cfg["window_s"]
+    # One train stream per training load; with several loads each episode draws one of them.
+    rates = cfg.get("rates_rps") or [cfg["rate_rps"]]
+    streams = [world.stream(r, seed, "train") for r in rates]
     log = CsvLogger(log_path) if log_path else None
     for ep in range(cfg["episodes"]):
+        full = streams[int(rng.integers(len(streams)))] if len(streams) > 1 else streams[0]
+        span = full[-1].arrival_s - cfg["window_s"]
         start = float(rng.uniform(0, max(span, 0.0)))
         window = slice_stream(full, start, cfg["window_s"])
         eps = epsilon_at(ep, cfg)

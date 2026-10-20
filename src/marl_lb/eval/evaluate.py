@@ -70,13 +70,20 @@ class World:
 
 
 def local_actions(policy):
-    """Wrap a LocalPolicy (act(obs, mask)) as an actions function for run_episode."""
+    """Wrap a LocalPolicy as an actions function for run_episode: act(obs, mask), or, for rules
+    that need to know which agent they are (RouteToFast), act_agent(index, obs, mask).
+    """
 
     def fn(obs, infos):
-        return {
-            name: (int(policy.act(obs[name], infos[name]["mask"])) if infos[name]["decide"] else 0)
-            for name in obs
-        }
+        out = {}
+        for i, name in enumerate(obs):
+            if not infos[name]["decide"]:
+                out[name] = 0
+            elif hasattr(policy, "act_agent"):
+                out[name] = int(policy.act_agent(i, obs[name], infos[name]["mask"]))
+            else:
+                out[name] = int(policy.act(obs[name], infos[name]["mask"]))
+        return out
 
     return fn
 

@@ -48,9 +48,16 @@ def build_cfg(a) -> dict:
         ("k", a.k),
         ("lambda_cost", a.lam),
         ("beta_coop", a.beta),
+        ("cost_credit", a.cost_credit),
+        ("epsilon_decay_episodes", a.eps_decay),
     ):
         if val is not None:
             cfg[key] = val
+    if a.rho_train:  # e.g. "0.95" or "0.5,0.8,0.95" (one load drawn per episode)
+        loads = [float(x) for x in a.rho_train.split(",")]
+        cfg["rho_train"] = loads if len(loads) > 1 else loads[0]
+    if a.delay_cost is not None:  # price of one wasted Forward or Defer, in reward points (ADR-027)
+        cfg.update(forward_cost=a.delay_cost, defer_cost=a.delay_cost)
     if a.smoke:
         cfg.update(episodes=3, window_s=15, replay={**cfg["replay"], "warmup": 50}, rho_eval=[0.8])
     cfg.update(solo=a.solo, eval_split=a.eval_split, eval_window_s=a.eval_window_s)
@@ -63,11 +70,13 @@ def run_seed(job) -> str:
     exp, seed, cfg, setting = job
     world = World()
     lam = load_lambda_sat(key=setting)
+    rho_train = cfg["rho_train"] if isinstance(cfg["rho_train"], list) else [cfg["rho_train"]]
     cfg = {
         **cfg,
         "seed": seed,
         "lambda_sat_rps": lam,
-        "rate_rps": rho_to_rate(cfg["rho_train"], lam),
+        "rate_rps": rho_to_rate(rho_train[0], lam),
+        "rates_rps": [rho_to_rate(r, lam) for r in rho_train],  # one train stream per load
     }
     run = make_run_dir(exp, seed, cfg)
     t0 = time.time()
@@ -136,6 +145,12 @@ def main() -> int:
     ap.add_argument("--k")
     ap.add_argument("--lam", type=float)
     ap.add_argument("--beta", type=float)
+    ap.add_argument("--cost-credit", choices=["serving", "shared"], dest="cost_credit")
+    ap.add_argument("--delay-cost", type=float, dest="delay_cost")
+    ap.add_argument("--eps-decay", type=int, dest="eps_decay")
+    ap.add_argument(
+        "--rho-train", dest="rho_train", help="training load(s) as fractions of lambda_sat"
+    )
     ap.add_argument("--setting", default="cache_on")
     ap.add_argument(
         "--solo",

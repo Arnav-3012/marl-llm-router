@@ -13,7 +13,7 @@ from marl_lb.policies.heuristics import (
     SEDGlobal,
     SEDLocal,
 )  # fmt: skip
-from marl_lb.sim.cluster import ACCEPT, FORWARD
+from marl_lb.sim.cluster import ACCEPT, DEFER, FORWARD
 from tests.helpers import make_cluster, req, stream_of
 
 ALL = np.array([True, True, True])
@@ -93,3 +93,16 @@ def test_random_global_is_seeded():
     a = [RandomGlobal(seed=4).assign(c, req()) for _ in range(5)]
     b = [RandomGlobal(seed=4).assign(c, req()) for _ in range(5)]
     assert a == b
+
+
+def test_route_to_fast_forwards_from_slow_agents_and_accepts_on_fast_ones():
+    from marl_lb.policies.heuristics import RouteToFast
+
+    p = RouteToFast(["fast_expensive", "slow_cheap"])
+    obs = None  # the rule ignores the observation
+    all_ok = [True, True, True]
+    assert p.act_agent(0, obs, all_ok) == ACCEPT  # fast agent accepts
+    assert p.act_agent(1, obs, all_ok) == FORWARD  # slow agent forwards
+    assert p.act_agent(1, obs, [True, False, True]) == ACCEPT  # cannot forward: accept
+    assert p.act_agent(0, obs, [False, True, True]) == DEFER  # fast agent cannot accept: wait
+    assert p.act_agent(0, obs, [False, True, False]) == FORWARD

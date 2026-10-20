@@ -41,6 +41,14 @@ METRICS = [
     "jain_utilisation",
 ]
 RHOS = ["0.5", "0.8", "0.95"]
+SUFFIX = ""  # "_v2" reads results/main_v2, baselines_v2, ... (ADR-027); set by --suffix
+
+
+def X(name: str) -> str:
+    """Experiment folder name with the version suffix."""
+    return name + SUFFIX
+
+
 REPLAY_POLICIES = {  # dashboard name -> where its events live
     "ddqn": ("main", None),
     "random": ("baselines", "random"),
@@ -108,7 +116,7 @@ def learned_rows(results: Path, exp: str, label: str):
 
 
 def baseline_rows(results: Path):
-    runs = finished_runs(results, "baselines")
+    runs = finished_runs(results, X("baselines"))
     if not runs:
         return None, None
     per_seed = [json.loads((r / "metrics.json").read_text()) for r in runs]
@@ -122,7 +130,7 @@ def baseline_rows(results: Path):
 
 def export_baselines(results: Path):
     data, src = baseline_rows(results)
-    learned, lsrc = learned_rows(results, "main", "DDQN independent, k=full, lambda=1")
+    learned, lsrc = learned_rows(results, X("main"), "DDQN independent, k=full, lambda=1")
     if data is None and learned is None:
         return envelope(None, reason="neither results/baselines nor results/main exist yet")
     out = {"metrics": METRICS, "baselines": data, "learned": learned}
@@ -131,7 +139,7 @@ def export_baselines(results: Path):
 
 def export_pareto(results: Path):
     points = []
-    for exp, lam in (("lambda0", 0.0), ("main", 1.0), ("lambda2", 2.0)):
+    for exp, lam in ((X("lambda0"), 0.0), (X("main"), 1.0), (X("lambda2"), 2.0)):
         rows, src = learned_rows(results, exp, f"DDQN lambda={lam}")
         if rows and "0.8" in rows["rows"]:
             m = rows["rows"]["0.8"]
@@ -174,8 +182,8 @@ def export_pareto(results: Path):
 
 
 def export_observability(results: Path):
-    k_full, s1 = learned_rows(results, "main", "DDQN k=full")
-    k0, s2 = learned_rows(results, "k0", "DDQN k=0")
+    k_full, s1 = learned_rows(results, X("main"), "DDQN k=full")
+    k0, s2 = learned_rows(results, X("k0"), "DDQN k=0")
     base, s3 = baseline_rows(results)
     if not (k_full or k0):
         return envelope(None, reason="no k ablation in results/ yet (E4 not run)")
@@ -190,7 +198,7 @@ def export_observability(results: Path):
 
 
 def export_training(results: Path, max_points: int = 200):
-    runs = finished_runs(results, "main")
+    runs = finished_runs(results, X("main"))
     if not runs:
         return envelope(None, reason="no main training run in results/ yet")
     cols = [
@@ -339,7 +347,7 @@ def export_replays(
 ) -> list:
     written = []
     for name, (exp, policy) in REPLAY_POLICIES.items():
-        runs = [r for r in finished_runs(results, exp) if r.name.endswith("_seed0")]
+        runs = [r for r in finished_runs(results, X(exp)) if r.name.endswith("_seed0")]
         for rho in RHOS:
             fname = f"events_rho{rho}.jsonl" if exp == "main" else f"events_{policy}_rho{rho}.jsonl"
             path = runs[0] / fname if runs else None
@@ -376,6 +384,7 @@ def export_replays(
 H2H_LABEL = {
     "ddqn_agents": "Learned agents (DDQN)",
     "random": "Random (entry rule)",
+    "route_to_fast": "Route-to-fast rule (class-aware, local)",
     "sed_global": "SED global",
     "sed_local_full": "SED local (k=full)",
     "cache_aware_global": "Cache-aware global",
@@ -514,7 +523,15 @@ def export_overview(results: Path, root: Path, baselines: dict, observability: d
     )
     experiments = {
         e: len(finished_runs(results, e))
-        for e in ("baselines", "main", "k0", "lambda0", "lambda2", "prototype", "timing")
+        for e in (
+            X("baselines"),
+            X("main"),
+            X("k0"),
+            X("lambda0"),
+            X("lambda2"),
+            "prototype",
+            "timing",
+        )
     }
     data = {
         "q1_goodput": q1,
@@ -539,8 +556,15 @@ def export_overview(results: Path, root: Path, baselines: dict, observability: d
 
 
 def run_export(
-    results: Path, out: Path, root: Path = ROOT, cap: int = 2000, dt: float | None = None
+    results: Path,
+    out: Path,
+    root: Path = ROOT,
+    cap: int = 2000,
+    dt: float | None = None,
+    suffix: str = "",
 ) -> list:
+    global SUFFIX
+    SUFFIX = suffix
     out.mkdir(parents=True, exist_ok=True)
     layout = None
     if dt is None:
@@ -581,8 +605,9 @@ def main() -> int:
     ap.add_argument("--results", type=Path, default=ROOT / "results")
     ap.add_argument("--out", type=Path, default=ROOT / "demo" / "site" / "public" / "data")
     ap.add_argument("--cap", type=int, default=2000)
+    ap.add_argument("--suffix", default="", help="read results/<exp><suffix>, e.g. _v2 (ADR-027)")
     a = ap.parse_args()
-    names = run_export(a.results, a.out, cap=a.cap)
+    names = run_export(a.results, a.out, cap=a.cap, suffix=a.suffix)
     print(f"wrote {len(names)} files to {a.out}")
     print(f"DONE export_dashboard_data {datetime.now().isoformat(timespec='seconds')}")
     return 0

@@ -175,10 +175,15 @@ function Summary({ data, rho, learned, baseline }: { data: HeadToHeadData; rho: 
         if (!lg || !b || lg.mean == null || b.mean == null) return null;
         const lo = lg.mean - (lg.ci ?? 0), hi = lg.mean + (lg.ci ?? 0), blo = b.mean - (b.ci ?? 0), bhi = b.mean + (b.ci ?? 0);
         const win = lo > bhi, lose = hi < blo;
+        const head = win ? "▲ Yes, it beats it" : lose ? "▼ No, it is worse" : "＝ It matches it, it does not beat it";
+        const tail = win
+          ? "The 95% intervals do not overlap."
+          : lose
+            ? "The learned agents are lower and the intervals do not overlap."
+            : "The 95% intervals overlap: a tie, not a win.";
         return (
           <div key={p.id} className={`verdict ${win ? "win" : lose ? "lose" : "tie"}`}>
-            <b>{win ? "▲ Yes" : "✕ No"}</b>: against {p.label} on goodput the learned agents have {fmt(lg.mean, 3)} ± {fmt(lg.ci, 3)} and the baseline {fmt(b.mean, 3)} ± {fmt(b.ci, 3)} req/s.{" "}
-            {win ? "The 95% intervals do not overlap." : lose ? "The learned agents are lower and the intervals do not overlap." : "The 95% intervals overlap, so this is not a win."}
+            <b>{head}</b>: against {p.label} on goodput the learned agents have {fmt(lg.mean, 3)} ± {fmt(lg.ci, 3)} and the baseline {fmt(b.mean, 3)} ± {fmt(b.ci, 3)} req/s. {tail}
           </div>
         );
       })}

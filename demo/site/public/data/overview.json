@@ -6,8 +6,8 @@
    "rho": "0.8",
    "metric": "goodput_rps",
    "ddqn": {
-    "mean": 0.28036899192073184,
-    "ci": 0.11179178222272682,
+    "mean": 0.4081091263937283,
+    "ci": 0.013646286492868774,
     "n": 5
    },
    "sed_local_full": {
@@ -29,15 +29,15 @@
   "q2_pareto_available": true,
   "q3_observability_available": true,
   "experiments_finished_seeds": {
-   "baselines": 5,
-   "main": 5,
-   "k0": 5,
-   "lambda0": 5,
-   "lambda2": 5,
+   "baselines_v2": 5,
+   "main_v2": 5,
+   "k0_v2": 5,
+   "lambda0_v2": 5,
+   "lambda2_v2": 5,
    "prototype": 5,
    "timing": 1
   },
-  "exported_at": "2026-10-20T20:16:06",
+  "exported_at": "2026-10-20T23:22:40",
   "not_done": [
    "break-it experiments (M2/M3)",
    "E5 burst test",

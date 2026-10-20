@@ -1,4 +1,4 @@
-// Shared UI: hooks (reduced motion, in-view, count-up), cards with spotlight, "not run" states, metric display.
+// Shared UI: hooks (reduced motion, in-view), cards with spotlight, "not run" states, metric display.
 import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { DataSource } from "./data/dataSource";
 import type { Envelope, Metric, Source } from "./data/types";
@@ -103,29 +103,13 @@ export function fmt(v: number | null | undefined, digits = 2): string {
   return Math.abs(v) >= 1000 ? v.toFixed(0) : v.toFixed(digits);
 }
 
-/** mean ± 95% CI, with a count-up on first view. A missing mean is "n/a", never a number. */
+/** mean ± 95% CI. A missing mean is "n/a", never a number. Static on purpose: a number that counts up
+ * from zero shows a wrong value for a moment (and in a screenshot), which a results page must never do. */
 export function Num({ m, digits = 2, unit = "", title }: { m: Metric | null | undefined; digits?: number; unit?: string; title?: string }) {
-  const reduced = useReducedMotion();
-  const [ref, seen] = useInView<HTMLSpanElement>();
-  const [shown, setShown] = useState(0);
-  const target = m?.mean ?? null;
-  useEffect(() => {
-    if (target == null) return;
-    if (reduced || !seen) return setShown(target);
-    let raf = 0;
-    const t0 = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min((now - t0) / 700, 1);
-      setShown(target * (1 - Math.pow(1 - p, 3)));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, seen, reduced]);
   if (!m || m.mean == null) return <span className="muted">n/a</span>;
   return (
-    <span ref={ref} title={title ?? `n = ${m.n} seeds, mean ± 95% CI`}>
-      {fmt(seen ? shown : m.mean, digits)}{unit}
+    <span title={title ?? `n = ${m.n} seeds, mean ± 95% CI`}>
+      {fmt(m.mean, digits)}{unit}
       {m.ci != null && <small className="muted"> ± {fmt(m.ci, digits)}</small>}
     </span>
   );
@@ -140,6 +124,7 @@ export const POLICY_STYLE: Record<string, { label: string; color: string; marker
   sed_local_k0: { label: "SED local, k=0", color: "#6b7fa8", marker: "square", dash: "1 4" },
   cache_aware_global: { label: "Cache-aware (global)", color: "#009e73", marker: "triangle" },
   cache_aware_local_full: { label: "Cache-aware local", color: "#33b895", marker: "triangle", dash: "6 4" },
+  route_to_fast: { label: "Route-to-fast rule", color: "#9aa4b5", marker: "square", dash: "8 3" },
   random: { label: "Random", color: "#cc79a7", marker: "diamond", dash: "1 4" },
   round_robin: { label: "Round-robin", color: "#b5668f", marker: "diamond", dash: "3 3" },
   jsq_global: { label: "JSQ (global)", color: "#f0e442", marker: "cross" },

@@ -132,6 +132,11 @@
     "id": "ADR-026",
     "title": "Live real-server demo (router on the real llama-servers)",
     "status": "accepted (accepted 2026-10-20 by Claude Code under ADR-020, on Arnav's demo-track addition; recorded here because the number \"ADR-023\" the addition used is the DDQN-hyperparameter ADR)"
+   },
+   {
+    "id": "ADR-027",
+    "title": "Reward credit fix for the independent agents (shared cost, delay cost) and a class-aware reference rule",
+    "status": "accepted (accepted 2026-10-20 by Claude Code under ADR-020; amends ADR-014's cost credit and ADR-022's forward/defer cost)"
    }
   ],
   "profiling_fit": {

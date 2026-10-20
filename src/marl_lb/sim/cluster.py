@@ -73,6 +73,10 @@ class SimParams:
     r_drop: float = -5.0
     lambda_cost: float = 0.0
     cost_scale: float = 1.0  # cost enters the reward as lambda * C / cost_scale (a unit, ADR-022)
+    cost_credit: str = (
+        "serving"  # "serving": only the Accept that served the request pays (ADR-014);
+    )
+    # "shared": every agent that acted on it pays, like R_SLA (ADR-027)
     beta_coop: float = 0.0
     breach_window_ticks: int = 100
     w_kv: float = 0.0
@@ -92,7 +96,7 @@ class SimParams:
             wait_scale_s=sim["wait_scale_s"], max_drain_s=sim["max_drain_s"], k=ob["k"],
             prefix_hit_enabled=ob["prefix_hit_enabled"], r_met=rw["r_sla_met"],
             r_missed=rw["r_sla_missed"], r_drop=rw["r_drop"], lambda_cost=rw["lambda_cost"],
-            cost_scale=rw.get("cost_scale", 1.0),
+            cost_scale=rw.get("cost_scale", 1.0), cost_credit=rw.get("cost_credit", "serving"),
             beta_coop=rw["beta_coop"], breach_window_ticks=rw["breach_window_ticks"],
             w_kv=rw["w_kv"], kv_threshold=rw["kv_threshold"], forward_cost=rw["forward_cost"],
             defer_cost=rw["defer_cost"],
@@ -443,9 +447,14 @@ class Cluster:
         ok = req.sla_met()
         cost = self.servers[req.server].price * req.attributed_s
         kv_frac = req.hot_ticks / req.resident_ticks if req.resident_ticks else 0.0
+        cost_term = self.p.lambda_cost * cost / self.p.cost_scale
         for rec in req.decisions:
-            if rec.serving:
-                rec.reward -= self.p.lambda_cost * cost / self.p.cost_scale + self.p.w_kv * kv_frac
+            if self.p.cost_credit == "shared":
+                rec.reward -= cost_term  # no agent can avoid the cost by passing the request on
+                if rec.serving:
+                    rec.reward -= self.p.w_kv * kv_frac
+            elif rec.serving:
+                rec.reward -= cost_term + self.p.w_kv * kv_frac
         self._credit(req, self.p.r_met if ok else self.p.r_missed, not ok)
         self._emit_all(req)
 

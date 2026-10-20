@@ -106,6 +106,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=max((os.cpu_count() or 2) - 1, 1))
     ap.add_argument("--seeds")
+    ap.add_argument(
+        "--agents-exp",
+        dest="agents_exp",
+        help="results/<exp> with agents.pt (default: paired.yaml)",
+    )
     ap.add_argument("--rhos")
     ap.add_argument(
         "--smoke", action="store_true", help="1 seed, 1 load, small cap, *_smoke folder"
@@ -114,6 +119,8 @@ def main() -> int:
     cfg = yaml.safe_load((ROOT / "configs" / "paired.yaml").read_text())
     if a.seeds:
         cfg["seeds"] = parse_seeds(a.seeds)
+    if a.agents_exp:
+        cfg["learned"]["experiment"] = a.agents_exp
     if a.rhos:
         cfg["rhos"] = [float(x) for x in a.rhos.split(",")]
     if a.smoke:
