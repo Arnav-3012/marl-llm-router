@@ -144,6 +144,23 @@ Source: src/marl_lb/data/processed.py `time_split`; tests/test_processed.py `tes
 
 </details>
 
+## M0.6a Arrival-rate rescaling and the seeded stream [B] 2026-10-20
+Prerequisite: docs/decisions.md ADR-009 (think time is not compressed) and ADR-018 (sampler); docs/glossary.md → Data and traces → "arrival-rate rescaling", "think time", "stream sampler"; src/marl_lb/data/traces.py `sample_stream`; tests/test_sampler.py.
+
+Bet (Arnav, before): on the held-out Azure part, the share of requests that are follow-up turns at 20 req/s will be (higher / lower / about the same) as at 2 req/s: _______
+Outcome (after, printed by sample_stream on the real held-out part, seed 0; logged in docs/logs.md 2026-10-20): 51.3% at 2 req/s and 29.2% at 20 req/s, so lower ✔/✘ _______
+
+Q1 (explain): The sampler multiplies every inter-arrival gap by one factor to reach a target rate, but leaves the think-time gaps between turns of a conversation alone. Why one factor for arrivals, why not for think times, and what does that do to the share of follow-up turns as the rate goes up?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+One factor keeps every ratio between gaps, so a burst stays a burst and a lull stays a lull; only the clock speed changes, which is the property that makes the Azure trace worth replaying (tests/test_sampler.py checks that the gaps at 1 and 8 req/s differ by exactly 8). Think time is how long a person reads before replying: it does not get shorter because the cluster is busier, so ADR-009 keeps it in simulated seconds. Consequence: when the rate rises the whole stream gets shorter (the held-out part lasts 143.5 s at 20 req/s) while a median gap is still 131 s, so more conversations are cut by the end of the stream and fewer requests are follow-up turns. That leaves the prefix cache with less to reuse at high load, which is why the report must state the follow-up share next to any cache result.
+
+Source: src/marl_lb/data/traces.py `sample_stream`, `session_plan`; tests/test_sampler.py `test_rescaling_keeps_the_relative_burst_structure`, `test_think_time_gaps_are_not_compressed_by_rescaling`; docs/decisions.md ADR-009, ADR-018 (follow-up shares 51.3%, 41.2%, 29.2% at 2, 5, 20 req/s, held-out, from the run output).
+
+</details>
+
 ## Revisit
 Questions marked partly or missed. Re-ask at the start of the next session; move a line to "cleared" once you get it.
 

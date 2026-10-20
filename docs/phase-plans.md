@@ -29,7 +29,7 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 - [x] M0.4a [B] Viva check for M0.4 (normalisation and split) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
 - [ ] ENV.1 [B] Enable shell access and permissions: .claude/settings.json allow/deny (no rule denying Bash), scripts/verify_env.sh, Environment note in CLAUDE.md — done when: Arnav runs `bash scripts/verify_env.sh` in a local Claude Code session and confirms the output (added 2026-10-20 as a dotted task, no renumbering)
 - [x] M0.6 [B] Seeded stream sampler taking an arrival rate in req/s (not ρ; ρ is converted in M1.28) — done when: same seed gives identical stream (test passes)
-- [ ] M0.6a [B] Viva check for M0.6 (arrival-rate rescaling) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
+- [x] M0.6a [B] Viva check for M0.6 (arrival-rate rescaling) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
 
 ## Phase M0.5 — Profiling (timebox 6h)
 - [ ] M0.5.0 [B] Learning gate L1 (before profiling): Deep-Dive Guide videos 1–5, Parts A–B — done when: Arnav answers the relevant self-check questions from the Deep-Dive Guide into docs/viva.md
