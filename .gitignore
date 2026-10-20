@@ -20,3 +20,8 @@ __pycache__/
 
 # Local model weights and llama.cpp scratch (never committed)
 models/
+
+# Dashboard build artefacts and made-up fixture data (never committed)
+demo/site/node_modules/
+demo/site/dist/
+demo/site/public/fixture-data/

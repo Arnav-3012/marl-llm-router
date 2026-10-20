@@ -4,6 +4,8 @@
 **Mode since 2026-10-20: Claude Code writes Tier A and B code, runs the tests and commits and pushes each task once its done-when passes; Arnav reviews summaries in claude.ai. Tests are written, and shown failing, before the Tier A task they cover.**
 **Every task, Tier A or B, has a docs/viva.md entry per amended ADR-008 (written by Claude Code; Arnav's self-check is optional).**
 
+**Demo track (ADR-020, accepted 2026-10-20): the order and scope below are overridden for the 2026-10-21 13:00 demo; tasks marked [demo-deferred] stay in the plan for the production-grade phase. Tasks not marked still need their done-when.**
+
 **Ordering rule (RULES.md #13): nothing from M6 onward starts before M5's charts exist in results/.**
 Tick a task only when its done-when is met, shown by passing output that Claude Code ran itself (RULES.md #10). Each task ≤ 4h. Every Tier A task is followed by a [B] "viva check" task (suffix `a`): 3 questions per ADR-008, written by Claude Code; Arnav's self-check in docs/viva.md is optional. Rewrite-from-memory tasks use suffix `b`. [B] test tasks come before the [A] task they cover. One task = one commit: "<phase>: <what> (<metric if any>)".
 Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ helper moved after SED; old M1.12 split into three; ADR task inserted before reward tests) and in S.6 (ADR-012 task inserted at M1.21 and prototype run at M1.24; everything from the old M1.21 on shifted, so the S.5 log entry's M1.24–M1.27 are now M1.26–M1.29); M2 and M3 IDs unchanged. S.7 renumbered nothing: it adds one dotted task (M1.8.1) and edits task text only. S.8 renumbers nothing either: it adds M1.25.1 (ADR-011 approved), changes what M1.8.1 and M1.16 approve (M1.8.1 now ADR-012 and ADR-013; M1.16 now ADR-010 and ADR-014), removes the ADR-012 approval from M1.21, and edits task text; the IDs above are unchanged. Dotted suffixes (M1.8.1, M1.25.1) are used for new tasks from now on. M0 plan change (after S.8): M0.3 and M0.4 moved from Tier B to Tier A; added M0.3a, M0.3.1, M0.4a, M0.6a; no IDs changed. No other file references them. M0.3 plan edit (2026-10-03): the M0.3 done-when now also requires ADR-016 (trace choice) and ADR-017 (BurstGPT failure rows) findings, and results/eda/trace_summary.json; no IDs renumbered.
@@ -34,13 +36,13 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 ## Phase M0.5 — Profiling (timebox 6h)
 - [x] M0.5.0 [B] Learning gate L1 (before profiling): Deep-Dive Guide videos 1–5, Parts A–B — done when: Arnav answers the relevant self-check questions from the Deep-Dive Guide into docs/viva.md
 - [x] M0.5.1 [B] Install llama.cpp, fetch Qwen2.5-3B Q4_K_M and a slow-class model — done when: llama-server answers a request
-- [ ] M0.5.2 [B] profiling/bench_server.py: TTFT, TPOT at varying prompt length and batch size, prefix-cache reuse — done when: raw CSV written for both classes; also measure decode and prefill slowdown with 0..N−1 other servers busy (ADR-015)
-- [ ] M0.5.3 [B] Tests for the fitting maths on synthetic data (known a, t0, k recovered) — done when: tests/test_fit_calibration.py passes
-- [ ] M0.5.4 [A] profiling/fit_calibration.py: fit a, t0, k, cache speedup, interference — done when: tests/test_fit_calibration.py passes
-- [ ] M0.5.4a [B] Viva check for M0.5.4 (fit_calibration) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
-- [ ] M0.5.4.1 [B] ADR-015 (interference model: options A/B/C) accepted from the M0.5.2 slowdown data, before M1.7 — done when: ADR-015 status accepted
-- [ ] M0.5.5 [B] Write calibration.json, plot fit vs measured in notebook 02 — done when: fit residuals plotted and reviewed
-- [ ] M0.5.6 [B] ADR: server class split, class prices, KV budgets; the class prices are labelled "synthetic price per busy second (rough real GPU price ratios)" wherever they appear — done when: ADR approved
+- [x] M0.5.2 [B] profiling/bench_server.py: TTFT, TPOT at varying prompt length and batch size, prefix-cache reuse — done when: raw CSV written for both classes; also measure decode and prefill slowdown with 0..N−1 other servers busy (ADR-015) (done 2026-10-20 as the quick profile: 5 repeats, no joint grid, 4000-token cache point dropped, ADR-020/022; 10-repeat re-run deferred)
+- [x] M0.5.3 [B] Tests for the fitting maths on synthetic data (known a, t0, k recovered) — done when: tests/test_fit_calibration.py passes (done 2026-10-20)
+- [x] M0.5.4 [A] profiling/fit_calibration.py: fit a, t0, k, cache speedup, interference — done when: tests/test_fit_calibration.py passes (done 2026-10-20; also fit_prefill_model, ADR-022)
+- [x] M0.5.4a [B] Viva check for M0.5.4 (fit_calibration) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008) (done 2026-10-20)
+- [x] M0.5.4.1 [B] ADR-015 (interference model: options A/B/C) accepted from the M0.5.2 slowdown data, before M1.7 — done when: ADR-015 status accepted (done 2026-10-20: option A accepted)
+- [x] M0.5.5 [B] Write calibration.json, plot fit vs measured in notebook 02 — done when: fit residuals plotted and reviewed (done 2026-10-20: residual plots as PNG per ADR-020, results/profiling/20261020-173822_seed0_quick/plots/; notebook 02 not written)
+- [x] M0.5.6 [B] ADR: server class split, class prices, KV budgets; the class prices are labelled "synthetic price per busy second (rough real GPU price ratios)" wherever they appear — done when: ADR approved (done 2026-10-20: ADR-024 accepted by Claude Code under ADR-020)
 
 ## Phase M1 — Simulator + heuristics
 - [ ] M1.1 [B] config.py + utils (seeding, logging, io) with tests — done when: tests/test_config.py and tests/test_utils.py pass
@@ -110,10 +112,10 @@ Task IDs in M1–M3 were renumbered in S.4, and M1 IDs again in S.5 (old M1.9 ρ
 - [ ] M2.12 [B] Train one DDQN agent replacing one SED-local agent in an otherwise all-SED-local cluster; plot return, TD loss, mean Q, ε, action histogram — done when: over 5 seeds, cluster goodput is within the all-SED-local 95% CI or better AND the action histogram shows more than one action in use (development gate on train traffic, not a reported result)
 
 Break-its (M2). Rule for all: write the hypothesis in docs/viva.md (Break-it log) first; ablation switches are config flags, 3 seeds (diagnostic runs, not reported in docs/numbers.md), results under results/break_it/. Claude Code makes any change inside Tier A files, adds the config entries and runs the experiments (RULES.md #1, #3); the hypothesis is still written first.
-- [ ] M2.13 [A+B] Break-it (a) no target network (online net bootstraps itself): hypothesis in docs/viva.md first — done when: TD loss, mean Q and return curves compared with M2.12 and explained
-- [ ] M2.14 [A+B] Break-it (b) no replay buffer, train on consecutive transitions: hypothesis in docs/viva.md first — done when: curves compared with M2.12 and the correlation effect explained
-- [ ] M2.15 [A+B] Break-it (c) γ ∈ {0, 0.9, 0.99}: hypothesis in docs/viva.md first — done when: three runs compared and the role of delayed outcomes (ADR-004) explained
-- [ ] M2.16 [A+B] Break-it (d) no action masking: hypothesis in docs/viva.md first — done when: illegal-action rate, drops and return compared with M2.12 and explained
+- [ ] M2.13 [A+B] [demo-deferred] Break-it (a) no target network (online net bootstraps itself): hypothesis in docs/viva.md first — done when: TD loss, mean Q and return curves compared with M2.12 and explained
+- [ ] M2.14 [A+B] [demo-deferred] Break-it (b) no replay buffer, train on consecutive transitions: hypothesis in docs/viva.md first — done when: curves compared with M2.12 and the correlation effect explained
+- [ ] M2.15 [A+B] [demo-deferred] Break-it (c) γ ∈ {0, 0.9, 0.99}: hypothesis in docs/viva.md first — done when: three runs compared and the role of delayed outcomes (ADR-004) explained
+- [ ] M2.16 [A+B] [demo-deferred] Break-it (d) no action masking: hypothesis in docs/viva.md first — done when: illegal-action rate, drops and return compared with M2.12 and explained
 
 ## Phase M3 — Multi-agent
 - [ ] M3.0 [B] Learning gate L3 (before M3): Deep-Dive Guide videos 11–12, Part E — done when: Arnav answers the relevant self-check questions from the Deep-Dive Guide into docs/viva.md
@@ -128,17 +130,17 @@ Break-its (M2). Rule for all: write the hypothesis in docs/viva.md (Break-it log
 - [ ] M3.6 [B] tests for neighbour observation with k ∈ {0, 1, full} — done when: tests written
 - [ ] M3.7 [A] Neighbour-wait observation in cluster — done when: tests pass
 - [ ] M3.7a [B] Viva check for M3.7 (neighbour-wait observation) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
-- [ ] M3.8 [B] ADR: joint-action design for the central DQN (one network with 3^N = 81 outputs vs factored), status Proposed — done when: ADR written and reviewed
-- [ ] M3.9 [B] tests/test_central_dqn.py — done when: tests written
-- [ ] M3.10 [A] agents/central_dqn.py — done when: tests/test_central_dqn.py passes
-- [ ] M3.10a [B] Viva check for M3.10 (central DQN) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
+- [ ] M3.8 [B] [demo-deferred] ADR: joint-action design for the central DQN (one network with 3^N = 81 outputs vs factored), status Proposed — done when: ADR written and reviewed
+- [ ] M3.9 [B] [demo-deferred] tests/test_central_dqn.py — done when: tests written
+- [ ] M3.10 [A] [demo-deferred] agents/central_dqn.py — done when: tests/test_central_dqn.py passes
+- [ ] M3.10a [B] [demo-deferred] Viva check for M3.10 (central DQN) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
 - [ ] M3.11 [B] Smoke run: 5 seeds, N=4, no NaNs, conservation holds — done when: results/ written for all seeds
 - [ ] M3.12 [B] Time one full training run and extrapolate total wall time for all experiments (run budget: E1 up to 15 if trained per ρ, E2 10, E3 25, E4 20, plus break-its 30 at 3 seeds; about 100 runs total if nothing is reused); set episode counts by ADR — done when: ADR approved with the wall-time estimate
 
 Break-its (M3). Same rule: hypothesis in docs/viva.md (Break-it log) first; config flags only; 3 seeds (diagnostic runs, not reported in docs/numbers.md); results under results/break_it/. Claude Code adds the config entries and runs the experiments (RULES.md #1).
-- [ ] M3.13 [A+B] Break-it (e) β = 0, smoke scale (links to E2 in M4.7, which is the formal run): hypothesis in docs/viva.md first — done when: breach rate and goodput vs β > 0 compared and explained
-- [ ] M3.14 [A+B] Break-it (f) replay buffer 500k vs 20k to expose non-stationarity: hypothesis in docs/viva.md first — done when: curves compared and stale-data effect explained
-- [ ] M3.15 [A+B] Break-it (g) freeze one agent's learning mid-training and observe the others: hypothesis in docs/viva.md first — done when: the other agents' return and action histograms before/after the freeze compared and explained
+- [ ] M3.13 [A+B] [demo-deferred] Break-it (e) β = 0, smoke scale (links to E2 in M4.7, which is the formal run): hypothesis in docs/viva.md first — done when: breach rate and goodput vs β > 0 compared and explained
+- [ ] M3.14 [A+B] [demo-deferred] Break-it (f) replay buffer 500k vs 20k to expose non-stationarity: hypothesis in docs/viva.md first — done when: curves compared and stale-data effect explained
+- [ ] M3.15 [A+B] [demo-deferred] Break-it (g) freeze one agent's learning mid-training and observe the others: hypothesis in docs/viva.md first — done when: the other agents' return and action histograms before/after the freeze compared and explained
 
 ## Phase M4 — Experiments E1–E6
 - [ ] M4.1 [B] tests/test_stats.py (mean, 95% CI against known values) — done when: tests written
@@ -153,8 +155,8 @@ Break-its (M3). Same rule: hypothesis in docs/viva.md (Break-it log) first; conf
 - [ ] M4.7 [B] E2 cooperation on/off — done when: results/cooperation/ complete
 - [ ] M4.8 [B] E3 λ ∈ {0, 0.25, 0.5, 1, 2} sweep — done when: results/lambda_sweep/ complete
 - [ ] M4.9 [B] E4 k ∈ {0, 1, full} vs centralised — done when: results/k_ablation/ complete
-- [ ] M4.10 [B] E5 train ρ=0.8, test ρ=0.95 and Azure code 2023 (burst test, ADR-016; replaces BurstGPT) — done when: results/load_generalization/ complete
-- [ ] M4.11 [B] E6 specialisation: slack of accepted requests by server class — done when: analysis table written from results/
+- [ ] M4.10 [B] [demo-deferred] E5 train ρ=0.8, test ρ=0.95 and Azure code 2023 (burst test, ADR-016; replaces BurstGPT) — done when: results/load_generalization/ complete
+- [ ] M4.11 [B] [demo-deferred] E6 specialisation: slack of accepted requests by server class — done when: analysis table written from results/
 - [ ] M4.12 [B] scripts/plot.py: goodput bars with CI, Pareto, k ablation, training curves — done when: figures in reports/figures/
 
 ## Phase M5 — Report + viva (course deliverable ends here)
@@ -162,33 +164,33 @@ Break-its (M3). Same rule: hypothesis in docs/viva.md (Break-it log) first; conf
 - [ ] M5.1a [B] Fill docs/numbers.md from results/ only, source path on every row — done when: no empty row has a results/ file available and no value lacks a path
 - [ ] M5.2 [B] Report draft: method, experiments, answers to the 3 questions — done when: draft reviewed
 - [ ] M5.3 [B] Limitations and threats (non-stationarity, sim fidelity, N=4, shared-chip contention: servers coupled on one M4 Pro, not a real cluster; decentralisation as a design choice, "what if routing is decentralised", with the central DQN as reference; synthetic prices) — done when: section reviewed
-- [ ] M5.4 [B] Compile final viva bank from docs/viva.md — done when: bank covers every viva check and every Revisit item
-- [ ] M5.4a [B] Strict mock viva (run in claude.ai); results into docs/viva.md Revisit list — done when: every wrong answer is listed in Revisit with its missing piece
-- [ ] M5.4b [B] Run the codebase-wiki skill to generate docs/wiki/ — done when: docs/wiki/ exists and Arnav has skimmed it
+- [ ] M5.4 [B] [demo-deferred] Compile final viva bank from docs/viva.md — done when: bank covers every viva check and every Revisit item
+- [ ] M5.4a [B] [demo-deferred] Strict mock viva (run in claude.ai); results into docs/viva.md Revisit list — done when: every wrong answer is listed in Revisit with its missing piece
+- [ ] M5.4b [B] [demo-deferred] Run the codebase-wiki skill to generate docs/wiki/ — done when: docs/wiki/ exists and Arnav has skimmed it
 - [ ] M5.5 [B] Final report to reports/final_report.md and slides if required — done when: submitted
 - [ ] M5.6 [B] Gate check: M5 charts exist in results/ and reports/figures/ — done when: Arnav confirms (unlocks M6)
 
 ## Phase M6 — Real deploy (blocked until M5.6)
-- [ ] M6.1 [B] Start N=4 llama-servers on the M4 Pro per configs/servers.yaml — done when: all health endpoints respond
-- [ ] M6.2 [B] router/server_client.py with tests against a mock server — done when: tests/test_server_client.py passes
-- [ ] M6.3 [B] tests/test_observation.py (live state equals sim observation for the same state) — done when: tests written
-- [ ] M6.4 [A] router/observation.py — done when: tests/test_observation.py passes
-- [ ] M6.4a [B] Viva check for M6.4 (observation) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
-- [ ] M6.5 [B] tests/test_policy_router.py (masking, hops, defers) — done when: tests written
-- [ ] M6.6 [A] router/policy_router.py — done when: tests/test_policy_router.py passes
-- [ ] M6.6a [B] Viva check for M6.6 (policy_router) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
-- [ ] M6.7 [B] router/app.py FastAPI endpoint — done when: tests/test_app.py passes with a mock backend
-- [ ] M6.8 [B] scripts/replay_trace.py against the live router — done when: a short replay completes with metrics logged
-- [ ] M6.9 [B] E7 sim vs real for SED: gap = |sim − real| / real — done when: gap table in results/
-- [ ] M6.10 [B] E7 for the learned policy and cache-aware — done when: results/ complete
+- [ ] M6.1 [B] [demo-deferred] Start N=4 llama-servers on the M4 Pro per configs/servers.yaml — done when: all health endpoints respond
+- [ ] M6.2 [B] [demo-deferred] router/server_client.py with tests against a mock server — done when: tests/test_server_client.py passes
+- [ ] M6.3 [B] [demo-deferred] tests/test_observation.py (live state equals sim observation for the same state) — done when: tests written
+- [ ] M6.4 [A] [demo-deferred] router/observation.py — done when: tests/test_observation.py passes
+- [ ] M6.4a [B] [demo-deferred] Viva check for M6.4 (observation) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
+- [ ] M6.5 [B] [demo-deferred] tests/test_policy_router.py (masking, hops, defers) — done when: tests written
+- [ ] M6.6 [A] [demo-deferred] router/policy_router.py — done when: tests/test_policy_router.py passes
+- [ ] M6.6a [B] [demo-deferred] Viva check for M6.6 (policy_router) — done when: entry written by Claude Code in docs/viva.md (Arnav's self-check is optional, ADR-008)
+- [ ] M6.7 [B] [demo-deferred] router/app.py FastAPI endpoint — done when: tests/test_app.py passes with a mock backend
+- [ ] M6.8 [B] [demo-deferred] scripts/replay_trace.py against the live router — done when: a short replay completes with metrics logged
+- [ ] M6.9 [B] [demo-deferred] E7 sim vs real for SED: gap = |sim − real| / real — done when: gap table in results/
+- [ ] M6.10 [B] [demo-deferred] E7 for the learned policy and cache-aware — done when: results/ complete
 
 ## Phase M7 — Showcase
-- [ ] M7.1 [B] docker/Dockerfile for router + replayer + sim/eval — done when: image builds and `scripts/evaluate.py` runs inside
-- [ ] M7.2 [B] docker-compose profile `cpu` — done when: compose up serves a routed request
-- [ ] M7.3 [B] docker-compose profile `host` (host.docker.internal) — done when: router reaches native llama-servers
-- [ ] M7.4 [B] Export trained policy weights to demo/weights/ and precompute the Pareto frontier — done when: files committed
-- [ ] M7.5 [B] demo/app.py controls and simulation (λ, ρ, k, policy) — done when: runs locally
-- [ ] M7.6 [B] demo/app.py plots: per-server decisions, TTFT/cost series, Pareto point — done when: plots render
+- [ ] M7.1 [B] [demo-deferred] docker/Dockerfile for router + replayer + sim/eval — done when: image builds and `scripts/evaluate.py` runs inside
+- [ ] M7.2 [B] [demo-deferred] docker-compose profile `cpu` — done when: compose up serves a routed request
+- [ ] M7.3 [B] [demo-deferred] docker-compose profile `host` (host.docker.internal) — done when: router reaches native llama-servers
+- [ ] M7.4 [B] [demo-deferred] Export trained policy weights to demo/weights/ and precompute the Pareto frontier — done when: files committed
+- [ ] M7.5 [B] [demo-deferred] demo/app.py controls and simulation (λ, ρ, k, policy) — done when: runs locally
+- [ ] M7.6 [B] [demo-deferred] demo/app.py plots: per-server decisions, TTFT/cost series, Pareto point — done when: plots render
 
 ### Phase Sh — Static showcase site (React + TypeScript), inside M7, between M7.6 and M7.7 — FUTURE, NOT STARTED
 Added 2026-10-20 as a plan entry only; no work is done now. M7 exists, so Sh is a sub-block of it and renumbers nothing in M7. Tier B throughout.
@@ -204,18 +206,18 @@ The Sh.1–Sh.6 split below maps the spec's Steps 0–4 onto six tasks; it is a 
 - [ ] Sh.4 [B] Result pages: Live replay (labelled "replay of a recorded episode"; policy picker Random/SED/Cache-aware/DQN, ρ selector, play/pause/speed, tick scrubber, per-agent action markers, queue depth; consumes the event stream through the DataSource), Pareto (Q2), Sim-to-real, Observability (Q3, goodput vs k plus the central-DQN reference if run), Traces (M0.3 EDA), Method (architecture, reward, ADR index with links). Every chart: axis labels, units, 95% CI where the evaluation has them, source file and config hash; "not run" empty states, never placeholders that look like results. Keyboard accessible, prefers-reduced-motion respected, responsive — done when: all seven pages build and render from fixture exports
 - [ ] Sh.5 [B] Step 3, verification, run it, do not assume: pytest (export), TypeScript check, lint and build pass; the site is run and every page screenshotted at desktop and phone width, overflow, unreadable charts and clipped text fixed, console clean; with an empty results/ the site builds and shows "not run" everywhere with zero numbers; with fixture results a test asserts every displayed number traces to a results/ file; a test with a mock DataSource (not the static one) renders the replay page, proving the interface is the only data path; initial JS under the DESIGN.md budget — done when: all of these pass and screenshots are saved (paths listed in the log entry)
 - [ ] Sh.6 [B] Step 4, docs and delivery: architecture.md (export script, demo/site layout, DataSource interface), glossary.md (replay, config hash, empty state, event stream, DataSource), docs/viva.md entry per ADR-008, docs/logs.md entry with numbers only from the run output, README "How to run, build and deploy to GitHub Pages", final report (pages done and cut, test and build output, bundle size, screenshot paths, commit hashes). Deployment itself stays with the deployment task (M7.7 below, or its replacement per ADR-019) — done when: README section works from a clean checkout and the docs are updated
-- [ ] Sh.P1 [post-deadline] 3D scene (react-three-fiber, 2D fallback, performance budget) — unstarted; needs its own ADR
-- [ ] Sh.P2 [post-deadline] Dynamic results (options: auto-refresh via GitHub Action; FastAPI results + replay stream; live simulation endpoint) — unstarted; needs its own ADR
+- [ ] Sh.P1 [post-deadline] [demo-deferred] 3D scene (react-three-fiber, 2D fallback, performance budget) — unstarted; needs its own ADR
+- [ ] Sh.P2 [post-deadline] [demo-deferred] Dynamic results (options: auto-refresh via GitHub Action; FastAPI results + replay stream; live simulation endpoint) — unstarted; needs its own ADR
 One commit per Sh task: "Showcase: <task>", pushed once its done-when passes (RULES.md #2).
 
-- [ ] M7.7 [B] Deploy to Hugging Face Space (CPU) — done when: public Space URL works
-- [ ] M7.8 [B] 2-minute demo video of the real M6 router — done when: video linked in README
+- [ ] M7.7 [B] [demo-deferred] Deploy to Hugging Face Space (CPU) — done when: public Space URL works
+- [ ] M7.8 [B] [demo-deferred] 2-minute demo video of the real M6 router — done when: video linked in README
 - [ ] M7.9 [B] README results table, Reproduce section, MIT licence — done when: README complete from results/
 - [ ] M7.9a [B] README "Results" table generated from docs/numbers.md only — done when: every README number matches a row in docs/numbers.md with a results/ source path
-- [ ] M7.10 [B] Make repo public after grading — done when: Arnav confirms
+- [ ] M7.10 [B] [demo-deferred] Make repo public after grading — done when: Arnav confirms
 
 ## Phase M8 — Kaggle 2×T4 + vLLM validation (stretch)
-- [ ] M8.1 [B] Kaggle notebook launching vLLM on 2×T4 — done when: both servers respond
-- [ ] M8.2 [B] Profile vLLM servers into a second calibration file — done when: calibration written
-- [ ] M8.3 [B] Replay trace through the router on vLLM — done when: metrics logged
-- [ ] M8.4 [B] Compare sim vs vLLM real — done when: gap table written
+- [ ] M8.1 [B] [demo-deferred] Kaggle notebook launching vLLM on 2×T4 — done when: both servers respond
+- [ ] M8.2 [B] [demo-deferred] Profile vLLM servers into a second calibration file — done when: calibration written
+- [ ] M8.3 [B] [demo-deferred] Replay trace through the router on vLLM — done when: metrics logged
+- [ ] M8.4 [B] [demo-deferred] Compare sim vs vLLM real — done when: gap table written

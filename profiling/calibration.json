@@ -1,3 +1,47 @@
 {
-  "_comment": "Filled by profiling/fit_calibration.py in M0.5. Simulator server parameters come ONLY from here (RULES.md #8)."
+  "interference_model": "A",
+  "classes": {
+    "fast_expensive": {
+      "a": 0.0012208897124883157,
+      "prefill_quad": 9.491188148231064e-09,
+      "cached_token_cost_ratio": 0.02264849438045615,
+      "t0": 0.013712136144465861,
+      "k": 0.001115585677005723,
+      "s_prefill": 0.3787892813383407,
+      "s_decode": 2.0659628771487846,
+      "kv_token_budget": 29127,
+      "kv_bytes_per_token": 36864,
+      "max_batch": 8,
+      "price_per_busy_second": 4.0,
+      "fit_r2": {
+        "prefill": 0.9933061579455198,
+        "decode": 0.6150743115687753
+      },
+      "fit_prefill_max_rel_err": 0.18780044513467697
+    },
+    "slow_cheap": {
+      "a": 0.009569192786078746,
+      "prefill_quad": 1.5076469820827265e-06,
+      "cached_token_cost_ratio": 0.008796588471062244,
+      "t0": 0.00914974727403766,
+      "k": 0.010364642768994155,
+      "s_prefill": 3.0004015143140723,
+      "s_decode": 8.36706026880385,
+      "kv_token_budget": 37449,
+      "kv_bytes_per_token": 28672,
+      "max_batch": 8,
+      "price_per_busy_second": 1.0,
+      "fit_r2": {
+        "prefill": 0.9997167550449765,
+        "decode": 0.989063557372426
+      },
+      "fit_prefill_max_rel_err": 0.11556969834624087
+    }
+  },
+  "notes": [],
+  "source": {
+    "fit": "results/profiling/20261020-173822_seed0_quick",
+    "written": "2026-10-20T18:29:43",
+    "n_servers": 4
+  }
 }

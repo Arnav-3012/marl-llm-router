@@ -1,0 +1,79 @@
+# Settings for profiling/bench_server.py (M0.5.2). Every grid size, repeat count and server flag
+# lives here, not in code. The measurements fit a, t0, k, cache speedup and interference
+# (profiling/fit_calibration.py); nothing in this file is a simulator parameter.
+# Timebox: the plan gives M0.5 6 hours in total; bench_server.py logs its actual wall time.
+
+output_root: results/profiling       # a run writes results/profiling/<timestamp>_seed<seed>/
+seed: 0                              # seeds the prompt text, so prompts are reproducible
+
+# --- servers ---------------------------------------------------------------------------------
+# 4 llama-server processes mirror the N=4 cluster (2 fast-expensive, 2 slow-cheap, configs/servers.yaml).
+# They are all started for the whole run so the interference grid can load any subset of them.
+# fast: Qwen2.5-3B Q4_K_M on Metal (all layers offloaded). slow: Qwen2.5-1.5B Q4_K_M CPU-only (-ngl 0).
+llama_server_bin: llama-server       # resolved on PATH
+host: 127.0.0.1
+ctx_size: 65536                      # total KV tokens per server; split across the parallel slots
+parallel_slots: 8                    # --parallel; must be >= the largest batch size below
+servers:
+  fast_expensive:
+    model: models/qwen2.5-3b/qwen2.5-3b-instruct-q4_k_m.gguf
+    n_gpu_layers: 99
+    threads: 2                       # Metal does the work; the CPU threads only drive it
+    ports: [8081, 8083]
+  slow_cheap:
+    model: models/qwen2.5-1.5b/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    n_gpu_layers: 0
+    threads: 3                       # CPU does the work. Threads over all 4 servers (2*2 + 2*3 = 10) stay below the
+    ports: [8082, 8084]              # 12 cores (8 P + 4 E): the first smoke run used 16 threads and the slow class
+                                     # slowed 20-40x with 3 busy neighbours, a thread-oversubscription collapse
+
+# --- measurement protocol ---------------------------------------------------------------------
+warmup_runs: 2                       # discarded runs before each point's recorded repeats
+repeats: 10                          # recorded runs per point (Guide H1: at least 10)
+decode_tokens: 128                   # output tokens for decode measurements (ignore_eos, so every run emits exactly this many)
+request_timeout_s: 600
+
+# --- grids ------------------------------------------------------------------------------------
+# a: prefill cost. One request alone, 1 output token; TTFT against prompt length.
+prefill_prompt_tokens: [100, 250, 500, 1000, 2000, 3000, 4000]
+# t0 and k: decode step time against concurrent requests, short prompt so prefill is negligible.
+batch_sizes: [1, 2, 4, 8]
+batch_prompt_tokens: 100
+# TTFT and TPOT over the joint grid (prompt length x batch size).
+# Kept small because the slow class prefills at about 100 tokens/s (measured while choosing the class, M0.5.1):
+# a (P, B) point of B x P tokens costs minutes there. B up to 8 is covered by the batch grid.
+joint_prompt_tokens: [100, 500, 1000]
+joint_batch_sizes: [1, 2, 4]
+# Prefix cache: prompt = shared prefix + new text. Cold = fresh text of the same total length.
+cache_prefix_tokens: [250, 500, 1000, 2000]
+cache_new_tokens: 50                 # fresh tokens appended after the shared prefix
+
+# Interference (ADR-015): a probe on one target server while n_other_busy of the other N-1 servers
+# run a closed loop of requests. n_other_busy = 0..N-1. The busy servers are the first n of a fixed
+# neighbour order: the target's same-class sibling, then the other class's servers.
+interference_levels: [0, 1, 2, 3]
+interference_probe_prefill_tokens: 500
+interference_probe_decode_prompt_tokens: 100
+interference_background_prompt_tokens: 500   # each busy server loops: this prompt, then decode_tokens output
+interference_settle_s: 5             # let the background load reach steady state before probing
+
+# --smoke: tiny grids to check the plumbing in a few minutes. Overrides the keys above; the
+# output directory gets a "_smoke" suffix and the numbers are not used for the fit.
+smoke:
+  warmup_runs: 1
+  repeats: 2
+  decode_tokens: 32
+  prefill_prompt_tokens: [100, 500]
+  batch_sizes: [1, 2]
+  joint_prompt_tokens: [100]
+  joint_batch_sizes: [1, 2]
+  cache_prefix_tokens: [250]
+  interference_levels: [0, 1, 3]
+  interference_settle_s: 2
+
+# --quick: the same protocol with fewer repeats (5 recorded, 1 warm-up) for when time is short. Below the
+# Deep-Dive Guide H1 minimum of 10, so confidence intervals are wider; use with --only
+# prefill,batch,cache,interference (the joint grid is descriptive and not fitted).
+quick:
+  warmup_runs: 1
+  repeats: 5

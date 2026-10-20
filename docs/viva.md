@@ -200,6 +200,62 @@ Source: Deep-Dive Guide A7 (Interference), H1, H5; docs/decisions.md ADR-015; do
 
 </details>
 
+## M0.5.4a fit_calibration: least squares, R², residuals, interference [A] 2026-10-20
+Prerequisite: Deep-Dive Guide H1, H2, H6 (profiling protocol, least-squares fit, residuals and standard errors); docs/glossary.md → "residual", "warm-up run", "interference"; docs/decisions.md ADR-015; profiling/fit_calibration.py; tests/test_fit_calibration.py.
+
+Bet (Arnav, before): for the fast class, the fitted prefill slope a will be (smaller / similar / larger) than the slow class's, by a factor of about ______; and the slow class's TTFT against prompt length will (stay straight / curve up): _______
+Outcome (after, from results/profiling/<run>/fit_output.json): _______ ✔/✘
+
+Q1 (explain): The prefill fit is TTFT = a·P + c by least squares. What do a and c mean physically, what does R² say, and why is R² alone not enough to trust the line?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+a is the seconds one more prompt token adds (prefill is one parallel pass whose cost grows with P); c is the fixed part of every request: HTTP and scheduling plus the one decode step that makes the first token, so c should be near t0 + k (the code prints that check). Least squares picks a and c to minimise the sum of squared gaps; the normal equations make the residuals perpendicular to the columns [P, 1]. R² is the share of TTFT variance the line explains. It can stay high when the shape is wrong: if attention cost grows with P², TTFT curves up, the line still scores a decent R², but its residuals are negative in the middle and positive at both ends. So the fit also adds a P² term and reports its t-value and its size against the line (`shape` in fit_output.json), plus the spread per prompt length.
+
+Source: Deep-Dive Guide H2, H6 (points 2 and 3); profiling/fit_calibration.py `fit_prefill`; tests/test_fit_calibration.py `test_shape_check_flags_a_curve_and_passes_a_straight_line`.
+
+</details>
+
+Q2 (break-it): You fit t0 and k with every request row of a batch-of-8 run, instead of one step time per run. What goes wrong, and what does the test `test_decode_fit_counts_each_run_once_not_once_per_request` guard against?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+bench_server writes the run-level step time on each request row, so a batch of 8 appears 8 times and a batch of 1 once: large batches are over-weighted 8:1 in the regression and the standard errors come out too small (the effective sample is the number of runs, not rows). The line is pulled towards the large-B points and the reported uncertainty is falsely tight. The test builds data with 4 batch sizes x 10 repeats and requires n_runs = 40, not 150, so rows must be collapsed to one value per (batch size, prompt length, repeat). A second guard: runs with no window where all requests decode (step time nan) are dropped, not filled.
+
+Source: profiling/fit_calibration.py `fit_decode`; profiling/bench_server.py `all_active_step_time`; tests/test_fit_calibration.py (the two decode tests).
+
+</details>
+
+Q3 (justify): The interference fit expresses slowdown as s·n/(N−1) through the origin, but the code also prints the slowdown at each level and a fixed-multiplier summary. Why not just commit to the formula, and what decides between ADR-015 options A, B and C?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+Option A (linear in the number of busy neighbours) is only one of three candidate models and ADR-015 is decided in M0.5.4.1 from the data, not before it. The per-level table shows the real shape: if the slowdown grows with n roughly in proportion, A fits (linear R² near 1); if it jumps at n = 1 and then stays flat, B (one fixed multiplier) is the honest model; if the slowdown is within the noise, C (no term, reported as a sim-to-real limit) is. The fit therefore reports s with its standard error, the linear R², and the per-level means with their uncertainty, and never writes calibration.json: that waits for the ADR. A through-the-origin line also assumes no slowdown at n = 0, which is true by construction because the baseline run is the n = 0 level.
+
+Source: docs/decisions.md ADR-015; profiling/fit_calibration.py `fit_interference`; Deep-Dive Guide A7 (Interference), H1.
+
+</details>
+
+## M0.5.4.1 / M0.5.5 Prefill shape and the interference decision [B] 2026-10-20
+Prerequisite: docs/glossary.md → "effective tokens", "interference"; docs/decisions.md ADR-015, ADR-022; results/profiling/20261020-173822_seed0_quick/plots/fit_*.png.
+
+Bet (Arnav, before): the straight line TTFT = a·P + c will fit both classes well (yes / no), and the slowdown from busy neighbours will be (linear / a jump / curving up): _______
+Outcome (after, from results/profiling/20261020-173822_seed0_quick/fit_output.json): _______ ✔/✘
+
+Q1 (justify): The line fit gave R² = 0.99 on both classes, yet the simulator uses a·E + q·E² through the origin. Why was the line rejected, and why is the model fitted with weights 1/TTFT?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+R² only says how much of the variance the line explains; the points are spread over 100 to 4000 tokens, so even a bent curve has a high R². The residuals say more: the line has a negative offset (−0.085 s fast, −2.83 s slow), which cannot be a real fixed cost, and TTFT per token rises with prompt length (slow class about 9.8 ms/token at 500 tokens, 15.8 at 4000), the signature of attention cost growing with P. The simulator has no per-request offset, so using the line's slope alone would misprice short and long prompts in opposite directions (about ±30% on the slow class). Weights 1/TTFT minimise relative error: most requests are short (median prompt 1,020 tokens), and an unweighted fit would be decided by the few 4,000-token points whose TTFTs are 20 to 50 times larger.
+
+Source: docs/decisions.md ADR-022; profiling/fit_calibration.py `fit_prefill_model`; results/profiling/20261020-173822_seed0_quick/fit_output.json (prefill shape and prefill_model).
+
+</details>
+
 ## Revisit
 Questions marked partly or missed. Re-ask at the start of the next session; move a line to "cleared" once you get it.
 

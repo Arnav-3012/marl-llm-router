@@ -1,0 +1,6 @@
+# Server class split, synthetic prices and KV budgets (M0.5.6, ADR-024). Calibration-derived physics (a, t0, k, cache,
+# interference) is NOT here: it comes only from the profiling fit (profiling/write_calibration.py -> calibration.json).
+kv_allotment_bytes: 1073741824    # KV-cache memory each server may use: 1 GiB (ASSUMPTION; sets kv_token_budget = bytes / bytes-per-token)
+price_per_busy_second:            # "synthetic price per busy second (rough real GPU price ratios)"; units are arbitrary
+  fast_expensive: 4.0
+  slow_cheap: 1.0
