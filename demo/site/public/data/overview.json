@@ -1,0 +1,55 @@
+{
+ "schema_version": 1,
+ "status": "ok",
+ "data": {
+  "q1_goodput": {
+   "rho": "0.8",
+   "metric": "goodput_rps",
+   "ddqn": {
+    "mean": 0.28036899192073184,
+    "ci": 0.11179178222272682,
+    "n": 5
+   },
+   "sed_local_full": {
+    "mean": 0.12457547565766554,
+    "ci": 0.004496435882671132,
+    "n": 5
+   },
+   "sed_global": {
+    "mean": 0.39630758622822315,
+    "ci": 0.025370471608565367,
+    "n": 5
+   },
+   "cache_aware_local_full": {
+    "mean": 0.1277730996689896,
+    "ci": 0.006186308418704472,
+    "n": 5
+   }
+  },
+  "q2_pareto_available": true,
+  "q3_observability_available": true,
+  "experiments_finished_seeds": {
+   "baselines": 5,
+   "main": 5,
+   "k0": 5,
+   "lambda0": 5,
+   "lambda2": 5,
+   "prototype": 5,
+   "timing": 1
+  },
+  "exported_at": "2026-10-20T20:16:06",
+  "not_done": [
+   "break-it experiments (M2/M3)",
+   "E5 burst test",
+   "E6 specialisation",
+   "centralised DQN reference",
+   "full 10-repeat profiling (this calibration used 5 repeats)",
+   "real-server replay and sim-to-real gap (E7)",
+   "Docker, Hugging Face Space and demo video",
+   "3D scene and dynamic results"
+  ]
+ },
+ "source": {
+  "note": "headline numbers are copied from baselines.json (see its source)"
+ }
+}

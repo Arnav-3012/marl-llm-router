@@ -1,7 +1,7 @@
 // The ONLY way pages get data. Swap StaticJsonSource for a live source later without touching a page.
 import {
   parseEnvelope,
-  type BaselinesData, type Envelope, type Frame, type MethodData, type ObservabilityData,
+  type BaselinesData, type Envelope, type Frame, type H2HReplay, type HeadToHeadData, type MethodData, type ObservabilityData,
   type OverviewData, type ParetoData, type ReplayData, type TracesData, type TrainingData,
 } from "./types";
 
@@ -13,6 +13,9 @@ export interface DataSource {
   getTraining(): Promise<Envelope<TrainingData>>;
   getTraces(): Promise<Envelope<TracesData>>;
   getMethod(): Promise<Envelope<MethodData>>;
+  getHeadToHead(): Promise<Envelope<HeadToHeadData>>;
+  /** Recorded episode (seed = event_seed) of one policy at one load on the identical slice. */
+  getH2HReplay(policy: string, rho: string): Promise<Envelope<H2HReplay>>;
   /** Frames of a recorded episode, delivered in order; meta (policy, rho, dt) comes from getReplayMeta. */
   getReplayStream(policy: string, rho: string): AsyncGenerator<Frame>;
   getReplayMeta(policy: string, rho: string): Promise<Envelope<ReplayData>>;
@@ -34,6 +37,8 @@ export class StaticJsonSource implements DataSource {
   getTraining = () => this.load<TrainingData>("training.json");
   getTraces = () => this.load<TracesData>("traces.json");
   getMethod = () => this.load<MethodData>("method.json");
+  getHeadToHead = () => this.load<HeadToHeadData>("headtohead.json");
+  getH2HReplay = (policy: string, rho: string) => this.load<H2HReplay>(`h2h_replay_${policy}_${rho}.json`);
   getReplayMeta = (policy: string, rho: string) => this.load<ReplayData>(`replay_${policy}_${rho}.json`);
 
   async *getReplayStream(policy: string, rho: string): AsyncGenerator<Frame> {

@@ -3,10 +3,11 @@ import { DataCtx } from "./ui";
 import { StaticJsonSource } from "./data/dataSource";
 import { Link, ROUTES, useRoute } from "./router";
 import { Overview } from "./pages/Overview";
+import { HeadToHead } from "./pages/HeadToHead";
 import { Replay } from "./pages/Replay";
 import { Baselines, Method, Observability, Pareto, Traces } from "./pages/Results";
 
-const PAGES: Record<string, () => JSX.Element> = { "/": Overview, "/replay": Replay, "/pareto": Pareto, "/baselines": Baselines, "/observability": Observability, "/traces": Traces, "/method": Method };
+const PAGES: Record<string, () => JSX.Element> = { "/": Overview, "/replay": Replay, "/headtohead": HeadToHead, "/pareto": Pareto, "/baselines": Baselines, "/observability": Observability, "/traces": Traces, "/method": Method };
 
 export function App() {
   const route = useRoute();

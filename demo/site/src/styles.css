@@ -153,3 +153,25 @@ details > summary { cursor: pointer; color: var(--text-3); font-size: 13px; marg
 .ticker b { color: var(--text-2); font-weight: 510; }
 input[type="range"] { width: 100%; min-height: 28px; }
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 12px 0; }
+
+/* ---- head to head (Sh.H2) ---- */
+.h2h-panes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
+@media (max-width: 860px) { .h2h-panes { grid-template-columns: 1fr; } }
+.pane { transition: opacity 200ms var(--ease); }
+.pane.dim { opacity: 0.45; }
+.pane-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.pane-head b { font-weight: 590; font-size: 15px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; margin-top: 10px; }
+.tile { border: 1px solid var(--border-subtle); border-radius: 8px; padding: 8px 10px; background: rgba(255, 255, 255, 0.02); }
+.tile .v { font-size: 20px; font-weight: 510; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.tile .k { font: 510 10.5px/1.3 var(--mono); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.tile .v small { font-size: 11px; color: var(--text-3); font-weight: 400; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
+.verdict { border-left: 3px solid var(--accent); padding: 8px 12px; background: rgba(113, 112, 255, 0.06); border-radius: 0 6px 6px 0; margin: 8px 0; font-size: 14px; color: var(--text-2); }
+.verdict.win { border-color: #009e73; } .verdict.lose { border-color: #d55e00; } .verdict.tie { border-color: #8a8f98; }
+.verdict b { color: var(--text); }
+tr.learned-row td { background: rgba(230, 159, 0, 0.08); }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+

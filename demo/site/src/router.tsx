@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 export const ROUTES = [
   { path: "/", label: "Overview" },
   { path: "/replay", label: "Replay" },
+  { path: "/headtohead", label: "Head to head" },
   { path: "/pareto", label: "Pareto" },
   { path: "/baselines", label: "Baselines & E1" },
   { path: "/observability", label: "Observability" },

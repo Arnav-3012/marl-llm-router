@@ -23,6 +23,7 @@ from datetime import datetime
 from pathlib import Path
 
 from marl_lb.config import ROOT
+from marl_lb.eval.paired import paired_difference, verify_paired
 from marl_lb.eval.pareto import pareto_front
 from marl_lb.eval.stats import aggregate
 
@@ -302,7 +303,14 @@ def frames_from_events(events: list, dt: float, cap: int) -> list:
             f["forwards"].append({"req": e["req"], "src": e["src"], "dst": e["dst"]})
         elif kind == "resolve":
             f["resolves"].append(
-                {"req": e["req"], "ok": e["ok"], "status": e["status"], "server": e.get("server")}
+                {
+                    "req": e["req"],
+                    "ok": e["ok"],
+                    "status": e["status"],
+                    "server": e.get("server"),
+                    "ttft": e.get("ttft"),  # seconds, None if never served
+                    "cost": e.get("cost"),  # synthetic price x busy seconds
+                }
             )
     ticks = sorted(by_tick)
     step = max(1, -(-len(ticks) // cap))
@@ -362,6 +370,125 @@ def export_replays(
                     )
                 )
             written.append(rel)
+    return written
+
+
+H2H_LABEL = {
+    "ddqn_agents": "Learned agents (DDQN)",
+    "random": "Random (entry rule)",
+    "sed_global": "SED global",
+    "sed_local_full": "SED local (k=full)",
+    "cache_aware_global": "Cache-aware global",
+    "cache_aware_local_full": "Cache-aware local",
+}
+H2H_DIFF_METRICS = ["goodput_rps", "sla_attainment", "drop_rate", "ttft_p95", "cost_per_request"]
+H2H_FRAME_CAP = (
+    1200  # two panes are drawn at once, so a replay has fewer frames than the Replay page
+)
+
+
+def latest_paired(results: Path):
+    done = sorted(d for d in (results / "paired").glob("*") if (d / "DONE").exists())
+    return done[-1] if done else None
+
+
+def export_headtohead(results: Path, out: Path, dt: float, cap: int, layout: list | None) -> list:
+    """headtohead.json (summaries, paired differences, provenance) + h2h_replay_<policy>_<rho>.json.
+
+    Reads the newest finished results/paired/<run>/ and refuses (raises) if its policies did not see
+    identical traffic (verify_paired). A missing run becomes a labelled "not run" file.
+    """
+    import yaml
+
+    written = ["headtohead.json"]
+    run = latest_paired(results)
+    if run is None:
+        reason = "no finished results/paired/<run>/ yet (scripts/evaluate_paired.py)"
+        (out / "headtohead.json").write_text(json.dumps(envelope(None, reason=reason)))
+        return written
+    report = verify_paired(run)
+    cfg = yaml.safe_load((run / "config.yaml").read_text())
+    docs = {}
+    for f in sorted(run.glob("*_rho*.json")):
+        d = json.loads(f.read_text())
+        docs[(d["policy"], str(d["rho"]))] = (f, d)
+    learned = cfg["learned"]["name"]
+    pids = [p for p in [learned, *cfg["baselines"]] if any(k[0] == p for k in docs)]
+    data = {
+        "dt": dt,
+        "layout": layout,
+        "learned": learned,
+        "event_seed": cfg["event_seed"],
+        "slice_split": cfg["split"],
+        "policies": [
+            {
+                "id": p,
+                "label": H2H_LABEL.get(p, p),
+                "kind": "learned" if p == learned else "baseline",
+                "mode": "global" if p.endswith("_global") else "agents",
+            }
+            for p in pids
+        ],
+        "rhos": {},
+    }
+    for rho in [str(r) for r in sorted(report)]:
+        rows = {p: docs[(p, rho)][1] for p in pids if (p, rho) in docs}
+        learned_doc = rows.get(learned)
+        entry = {
+            "slice_id": report[float(rho)]["slice_id"],
+            "seeds": report[float(rho)]["seeds"],
+            "config_hash": report[float(rho)]["config_hash"],
+            "summary": {
+                p: aggregate(list(d["per_seed"].values()), METRICS) for p, d in rows.items()
+            },
+            "paired_diff": {},
+            "replay": {},
+        }
+        for p, d in rows.items():
+            if p != learned and learned_doc is not None:
+                try:
+                    entry["paired_diff"][p] = {
+                        m: paired_difference(learned_doc["per_seed"], d["per_seed"], m)
+                        for m in H2H_DIFF_METRICS
+                    }
+                except ValueError:  # fewer than 2 shared seeds
+                    entry["paired_diff"][p] = None
+            rel = f"h2h_replay_{p}_{rho}.json"
+            events_path = run / d["events_file"] if d.get("events_file") else None
+            if events_path is None or not events_path.exists():
+                (out / rel).write_text(
+                    json.dumps(envelope(None, reason=f"no event log for {p} at rho {rho}"))
+                )
+                entry["replay"][p] = None
+            else:
+                events = [json.loads(x) for x in events_path.read_text().splitlines() if x]
+                replay = {
+                    "policy": p,
+                    "rho": float(rho),
+                    "dt": dt,
+                    "layout": layout,
+                    "mode": "global" if p.endswith("_global") else "agents",
+                    "seed": cfg["event_seed"],
+                    "events": d["events"],
+                    "frames": frames_from_events(events, dt, min(cap, H2H_FRAME_CAP)),
+                }
+                src = {
+                    "files": [str(events_path.relative_to(results.parent))],
+                    "config_hash": d["config_hash"],
+                    "n_seeds": 1,
+                    "note": f"slice {d['slice_id']}, seed {cfg['event_seed']}",
+                }
+                (out / rel).write_text(json.dumps(envelope(replay, src), default=float))
+                entry["replay"][p] = rel
+                written.append(rel)
+        data["rhos"][rho] = entry
+    source = {
+        "files": sorted(str(f.relative_to(results.parent)) for f, _ in docs.values()),
+        "config_hash": next(iter(report.values()))["config_hash"],
+        "n_seeds": len(next(iter(report.values()))["seeds"]),
+        "note": "every policy on the identical held-out slice (verified)",
+    }
+    (out / "headtohead.json").write_text(json.dumps(envelope(data, source), default=float))
     return written
 
 
@@ -435,6 +562,7 @@ def run_export(
     for name, env in files.items():
         (out / name).write_text(json.dumps(env, indent=1, default=float))
     names = sorted(files) + export_replays(results, out, dt, cap, layout)
+    names += export_headtohead(results, out, dt, cap, layout)
     (out / "manifest.json").write_text(
         json.dumps(
             {

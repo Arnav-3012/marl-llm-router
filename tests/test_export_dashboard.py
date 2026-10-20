@@ -166,3 +166,75 @@ def test_method_page_lists_the_adrs(fixture_root):
         "title": "Ticks",
         "status": "accepted",
     }
+
+
+# ---- head-to-head (Sh.H2): paired results -> headtohead.json + replay files --------------------
+def make_paired_run(root, seeds=(0, 1, 2), cap=60000):
+    import yaml
+
+    from marl_lb.eval import paired
+    from tests.test_paired import RUNNERS, stream_fn
+
+    run = root / "results" / "paired" / "20261020-000000"
+    run.mkdir(parents=True)
+    runners = {"ddqn_agents": RUNNERS["sed_global"], **RUNNERS}
+    paired.evaluate_paired(
+        runners, stream_fn, [0.5, 0.8], lambda rho: rho * 2.0, list(seeds), "heldout", "cfg1", run,
+        event_seed=0, event_cap=cap,
+    )  # fmt: skip
+    cfg = {
+        "learned": {"name": "ddqn_agents", "experiment": "main"},
+        "baselines": ["random", "sed_global"],
+        "event_seed": 0,
+        "split": "heldout",
+    }
+    (run / "config.yaml").write_text(yaml.safe_dump(cfg))
+    (run / "DONE").write_text("x")
+    return run
+
+
+def test_headtohead_is_not_run_without_a_paired_folder(fixture_root):
+    out = fixture_root / "out"
+    run_export(fixture_root / "results", out, root=fixture_root, dt=0.1)
+    env = load(out, "headtohead.json")
+    assert env["status"] == "not_run" and env["data"] is None and "evaluate_paired" in env["reason"]
+    assert "headtohead.json" in load(out, "manifest.json")["files"]
+
+
+def test_headtohead_exports_summaries_paired_differences_and_replays(fixture_root):
+    make_paired_run(fixture_root)
+    out = fixture_root / "out"
+    run_export(fixture_root / "results", out, root=fixture_root, dt=0.1, cap=200)
+    env = load(out, "headtohead.json")
+    assert env["status"] == "ok" and env["source"]["n_seeds"] == 3
+    d = env["data"]
+    assert d["learned"] == "ddqn_agents"
+    assert [p["id"] for p in d["policies"]] == ["ddqn_agents", "random", "sed_global"]
+    assert [p["mode"] for p in d["policies"]] == ["agents", "agents", "global"]
+    for row in d["rhos"].values():
+        assert row["seeds"] == [0, 1, 2] and row["config_hash"] == "cfg1" and row["slice_id"]
+        assert set(row["summary"]) == {"ddqn_agents", "random", "sed_global"}
+        assert row["summary"]["sed_global"]["goodput_rps"]["n"] == 3
+        assert set(row["paired_diff"]) == {"random", "sed_global"}  # learned vs each baseline
+        # the "learned" runner here IS sed_global, so its paired difference to sed_global is 0
+        assert row["paired_diff"]["sed_global"]["goodput_rps"]["mean_diff"] == 0
+        assert not row["paired_diff"]["sed_global"]["goodput_rps"]["excludes_zero"]
+        rel = row["replay"]["random"]
+        replay = load(out, rel)
+        assert replay["status"] == "ok" and replay["data"]["mode"] == "agents"
+        frames = replay["data"]["frames"]
+        assert 0 < len(frames) <= 200
+        resolves = [r for f in frames for r in f["resolves"]]
+        assert resolves and all("ttft" in r and "cost" in r for r in resolves)
+        assert any(r["ttft"] is not None and r["cost"] is not None for r in resolves)
+    assert rel in load(out, "manifest.json")["files"]
+
+
+def test_headtohead_refuses_a_paired_folder_whose_policies_saw_different_traffic(fixture_root):
+    run = make_paired_run(fixture_root)
+    f = run / "random_rho0.5.json"
+    doc = json.loads(f.read_text())
+    doc["slice_id"] = "ffffffffffff"
+    f.write_text(json.dumps(doc))
+    with pytest.raises(ValueError, match="slice_id"):
+        run_export(fixture_root / "results", fixture_root / "out", root=fixture_root, dt=0.1)

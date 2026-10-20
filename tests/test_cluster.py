@@ -237,6 +237,16 @@ def test_replay_events_are_recorded_when_asked():
     assert {"arrive", "act", "servers", "resolve"} <= kinds
 
 
+def test_resolve_events_carry_the_requests_ttft_and_cost():
+    c = make_cluster(record=True)
+    run_episode(c, stream_of([(0.0, 100, 5)]), 0, local_actions(AcceptAll()))
+    (event,) = [e for e in c.run.events if e["e"] == "resolve"]
+    (r,) = c.run.requests
+    assert event["ttft"] == pytest.approx(r.ttft) and r.ttft > 0
+    assert event["cost"] == pytest.approx(c.servers[r.server].price * r.attributed_s)
+    assert event["cost"] > 0
+
+
 def test_cost_scale_divides_the_cost_term_in_the_reward_only():
     def run(scale):
         c = make_cluster(

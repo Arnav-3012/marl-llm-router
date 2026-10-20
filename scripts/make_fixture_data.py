@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 
 from marl_lb.config import ROOT
+from marl_lb.eval import paired
 from scripts.export_dashboard_data import run_export
 
 POLICIES = {
@@ -59,7 +60,7 @@ def make_run(root, exp, seed, files):
     return d
 
 
-def events(rng, n_ticks=900, dt=0.1):
+def events(rng, n_ticks=900, dt=0.1, quality=0.8):
     ev, rid = [], 0
     for t in range(n_ticks):
         for _ in range(rng.poisson(0.5)):
@@ -93,8 +94,10 @@ def events(rng, n_ticks=900, dt=0.1):
                     "e": "resolve",
                     "req": max(rid - 3, 0),
                     "status": "done",
-                    "ok": bool(rng.random() > 0.2),
+                    "ok": bool(rng.random() < quality),
                     "server": int(rng.integers(4)),
+                    "ttft": round(float(rng.gamma(2.0, (3.2 - 2.6 * quality) / 2)), 3),
+                    "cost": round(float(rng.gamma(4.0, 4.5 - 2.0 * quality)), 3),
                 }
             )
         ev.append(
@@ -112,6 +115,50 @@ def events(rng, n_ticks=900, dt=0.1):
             }
         )
     return "\n".join(json.dumps(e) for e in ev)
+
+
+# policy -> (goodput factor, event quality); the learned policy is deliberately close to SED
+PAIRED = {
+    "ddqn_agents": (1.06, 0.82),
+    "sed_global": (1.0, 0.9),
+    "sed_local_full": (0.93, 0.7),
+    "cache_aware_global": (0.97, 0.78),
+    "cache_aware_local_full": (0.91, 0.68),
+    "random": (0.7, 0.55),
+}
+
+
+def write_paired_fixture(root: Path, rng) -> None:
+    """results/paired/fixture/ in the layout scripts/evaluate_paired.py writes (made-up numbers)."""
+    import yaml
+
+    run = root / "results" / "paired" / "fixture"
+    run.mkdir(parents=True)
+    seeds = list(range(5))
+    for rho in (0.5, 0.8, 0.95):
+        for name, (g, quality) in PAIRED.items():
+            results = [
+                {
+                    "seed": s,
+                    "slice_id": f"fx{rho}-{s}",  # identical for every policy at this load and seed
+                    "metrics": metrics(rng, 5 * g * (1.1 - 0.2 * rho), 3.0, rho),
+                    "events": [json.loads(x) for x in events(rng, quality=quality).splitlines()]
+                    if s == 0
+                    else [],
+                }
+                for s in seeds
+            ]
+            paired.write_policy_file(
+                run, name, rho, rho * 0.59, "heldout", "fixture0", results, 0, 60000
+            )
+    cfg = {
+        "learned": {"name": "ddqn_agents", "experiment": "main"},
+        "baselines": [p for p in PAIRED if p != "ddqn_agents"],
+        "event_seed": 0,
+        "split": "heldout",
+    }
+    (run / "config.yaml").write_text(yaml.safe_dump(cfg))
+    (run / "DONE").write_text("fixture")
 
 
 def main() -> None:
@@ -155,6 +202,7 @@ def main() -> None:
                     for r in (0.5, 0.8, 0.95):
                         f2[f"events_rho{r}.jsonl"] = events(rng)
                 make_run(root, exp, seed, f2)
+        write_paired_fixture(root, rng)
         eda = ROOT / "results" / "eda" / "trace_summary.json"
         (root / "results" / "eda").mkdir(parents=True, exist_ok=True)
         if eda.exists():  # the EDA summary is a real result file; reuse it as is

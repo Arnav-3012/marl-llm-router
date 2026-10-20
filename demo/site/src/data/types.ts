@@ -79,9 +79,40 @@ export type Frame = {
   arrivals: { req: number; entry: number; p: number | null; o: number | null }[];
   acts: { agent: number; req: number; action: number }[];
   forwards: { req: number; src: number; dst: number }[];
-  resolves: { req: number; ok: boolean; status: string; server: number | null }[];
+  resolves: { req: number; ok: boolean; status: string; server: number | null; ttft?: number | null; cost?: number | null }[];
 };
 export type ReplayData = { policy: string; rho: number; dt: number; layout?: string[]; frames: Frame[] };
+
+// ---- head-to-head (Sh.H2): every policy on the identical held-out slice ---------------------------
+export type H2HPolicy = { id: string; label: string; kind: "learned" | "baseline"; mode: "agents" | "global" };
+export type PairedDiff = { metric: string; n: number; seeds: number[]; mean_diff: number; ci95: [number, number]; excludes_zero: boolean };
+export type H2HRho = {
+  slice_id: string;
+  seeds: number[];
+  config_hash: string;
+  summary: Record<string, MetricRow>; // policy -> metric -> mean/ci over seeds
+  paired_diff: Record<string, Record<string, PairedDiff> | null>; // baseline -> metric -> learned minus baseline
+  replay: Record<string, string | null>;
+};
+export type HeadToHeadData = {
+  dt: number;
+  layout: string[] | null;
+  learned: string;
+  event_seed: number;
+  slice_split: string;
+  policies: H2HPolicy[];
+  rhos: Record<string, H2HRho>;
+};
+export type H2HReplay = {
+  policy: string;
+  rho: number;
+  dt: number;
+  layout: string[] | null;
+  mode: "agents" | "global";
+  seed: number;
+  events: { cap: number; original: number; kept: number; truncated: boolean; seed: number } | null;
+  frames: Frame[];
+};
 
 export function parseEnvelope<T>(raw: unknown, name: string): Envelope<T> {
   const e = raw as Envelope<T>;

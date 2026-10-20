@@ -427,7 +427,17 @@ class Cluster:
         for rec in req.decisions:
             rec.reward += outcome
             rec.final = True
-        self._log("resolve", req=req.id, status=req.status, ok=not breached, server=req.server)
+        # ttft and cost ride on the event so the replay page computes its tiles from the log alone.
+        cost = None if req.server is None else self.servers[req.server].price * req.attributed_s
+        self._log(
+            "resolve",
+            req=req.id,
+            status=req.status,
+            ok=not breached,
+            server=req.server,
+            ttft=req.ttft,
+            cost=cost,
+        )
 
     def _resolve(self, req) -> None:
         ok = req.sla_met()

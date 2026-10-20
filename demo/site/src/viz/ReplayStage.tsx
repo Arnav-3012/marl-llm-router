@@ -6,15 +6,17 @@ const COL = { fast: "#56b4e9", slow: "#e69f00", ok: "#009e73", bad: "#d55e00", a
 const ACT = ["●", "→", "⏱"]; // Accept, Forward, Defer: shape, not colour
 const ACT_NAME = ["Accept", "Forward", "Defer"];
 
-export function ReplayStage({ frame, layout, queueCap = 16, mode }: { frame: Frame; layout: string[]; queueCap?: number; mode: "agents" | "global" }) {
-  const W = 880, H = 330;
+export function ReplayStage({ frame, layout, queueCap = 16, mode, compact = false }: { frame: Frame; layout: string[]; queueCap?: number; mode: "agents" | "global"; compact?: boolean }) {
+  // compact: a narrower drawing with larger text, for two stages side by side
+  const W = compact ? 640 : 880, H = 330;
   const y = (i: number) => 52 + i * 76;
-  const ax = 250, sx = 740;
+  const ax = compact ? 130 : 250, sx = compact ? 410 : 740;
+  const fs = compact ? 13.5 : 11;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={`Replay frame at t = ${frame.t.toFixed(1)} s`}>
-      <text x={40} y={16} fontSize="11">requests</text>
-      {mode === "agents" && <text x={ax} y={16} textAnchor="middle" fontSize="11">router agents</text>}
-      <text x={sx} y={16} textAnchor="middle" fontSize="11">servers</text>
+      <text x={compact ? 24 : 40} y={16} fontSize={fs}>requests</text>
+      {mode === "agents" && <text x={ax} y={16} textAnchor="middle" fontSize={fs}>router agents</text>}
+      <text x={sx} y={16} textAnchor="middle" fontSize={fs}>servers</text>
       {[0, 1, 2, 3].map((i) => {
         const fast = (layout[i] ?? "").startsWith("fast"), col = fast ? COL.fast : COL.slow;
         const q = frame.queue?.[i] ?? 0, a = frame.active?.[i] ?? 0, kv = frame.kv?.[i] ?? 0;
@@ -43,8 +45,8 @@ export function ReplayStage({ frame, layout, queueCap = 16, mode }: { frame: Fra
               : <circle cx={sx} cy={y(i)} r={29} fill={a ? "rgba(230,159,0,0.2)" : "rgba(255,255,255,0.03)"} stroke={col} strokeWidth={2} strokeDasharray="5 4" />}
             <circle cx={sx} cy={y(i)} r={36} fill="none" stroke={hot ? COL.bad : "rgba(255,255,255,0.18)"} strokeWidth={hot ? 3 : 1.5} strokeDasharray={`${Math.min(kv, 1) * 226} 226`} transform={`rotate(-90 ${sx} ${y(i)})`} />
             {Array.from({ length: Math.min(a, 8) }, (_, k) => <circle key={k} cx={sx - 14 + (k % 4) * 9.5} cy={y(i) - 5 + Math.floor(k / 4) * 12} r={3.4} fill="#f7f8f8" />)}
-            <text x={sx + 46} y={y(i) - 4} fontSize="11" fill="#d0d6e0">{fast ? "fast" : "slow"} · {a} serving</text>
-            <text x={sx + 46} y={y(i) + 11} fontSize="11" fill={hot ? "#ffb37a" : "#8a8f98"}>KV {Math.round(kv * 100)}%{hot ? " ⚠" : ""} · queue {q}</text>
+            <text x={sx + 46} y={y(i) - 4} fontSize={fs} fill="#d0d6e0">{fast ? "fast" : "slow"} · {a} serving</text>
+            <text x={sx + 46} y={y(i) + 12} fontSize={fs} fill={hot ? "#ffb37a" : "#8a8f98"}>KV {Math.round(kv * 100)}%{hot ? " ⚠" : ""} · queue {q}</text>
             <rect x={sx - 150} y={y(i) + 8} width={100} height={6} rx={3} fill="rgba(255,255,255,0.08)" />
             <rect x={sx - 150} y={y(i) + 8} width={Math.min(q / queueCap, 1) * 100} height={6} rx={3} fill={q / queueCap > 0.6 ? COL.bad : col} />
             {res.slice(0, 2).map((r, k) => (

@@ -133,6 +133,7 @@ export function Num({ m, digits = 2, unit = "", title }: { m: Metric | null | un
 
 export const POLICY_STYLE: Record<string, { label: string; color: string; marker: "circle" | "square" | "triangle" | "diamond" | "cross"; dash?: string }> = {
   ddqn: { label: "DDQN agents", color: "#e69f00", marker: "circle" },
+  ddqn_agents: { label: "Learned agents (DDQN)", color: "#e69f00", marker: "circle" },
   sed_global: { label: "SED (global)", color: "#56b4e9", marker: "square" },
   sed_local_full: { label: "SED local, k=full", color: "#0072b2", marker: "square", dash: "6 4" },
   sed_local_k1: { label: "SED local, k=1", color: "#3b8bd0", marker: "square", dash: "2 3" },

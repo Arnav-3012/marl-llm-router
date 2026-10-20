@@ -1,0 +1,310 @@
+{
+ "schema_version": 1,
+ "status": "ok",
+ "data": {
+  "rho": 0.8,
+  "x": "cost_per_request",
+  "y": "ttft_p95",
+  "points": [
+   {
+    "label": "DDQN lambda=0.0",
+    "kind": "learned",
+    "lambda": 0.0,
+    "cost": {
+     "mean": 16.40912388221393,
+     "ci": 3.303082195734666,
+     "n": 5
+    },
+    "latency": {
+     "mean": 18.912690019417987,
+     "ci": 28.27340945379636,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.3411897785278747,
+     "ci": 0.1348555000329599,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/lambda0/20261020-193530-442048_seed0/config.yaml",
+      "results/lambda0/20261020-193530-442048_seed0/eval_metrics.json",
+      "results/lambda0/20261020-193530-476822_seed1/config.yaml",
+      "results/lambda0/20261020-193530-476822_seed1/eval_metrics.json",
+      "results/lambda0/20261020-193530-488250_seed2/config.yaml",
+      "results/lambda0/20261020-193530-488250_seed2/eval_metrics.json",
+      "results/lambda0/20261020-193530-504767_seed3/config.yaml",
+      "results/lambda0/20261020-193530-504767_seed3/eval_metrics.json",
+      "results/lambda0/20261020-193530-511573_seed4/config.yaml",
+      "results/lambda0/20261020-193530-511573_seed4/eval_metrics.json"
+     ],
+     "config_hash": "1b8dd82cf091",
+     "n_seeds": 5
+    },
+    "on_frontier": false
+   },
+   {
+    "label": "DDQN lambda=1.0",
+    "kind": "learned",
+    "lambda": 1.0,
+    "cost": {
+     "mean": 18.086210131948683,
+     "ci": 5.083046894059368,
+     "n": 5
+    },
+    "latency": {
+     "mean": 245.30344090074414,
+     "ci": 397.15400935099285,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.28036899192073184,
+     "ci": 0.11179178222272682,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/main/20261020-185829-362786_seed0/config.yaml",
+      "results/main/20261020-185829-362786_seed0/eval_metrics.json",
+      "results/main/20261020-185829-367388_seed1/config.yaml",
+      "results/main/20261020-185829-367388_seed1/eval_metrics.json",
+      "results/main/20261020-185829-369539_seed2/config.yaml",
+      "results/main/20261020-185829-369539_seed2/eval_metrics.json",
+      "results/main/20261020-185829-401240_seed3/config.yaml",
+      "results/main/20261020-185829-401240_seed3/eval_metrics.json",
+      "results/main/20261020-185829-431891_seed4/config.yaml",
+      "results/main/20261020-185829-431891_seed4/eval_metrics.json"
+     ],
+     "config_hash": "94fa58940f24",
+     "n_seeds": 5
+    },
+    "on_frontier": false
+   },
+   {
+    "label": "DDQN lambda=2.0",
+    "kind": "learned",
+    "lambda": 2.0,
+    "cost": {
+     "mean": 20.738742498367333,
+     "ci": 4.094414796885423,
+     "n": 5
+    },
+    "latency": {
+     "mean": 356.05096713863,
+     "ci": 498.60885636527377,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.2023074078092335,
+     "ci": 0.1060072280786029,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/lambda2/20261020-193530-458135_seed0/config.yaml",
+      "results/lambda2/20261020-193530-458135_seed0/eval_metrics.json",
+      "results/lambda2/20261020-193530-469661_seed1/config.yaml",
+      "results/lambda2/20261020-193530-469661_seed1/eval_metrics.json",
+      "results/lambda2/20261020-193530-495166_seed3/config.yaml",
+      "results/lambda2/20261020-193530-495166_seed3/eval_metrics.json",
+      "results/lambda2/20261020-193530-496642_seed2/config.yaml",
+      "results/lambda2/20261020-193530-496642_seed2/eval_metrics.json",
+      "results/lambda2/20261020-193530-509888_seed4/config.yaml",
+      "results/lambda2/20261020-193530-509888_seed4/eval_metrics.json"
+     ],
+     "config_hash": "85a0a3b17b6b",
+     "n_seeds": 5
+    },
+    "on_frontier": false
+   },
+   {
+    "label": "sed_global",
+    "kind": "baseline",
+    "lambda": null,
+    "cost": {
+     "mean": 15.002814930036394,
+     "ci": 0.24403932097120282,
+     "n": 5
+    },
+    "latency": {
+     "mean": 10.481943849169767,
+     "ci": 8.34369666625975,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.39630758622822315,
+     "ci": 0.025370471608565367,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/baselines/20261020-183857-498314_seed0/config.yaml",
+      "results/baselines/20261020-183857-498314_seed0/metrics.json",
+      "results/baselines/20261020-183857-499034_seed1/config.yaml",
+      "results/baselines/20261020-183857-499034_seed1/metrics.json",
+      "results/baselines/20261020-183857-502627_seed2/config.yaml",
+      "results/baselines/20261020-183857-502627_seed2/metrics.json",
+      "results/baselines/20261020-183857-502945_seed4/config.yaml",
+      "results/baselines/20261020-183857-502945_seed4/metrics.json",
+      "results/baselines/20261020-183857-502961_seed3/config.yaml",
+      "results/baselines/20261020-183857-502961_seed3/metrics.json"
+     ],
+     "config_hash": "d021bc2e46ca",
+     "n_seeds": 5
+    },
+    "on_frontier": true
+   },
+   {
+    "label": "sed_local_full",
+    "kind": "baseline",
+    "lambda": null,
+    "cost": {
+     "mean": 20.75988089800528,
+     "ci": 0.059622965161661864,
+     "n": 5
+    },
+    "latency": {
+     "mean": 30.40163889340934,
+     "ci": 1.347683454814863,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.12457547565766554,
+     "ci": 0.004496435882671132,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/baselines/20261020-183857-498314_seed0/config.yaml",
+      "results/baselines/20261020-183857-498314_seed0/metrics.json",
+      "results/baselines/20261020-183857-499034_seed1/config.yaml",
+      "results/baselines/20261020-183857-499034_seed1/metrics.json",
+      "results/baselines/20261020-183857-502627_seed2/config.yaml",
+      "results/baselines/20261020-183857-502627_seed2/metrics.json",
+      "results/baselines/20261020-183857-502945_seed4/config.yaml",
+      "results/baselines/20261020-183857-502945_seed4/metrics.json",
+      "results/baselines/20261020-183857-502961_seed3/config.yaml",
+      "results/baselines/20261020-183857-502961_seed3/metrics.json"
+     ],
+     "config_hash": "d021bc2e46ca",
+     "n_seeds": 5
+    },
+    "on_frontier": false
+   },
+   {
+    "label": "cache_aware_global",
+    "kind": "baseline",
+    "lambda": null,
+    "cost": {
+     "mean": 20.829334684992325,
+     "ci": 0.04947081106268856,
+     "n": 5
+    },
+    "latency": {
+     "mean": 41.611930251299995,
+     "ci": 2.4788121796926594,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.15684840253484325,
+     "ci": 0.007607681979586198,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/baselines/20261020-183857-498314_seed0/config.yaml",
+      "results/baselines/20261020-183857-498314_seed0/metrics.json",
+      "results/baselines/20261020-183857-499034_seed1/config.yaml",
+      "results/baselines/20261020-183857-499034_seed1/metrics.json",
+      "results/baselines/20261020-183857-502627_seed2/config.yaml",
+      "results/baselines/20261020-183857-502627_seed2/metrics.json",
+      "results/baselines/20261020-183857-502945_seed4/config.yaml",
+      "results/baselines/20261020-183857-502945_seed4/metrics.json",
+      "results/baselines/20261020-183857-502961_seed3/config.yaml",
+      "results/baselines/20261020-183857-502961_seed3/metrics.json"
+     ],
+     "config_hash": "d021bc2e46ca",
+     "n_seeds": 5
+    },
+    "on_frontier": false
+   },
+   {
+    "label": "random",
+    "kind": "baseline",
+    "lambda": null,
+    "cost": {
+     "mean": 20.97989117203312,
+     "ci": 0.07464030934727046,
+     "n": 5
+    },
+    "latency": {
+     "mean": 510.1598359099609,
+     "ci": 332.5425391815033,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.110334510988676,
+     "ci": 0.0038331829511646792,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/baselines/20261020-183857-498314_seed0/config.yaml",
+      "results/baselines/20261020-183857-498314_seed0/metrics.json",
+      "results/baselines/20261020-183857-499034_seed1/config.yaml",
+      "results/baselines/20261020-183857-499034_seed1/metrics.json",
+      "results/baselines/20261020-183857-502627_seed2/config.yaml",
+      "results/baselines/20261020-183857-502627_seed2/metrics.json",
+      "results/baselines/20261020-183857-502945_seed4/config.yaml",
+      "results/baselines/20261020-183857-502945_seed4/metrics.json",
+      "results/baselines/20261020-183857-502961_seed3/config.yaml",
+      "results/baselines/20261020-183857-502961_seed3/metrics.json"
+     ],
+     "config_hash": "d021bc2e46ca",
+     "n_seeds": 5
+    },
+    "on_frontier": false
+   },
+   {
+    "label": "jsq_global",
+    "kind": "baseline",
+    "lambda": null,
+    "cost": {
+     "mean": 20.891443219435295,
+     "ci": 0.013257932931534286,
+     "n": 5
+    },
+    "latency": {
+     "mean": 85.46623056232818,
+     "ci": 16.239788035503874,
+     "n": 5
+    },
+    "goodput": {
+     "mean": 0.1486071035365854,
+     "ci": 0.006427384366289447,
+     "n": 5
+    },
+    "source": {
+     "files": [
+      "results/baselines/20261020-183857-498314_seed0/config.yaml",
+      "results/baselines/20261020-183857-498314_seed0/metrics.json",
+      "results/baselines/20261020-183857-499034_seed1/config.yaml",
+      "results/baselines/20261020-183857-499034_seed1/metrics.json",
+      "results/baselines/20261020-183857-502627_seed2/config.yaml",
+      "results/baselines/20261020-183857-502627_seed2/metrics.json",
+      "results/baselines/20261020-183857-502945_seed4/config.yaml",
+      "results/baselines/20261020-183857-502945_seed4/metrics.json",
+      "results/baselines/20261020-183857-502961_seed3/config.yaml",
+      "results/baselines/20261020-183857-502961_seed3/metrics.json"
+     ],
+     "config_hash": "d021bc2e46ca",
+     "n_seeds": 5
+    },
+    "on_frontier": false
+   }
+  ]
+ },
+ "source": {
+  "note": "points carry their own source"
+ }
+}
