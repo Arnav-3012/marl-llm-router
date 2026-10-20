@@ -30,7 +30,7 @@ Signatures below are text contracts, not code. Types are indicative; finalise pe
 | src/marl_lb/utils/{seeding,logging,io}.py | seeds, CSV logs, run dirs | B |
 | src/marl_lb/data/traces.py | trace loaders and stream sampler | B |
 | src/marl_lb/data/processed.py | normalisation constants (99th percentile, clip to [0,1]), time-ordered train/held-out split | A |
-| notebooks/01_trace_eda.ipynb | trace EDA (analysis cells); skeleton is B | A |
+| notebooks/01_trace_eda.ipynb | trace EDA (analysis cells); skeleton is B | A (temporary exception 2026-10-20: Claude writes cells 9–21, RULES.md #3) |
 | src/marl_lb/data/load.py | ρ = λ_arr / λ_sat helper, ρ → arrival rate in req/s (ADR-011) | B |
 | src/marl_lb/sim/request.py | request record | B |
 | src/marl_lb/sim/server.py | service time, batching, queue | A |

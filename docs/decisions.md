@@ -77,9 +77,17 @@ Alternatives considered: A single viva prep at the end (late, answers forgotten,
 Consequences: About 15 minutes extra per task. Real debugging stories from the break-it experiments. Bets, attempts and hypotheses stay in his own voice. Hypotheses are pre-registered, so a wrong prediction is kept as evidence of learning rather than hidden.
 
 ## ADR-009: Conversation source for the prefix cache
-Status: proposed · Date: 2026-10-03
+Status: proposed · Date: 2026-10-03 (amended 2026-10-20, M0.3 findings)
+What: Choose where the conversation id for the prefix cache comes from: BurstGPT Session IDs (A) or synthetic sessions layered on Azure traffic (B).
+Why: Azure has no conversation id, and BurstGPT Session IDs cover only 4.37% of BurstGPT_3 rows, so the choice decides which experiments can claim real session structure.
 Context: The prefix cache (sim/prefix_cache.py, cache-aware baseline, prefix-hit feature) needs a conversation id per request so that follow-up turns can reuse a server's cached prefix. Azure LLM Inference 2023 is believed to have only TIMESTAMP, ContextTokens and GeneratedTokens, so it carries no conversation id. BurstGPT has a Session ID, but only for conversation-mode rows, and it is not yet known whether Request tokens grow within a session (history included) or how long sessions are.
-Decision: Not yet taken. Decide after the M0.3 findings (Session ID coverage, token growth within a session, session length distribution, Azure columns confirmed). The M0.3 findings are recorded in this ADR.
+Findings (M0.3, drafted by Claude on 2026-10-20 at Arnav's instruction from his notebook output; Arnav to review):
+- Azure conv and code raw files have only TIMESTAMP, ContextTokens and GeneratedTokens: no conversation id.
+- BurstGPT_1 has no Session ID column. BurstGPT_3: 233,617 of 5,344,021 rows (4.37%) have a Session ID, and they are exactly the "Conversation log" rows (233,617 of 233,617; "API log" rows 0 of 5,110,404).
+- 55,920 sessions; 35.5% have a single turn; turns per session p50/p90/p99/max = 2/9/31/436. Gap between consecutive turns p50/p90/p99 = 131 s / 2,340 s / 78,788 s. Session duration p50/p90/p99 = 121 s / 11,812 s / 312,894 s.
+- History inclusion: of 177,697 turns that have a previous turn, the prompt grew in 77.8% and prompt ≥ previous prompt + previous output in 58.7%. diff = prompt − (previous prompt + previous output) has p10/p50/p90 = −457 / 15 / 119 tokens. So in the typical turn the prompt is the earlier conversation plus about 15 new tokens (history is re-sent), but about 41% of turns fall short, so history inclusion is common, not universal.
+- Source: results/eda/trace_summary.json (sessions block) and the printed output of notebooks/01_trace_eda.ipynb cells (e), (f), (g), (h).
+Decision: Not yet taken. Suggested (for Arnav's approval): option B for the main experiments, i.e. synthetic sessions layered on the Azure traffic, with every session parameter in configs/ and set from the BurstGPT_3 statistics above (turns per session, gap between turns, prompt = previous prompt + previous output + new text, a stated share of turns without history); option A only as a cache check on the 233,617 conversation rows. Reason: only 4.37% of BurstGPT rows have sessions, and Azure arrivals (ADR-016 suggestion) have none. The session structure is then an assumption that the report states.
 Alternatives considered: (A) BurstGPT Session IDs for the cache experiments: real session structure, but only a subset of rows, and a different trace from the Azure traffic used elsewhere; (B) synthetic sessions layered on Azure traffic: same arrival and length distributions as the main experiments, but session structure is invented and must be stated as an assumption (parameters in configs/, not in code).
 Consequences: Until decided, cache experiments (E1 Cache-aware, cache hit rate) are not claimed as validated on real conversation structure. Whichever option is chosen, the report states the source of the conversation id.
 
@@ -163,3 +171,33 @@ Decision: Not yet taken. Fixed in M0.5.4.1 from the M0.5.2 profiling data. Candi
 - (C) No interference term in the simulator; the measured slowdown is reported as a sim-to-real limitation (M5.3).
 Alternatives considered: the three options above are the alternatives; none is rejected yet.
 Consequences: M0.5.2 must measure decode and prefill slowdown with 0..N−1 other servers busy, so A can be fitted (a single "any other busy" point would only support B). M0.5.4 fits whatever the accepted option needs. The M1.7 tests and the M1.8 service-time code follow the accepted option, and configs/sim.yaml and calibration.json carry its parameters (no magic numbers). If C is chosen, E7 (sim-to-real gap) is expected to show the slowdown and M5.3 says so.
+
+## ADR-016: Trace driving training and held-out evaluation
+Status: proposed · Date: 2026-10-03
+What: Choose the trace (or combination) that supplies requests for training and held-out evaluation.
+Why: Azure 2023 covers only about one hour per file, which may be too short for a time-ordered train/held-out split plus several seeds; BurstGPT covers weeks but is a different workload.
+Context: M0.1 MANIFEST.json facts; M0.3 EDA findings (arrival rates, burstiness c_a, P/O distributions) to be recorded here by Arnav.
+Findings (M0.3, drafted by Claude on 2026-10-20 at Arnav's instruction from his notebook output; Arnav to review):
+- Duration: Azure conv 0.97 h, Azure code 0.95 h, BurstGPT_1 61.0 days, BurstGPT_3 110.0 days. Mean rate: 5.53, 2.567, 0.271, 0.562 req/s.
+- 80/20 time split (by duration), train / held-out requests: azure_conv 16,495 / 2,871 (held-out 11.7 min); azure_code 8,068 / 751 (11.5 min); burstgpt_1 1,120,335 / 309,402 (12.2 days); burstgpt_3 4,249,532 / 1,094,489 (22.0 days). Mean rate train vs held-out: azure_conv 5.89 vs 4.10, azure_code 2.94 vs 1.09, burstgpt_1 0.266 vs 0.294, burstgpt_3 0.559 vs 0.576 req/s. The BurstGPT held-out part is below the mid-trace peak but not below the mean of its training part.
+- Burstiness: c_a over the whole trace = 1.09 / 13.15 / 13.28 / 17.75. IDC at 1 s = 1.39 / 13.19 / 3.84 / 8.28; at 60 s = 16.1 / 164 / 138 / 230; at 1 h (BurstGPT) = 5,321 / 10,606. Inside slices (10 s counts, 10 min slices for Azure, 1 h for BurstGPT) the median IDC is 2.12 (conv, whole 3.41), 67.6 (code, whole 72.6), 1.06 (BurstGPT_1, whole 24.76) and 1.06 (BurstGPT_3, whole 44.35). Reading: BurstGPT is close to Poisson locally and its burstiness is non-stationarity (hourly slice rates p10–p90: 0.002–0.767 and 0.004–1.583 req/s); azure_code is bursty inside the hour; azure_conv is in between. Timestamps: Azure has microsecond resolution; BurstGPT 1 s (45.6% and 68.3% of gaps are ties); BurstGPT has gaps of 4.2 h and 5.2 h in low-traffic hours.
+- Tokens, p50 / p99: prompt 1020/4142 (conv), 1469/7436 (code), 251/3387 (BurstGPT_1), 327/3354 (BurstGPT_3); output 129/601, 13/251, 34/1491, 14/876. Azure prompts look capped (code: p95 7,303, p99 7,436, max 7,437). Spearman P–O: 0.073, −0.021, 0.429, 0.213 (0.012 without failure rows).
+- Source: results/eda/trace_summary.json and the printed output of notebooks/01_trace_eda.ipynb.
+Decision: Not yet taken. Suggested (for Arnav's approval): option A, Azure conv for training and held-out, with the one-hour window and the small held-out part (2,871 requests) stated as limitations, and BurstGPT_1 used for the E5 burst test as context.md already plans. Reasons: the sampler takes an arrival rate in req/s (M0.6), so trace span and mean rate do not constrain load; Azure has real second-to-minute burstiness while BurstGPT is near-Poisson locally; BurstGPT's 1 s clock and multi-hour gaps need special handling. Open point for M0.6: how a stream longer than the 11.7 min held-out part is built (for example resampling blocks of gaps with a seed). Alternative C if that proves too weak.
+Alternatives considered: (A) Azure 2023 for both, with the short window stated as a limitation; (B) BurstGPT_1 for training and held-out; (C) Azure P/O distributions with BurstGPT arrival times.
+Consequences: M0.4 (split) and M0.6 (sampler) depend on this. context.md "Sampled from Azure 2023" is updated to match the decision.
+
+## ADR-017: Handling of BurstGPT failure rows (output_tokens == 0)
+Status: proposed · Date: 2026-10-03
+What: Keep, drop, or model separately the BurstGPT rows with zero output tokens.
+Why: They are about 1.8% of BurstGPT_1 and about 7.3% of BurstGPT_3 (M0.2 smoke run). If they carry non-zero prompt tokens, they consumed prefill compute, so dropping them understates load; Azure 2023 shows zero such rows, which may mean failures were excluded upstream.
+Context: M0.3 EDA findings (prompt-token distribution of failure rows, time pattern of failures) to be recorded here by Arnav.
+Findings (M0.3, drafted by Claude on 2026-10-20 at Arnav's instruction from his notebook output; Arnav to review):
+- Failure rows: Azure conv 0, Azure code 0, BurstGPT_1 25,443 (1.78%), BurstGPT_3 387,963 (7.26%).
+- They carry no prompt tokens: prompt_tokens == 0 in 99.94% (BurstGPT_1) and 100% (BurstGPT_3) of failure rows, and their share of all prompt tokens is 0.0 to four decimals. The Why premise above (non-zero prompt tokens, prefill consumed) does not hold; they are empty requests with no prefill and no decode.
+- By Log Type, failure share: BurstGPT_1 API log 1.33% (16,931/1,275,518), Conversation log 5.52% (8,512/154,219); BurstGPT_3 API log 7.56% (386,107/5,110,404), Conversation log 0.79% (1,856/233,617). By Model: BurstGPT_1 ChatGPT 1.73%, GPT-4 2.05%; BurstGPT_3 ChatGPT 7.74%, GPT-4 4.52%. The share-per-day plot is in notebook cell (k) and is not summarised here.
+- Effect of keeping them: a spike of zeros pulls every output-token percentile down, and BurstGPT_3's Spearman P–O is 0.213 with them against 0.012 without. Dropping them thins the arrival count by 1.78% and 7.26%.
+- Source: the printed output of notebooks/01_trace_eda.ipynb cells (k) and (d); results/eda/trace_summary.json (failure_rows, failure_share).
+Decision: Not yet taken. Suggested (for Arnav's approval): option B, drop_failures=True, stated in the report. They add no load, so dropping hides nothing; the thinning of arrivals is small and the sampler sets the rate in req/s anyway; M0.4's normalisation constants are computed after dropping. Use option C only if BurstGPT arrival timing must be exact in E5.
+Alternatives considered: (A) keep as prefill-only requests; (B) drop (drop_failures=True) and state it; (C) drop for P/O distributions but keep in arrival counts.
+Consequences: Affects normalisation constants (M0.4), arrival rates and λ_sat if BurstGPT drives any experiment.

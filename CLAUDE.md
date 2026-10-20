@@ -4,6 +4,9 @@ Project: MARL LLM Router — independent Double-DQN agents routing requests acro
 This repo exists for Arnav to LEARN by writing the core himself. Shipping is second.
 Hard rules: RULES.md (read every session; it overrides everything here).
 
+## Update 2026-10-20 (overrides the teaching sections below)
+Arnav asked for Claude to write all code, including the former Tier A files, with explanatory comments, because of the deadline (RULES.md #3–#5, #15–#16 are suspended accordingly). The Tier A teaching protocol, "Arnav types it", and the one-part-per-message limit below apply again only when Arnav asks for teaching. Tests, ruff, conservation test, configs-only values, seeds and the end-of-session steps still apply. Viva self-checks and ADR findings in Arnav's own words are deferred, not dropped.
+
 ## Session start
 Read in order: RULES.md → docs/context.md → docs/phase-plans.md (current phase, first unchecked task) → docs/mistakes.md → last 3 entries of docs/logs.md. Read docs/architecture.md and docs/decisions.md when touching interfaces, state, reward or metrics.
 Reply with exactly:

@@ -64,6 +64,45 @@ Source: M0.2 task brief; src/marl_lb/data/traces.py `_finalise`; the share itsel
 
 </details>
 
+## M0.3a Trace EDA [A] 2026-10-20
+Prerequisite: docs/glossary.md → Queueing → "inter-arrival CV (c_a)" and Data and traces → "index of dispersion of counts", "non-stationarity", "heavy tail"; results/eda/trace_summary.json; docs/decisions.md ADR-009, ADR-016, ADR-017; Deep-Dive Guide B5.
+
+Bet (Arnav): BurstGPT arrivals are bursty in the short term, not only over the day: _______
+Outcome (after): _______ ✔/✘
+
+Q1 (explain): The whole-trace c_a of BurstGPT_1 is 13.3, yet inside one-hour slices the index of dispersion of 10 s counts has a median of 1.06. What do these two numbers say together about the traffic, and which one would you hand to the router designer?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+Inside an hour the arrivals are close to random (IDC ≈ 1, like Poisson), so the large c_a does not come from short-term clumping. It comes from the rate changing between hours (hourly mean rates range from 0.002 to 0.767 req/s between the 10th and 90th percentile of slices) and from hours-long gaps: that is non-stationarity inflating the whole-trace statistic. For queueing waits, burstiness at the time scale of seconds to minutes matters (Kingman: wait grows with c_a²), so the router designer gets the short-window numbers plus the rate profile, not the single c_a.
+
+Source: results/eda/trace_summary.json (c_a, idc_by_window_s); per-slice IDC from the printed output of notebooks/01_trace_eda.ipynb cell "IDC whole trace vs per slice"; Guide B5.
+
+</details>
+
+Q2 (break-it): You split BurstGPT_3 into train and held-out by shuffling requests at random (80/20). Name two separate ways the held-out score would be too optimistic.
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+(1) Time leakage: neighbouring requests of the same burst or hour fall on both sides, so the policy is tested on traffic it has effectively seen. (2) Session leakage: turns of one conversation (55,920 sessions, median gap between turns 131 s) are split, so earlier turns are in training and later turns in held-out, and the prefix-cache behaviour is evaluated on history the held-out stream does not contain. Both show up as a better score than a forward-in-time test. A time-ordered split with an embargo gap, or a split by session, avoids them (ADR-016).
+
+Source: notebook cells (g), (i); docs/decisions.md ADR-016; docs/phase-plans.md M0.3.1.
+
+</details>
+
+Q3 (justify): ADR-017 considers keeping BurstGPT failure rows as "prefill-only" requests. What does the data say about that, and what does keeping them do to the statistics you compute?
+Arnav:   Self-check: got it / partly / missed
+
+<details><summary>Answer</summary>
+
+The failure rows have prompt_tokens = 0 in 99.94% (BurstGPT_1) and 100% (BurstGPT_3) of cases, and carry about 0% of all prompt tokens, so they consume neither prefill nor decode: the "prefill-only" premise does not hold. Keeping them puts a spike of zeros in the output-length distribution (it lowers every O percentile) and creates a fake P–O correlation (Spearman 0.213 with them, 0.012 without in BurstGPT_3). They only thin the arrival count by 1.78% and 7.26%.
+
+Source: printed output of notebooks/01_trace_eda.ipynb cells (k) and (d); results/eda/trace_summary.json (failure_rows, failure_share); docs/decisions.md ADR-017.
+
+</details>
+
 ## Revisit
 Questions marked partly or missed. Re-ask at the start of the next session; move a line to "cleared" once you get it.
 
