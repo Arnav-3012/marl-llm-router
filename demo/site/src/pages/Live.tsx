@@ -78,11 +78,13 @@ export function Live() {
   }, [seconds, rho, seed, policies]);
   // The quick overload showdown for a demo: a fixed, heavy arrival rate (about four times what the cluster serves in time), 45 s of
   // traffic per policy and at most 45 s to finish, so four policies take about six minutes and the differences are large.
+  // Rates are the agents' training loads: rho 0.5 and 0.8 of the simulator lambda_sat 0.591 req/s (results/saturation/lambda_sat_flat.json; rho_train 0.8, configs/train.yaml) = 0.30 and 0.47 req/s.
   // The full showdown (the main result): two rates, 120 s of traffic per policy, five policies; about 36 minutes, saved as the main comparison.
-  const fullShowdown = () => { if (window.confirm("The full showdown takes about 36 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.15, 0.3], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
-  // Medium load only (0.15 req/s, about 28 requests per policy), about 12 minutes.
-  const mediumShowdown = () => { if (window.confirm("The medium-load showdown takes about 12 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.15], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
-  const showdown = () => start({ rate_rps: 0.3, seconds: 45, drain_s: 45, policies: ["sed_global", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] });
+  const fullShowdown = () => { if (window.confirm("The full showdown takes about 36 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.3, 0.47], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
+  // Training load only (rho 0.8 = 0.47 req/s), about 12 minutes.
+  const mediumShowdown = () => { if (window.confirm("The medium-load showdown takes about 12 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.47], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
+  // Quick overload showdown: 0.30 req/s = rho 0.5 of the simulator lambda_sat, inside the agents' training loads; 75 s so a run holds enough requests to rank.
+  const showdown = () => start({ rate_rps: 0.3, seconds: 75, drain_s: 60, policies: ["sed_global", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] });
   useEffect(() => { if (auto.current && health && health.status === "ok" && state === "idle") { auto.current = false; void start(); } });
   const stop = () => api("/livecheck/stop", { method: "POST" }).catch(() => undefined);
   const servers = (what: "start" | "stop") => {
@@ -170,7 +172,7 @@ export function Live() {
                 <button className="primary" onClick={() => start()} disabled={running}>{running ? "Running…" : msgs.length ? "Run again" : "Start live test"}</button>
                 <button onClick={mediumShowdown} disabled={running} title="the medium load, five policies, about 12 minutes">Medium-load showdown (12 min)</button>
                 <button onClick={fullShowdown} disabled={running} title="the main real-server result: two loads, five policies, about 36 minutes">Full showdown (36 min)</button>
-                <button onClick={showdown} disabled={running} title="heavy overload, four policies, about six minutes">Quick overload showdown (6 min)</button>
+                <button onClick={showdown} disabled={running} title="training-load overload (0.30 req/s), four policies, about 10 minutes">Quick overload showdown (10 min)</button>
                 <button onClick={stop} disabled={!running}>Stop</button>
                 <details className="as-opts"><summary>Options</summary>
                   <div className="as-optgrid">

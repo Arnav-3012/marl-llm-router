@@ -1,6 +1,6 @@
 """Live showdown on the REAL servers: every policy on the same requests, fixed rates. Tier B.
 
-uv run python -m scripts.live_showdown [--rates 0.15,0.30] [--seconds 120] [--policies a,b,...]
+uv run python -m scripts.live_showdown [--rates 0.30,0.47] [--seconds 120] [--policies a,b,...]
 
 Needs the router on the real servers (docs/DEMO.md; start it with --robust-exp e8_robust to include
 the robust agents) and nothing else running. For each rate (requests per second, an absolute number
@@ -34,7 +34,8 @@ DEFAULT = "sed_global,route_to_fast,route_to_fast_shed,ddqn_agents,ddqn_robust"
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--api", default="http://127.0.0.1:8000")
-    ap.add_argument("--rates", default="0.15,0.30")
+    # default = the agents' training loads: rho 0.5 and 0.8 of the simulator lambda_sat 0.591 req/s
+    ap.add_argument("--rates", default="0.30,0.47")
     ap.add_argument("--seconds", type=float, default=120.0)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument(
