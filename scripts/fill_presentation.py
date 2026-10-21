@@ -8,6 +8,7 @@ from the same JSON the dashboard reads (which comes from results/), so the deck 
 site does not. Sections without results say so and are left for later; nothing is invented.
 """
 
+# ruff: noqa: E501  (long prose strings for the presentation text)
 from __future__ import annotations
 
 import argparse
@@ -81,6 +82,57 @@ def live_block(data: Path) -> str:
     return live_sentence(d)
 
 
+def _latest_fit() -> dict | None:
+    fits = sorted((ROOT / "results" / "calibration_load").glob("*/fit.json"))
+    return json.loads(fits[-1].read_text()) if fits else None
+
+
+def simreal_block(data: Path) -> str:
+    """Real servers vs the simulator (ADR-037), from the last fit's own table of runs."""
+    d = _latest_fit()
+    if not d:
+        return "[TO BE FILLED: no real-server measurement under load has been fitted yet]"
+    rows = [
+        "| policy | load (req/s) | met both targets: real | simulator (first calibration) |",
+        "|---|---|---|---|",
+    ]
+    for r in sorted(
+        d["fit"] + d["validation"], key=lambda r: (r["real"]["rate"], r["real"]["policy"])
+    ):
+        rr = r["real"]
+        rows.append(
+            f"| {rr['policy']} | {rr['rate']:.2f} | {rr['sla'] * 100:.0f}% | "
+            f"{r['sim_old']['sla'] * 100:.0f}% |"
+        )
+    return (
+        "Same held-out requests replayed on the real cluster and in the simulator, seed 0 (window 90 s; "
+        "the 0.15 and 0.60 req/s rows are the first, 40 s runs):\n\n"
+        + "\n".join(rows)
+        + "\n\nThe simulator is accurate at light load and optimistic from 0.20 req/s: real busy servers "
+        "slow down much more than the profiled interference predicts (fast-server time per token 0.2 to "
+        "0.3 s under load against 0.011 s for a lone request). Cause: llama-server runs all requests in "
+        "one forward pass (a long prompt delays everybody), attention reads every request's context at "
+        "every step, and all four servers share one chip and one memory bus. The profiling had measured "
+        "interference with one background request per server."
+    )
+
+
+def recal_block(data: Path) -> str:
+    d = _latest_fit()
+    if not d:
+        return "[TO BE FILLED]"
+    n_ok = sum(1 for r in d["validation"] if r["pass"])
+    verdict = "PASSED" if d["passed"] else "FAILED"
+    return (
+        f"We tried to recalibrate the simulator on those runs (three fits; pass bar fixed in advance, "
+        f"ADR-037: simulated share meeting both targets within 10 points of the real one on every "
+        f"validation run). The fits reproduced the runs they were fitted on but the validation "
+        f"{verdict} ({n_ok} of {len(d['validation'])} validation runs within the bar), so we did NOT "
+        "retrain the agents and every simulator result in this deck uses the first calibration. "
+        "Say it plainly: this is a limit of the project and a finding about sim-to-real."
+    )
+
+
 def splice(path: Path, tag: str, body: str) -> None:
     text = path.read_text()
     block = f"<!-- AUTO:{tag} -->\n{body}\n<!-- /AUTO:{tag} -->"
@@ -100,7 +152,9 @@ def main() -> None:
     splice(a.file, "numbers", numbers_block(a.data))
     splice(a.file, "layout", layout_block(a.data))
     splice(a.file, "live", live_block(a.data))
-    print(f"filled {a.file} (numbers, layout, live)")
+    splice(a.file, "simreal", simreal_block(a.data))
+    splice(a.file, "recal", recal_block(a.data))
+    print(f"filled {a.file} (numbers, layout, live, simreal, recal)")
 
 
 if __name__ == "__main__":

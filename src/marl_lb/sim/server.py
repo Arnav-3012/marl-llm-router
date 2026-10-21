@@ -39,6 +39,31 @@ class Server:
         self.q = cls.get("prefill_quad", 0.0)  # attention cost: TTFT curves up with prompt length
         self.t0, self.k = cls["t0"], cls["k"]
         self.s_prefill, self.s_decode = cls["s_prefill"], cls["s_decode"]
+        # ADR-037 load terms, fitted on real runs under load (0 = the ADR-015 model unchanged):
+        # ctx_decode  seconds added to a decode step per context token of the batch (attention
+        #             reads every request's prompt + generated tokens at every step)
+        # g_prefill, g_decode  extra slowdown per request active on the OTHER servers (they share
+        #             one chip: GPU time and memory bandwidth), on top of the busy-count term
+        self.ctx_decode = cls.get("ctx_decode", 0.0)
+        # (split by class: two servers of one class share a GPU, a CPU server competes for the
+        #  memory bus and cores, so the two effects are fitted separately; older files with plain
+        #  g_prefill/g_decode apply them to both)
+        gp, gd = cls.get("g_prefill", 0.0), cls.get("g_decode", 0.0)
+        self.g_same_pre, self.g_same_dec = (
+            cls.get("g_same_prefill", gp),
+            cls.get("g_same_decode", gd),
+        )
+        self.g_diff_pre, self.g_diff_dec = (
+            cls.get("g_diff_prefill", gp),
+            cls.get("g_diff_decode", gd),
+        )
+        self.a_same = self.a_diff = 0  # active requests on other servers of the same / other class
+        # ADR-038: with est_aware_load False the router-side estimates (expected_wait, SED) use the
+        # nominal step time, like the live router whose shadow servers know no load terms
+        self.est_aware_load = cls.get("est_aware_load", True)
+        self._base_load = (
+            self.ctx_decode, self.g_same_pre, self.g_same_dec, self.g_diff_pre, self.g_diff_dec
+        )  # fmt: skip
         self.price = cls["price_per_busy_second"]
         self.max_batch = cls["max_batch"]
         self.max_queue = sim["max_queue"]
@@ -85,7 +110,12 @@ class Server:
     def _per_token(self, extra: int = 0) -> float:
         """Server seconds per decoded token when the present requests (+extra) share steps."""
         b = max(1, min(self.max_batch, self.n_present() + extra))
-        return (self.t0 + self.k * b) / b
+        if not self.est_aware_load:
+            return (self.t0 + self.k * b) / b
+        ctx = sum(r.prompt_tokens + r.output_tokens - r.dec_left for r in self.active)
+        ctx += extra * self.est_output_tokens  # a newcomer adds roughly its own context
+        step = self.t0 + self.k * b + self.ctx_decode * ctx
+        return step * self._load_mult(decode=True) / b
 
     def expected_wait(self) -> float:
         """Seconds of work ahead of a new request: remaining prefill plus expected remaining decode.
@@ -136,11 +166,33 @@ class Server:
             r.attributed_s += share
 
     # ---- time -----------------------------------------------------------------------------------
-    def advance(self, t_start: float, t_end: float, n_other_busy: int, n_servers: int) -> list:
+    def set_load_scale(self, scale: float) -> None:
+        """Scale every load term from its calibrated value (ADR-038 training randomisation)."""
+        c, sp, sd, dp, dd = (x * scale for x in self._base_load)
+        self.ctx_decode, self.g_same_pre, self.g_same_dec, self.g_diff_pre, self.g_diff_dec = (
+            c, sp, sd, dp, dd
+        )  # fmt: skip
+
+    def _load_mult(self, decode: bool) -> float:
+        gs, gd = (
+            (self.g_same_dec, self.g_diff_dec) if decode else (self.g_same_pre, self.g_diff_pre)
+        )
+        return 1.0 + gs * self.a_same + gd * self.a_diff
+
+    def advance(
+        self,
+        t_start: float,
+        t_end: float,
+        n_other_busy: int,
+        n_servers: int,
+        a_same: int = 0,
+        a_diff: int = 0,
+    ) -> list:
         """Run the server from t_start to t_end; return the requests that finished."""
         scale = n_other_busy / max(n_servers - 1, 1)
-        mult_pf = (1.0 + self.s_prefill * scale) * self.slowdown
-        mult_dec = (1.0 + self.s_decode * scale) * self.slowdown
+        self.a_same, self.a_diff = a_same, a_diff
+        mult_pf = (1.0 + self.s_prefill * scale) * self._load_mult(False) * self.slowdown
+        mult_dec = (1.0 + self.s_decode * scale) * self._load_mult(True) * self.slowdown
         done: list = []
         t = t_start
         while t < t_end - EPS:
@@ -158,7 +210,8 @@ class Server:
                 continue
             batch = self.active
             b = len(batch)
-            step = (self.t0 + self.k * b) * mult_dec
+            ctx = sum(r.prompt_tokens + r.output_tokens - r.dec_left for r in batch)
+            step = (self.t0 + self.k * b + self.ctx_decode * ctx) * mult_dec
             need_first = max(step - self.partial, 0.0)  # rest of the step in progress
             if t_end - t < need_first - EPS:  # not even this step finishes inside the window
                 self._account(t_end - t, batch)

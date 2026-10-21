@@ -377,15 +377,23 @@ def export_live(results: Path):
         )
     capf = results / "live" / "real_lambda_sat.json"
     cap = json.loads(capf.read_text()) if capf.exists() else None
+    comps = []  # guided-test comparisons (every policy on one slice), real servers only
+    for f in sorted((results / "live").glob("comparison_*.json")):
+        c = json.loads(f.read_text())
+        if c.get("mode") == "real":
+            comps.append({**c, "file": f.name})
     if not runs and not cap:
         return envelope(None, reason="no real-server run yet (docs/DEMO.md)")
     if cap:
         cap = {k: cap.get(k) for k in ("lambda_sat_rps", "quick", "window_s", "measured")}
-    files = [f"results/live/{r['run_id']}" for r in runs] + (
-        ["results/live/real_lambda_sat.json"] if cap else []
+    files = (
+        [f"results/live/{r['run_id']}" for r in runs]
+        + (["results/live/real_lambda_sat.json"] if cap else [])
+        + [f"results/live/{c['file']}" for c in comps]
     )
     return envelope(
-        {"runs": runs, "capacity": cap}, {"files": files, "note": "real servers, one machine"}
+        {"runs": runs, "capacity": cap, "comparisons": comps},
+        {"files": files, "note": "real servers, one machine"},
     )
 
 

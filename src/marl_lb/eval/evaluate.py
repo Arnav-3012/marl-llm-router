@@ -41,6 +41,8 @@ class World:
         if "layout" not in overrides and os.environ.get("MARL_LAYOUT"):  # ADR-035: other layouts
             overrides["layout"] = os.environ["MARL_LAYOUT"].split(",")
         self.sim = deep_update(sim, overrides)
+        if os.environ.get("MARL_CALIBRATION"):  # ADR-037: the load-recalibrated parameters
+            self.sim["calibration_path"] = os.environ["MARL_CALIBRATION"]
         self.calib = json.loads((root / self.sim["calibration_path"]).read_text())
         norm = json.loads((root / self.sim["traffic"]["normalisation_path"]).read_text())
         data_cfg = yaml.safe_load((root / "configs" / "data.yaml").read_text())["processed"]

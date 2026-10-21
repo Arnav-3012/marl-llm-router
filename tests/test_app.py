@@ -1,5 +1,6 @@
 """Live router app in mock mode (Sh.L1, Sh.L2): health, chat, simulate, run folder, frames."""
 
+import json
 import time
 
 import pytest
@@ -156,3 +157,24 @@ def test_the_guided_live_test_can_be_stopped(client):
             break
         time.sleep(0.3)
     assert s["state"] == "stopped"
+
+
+def test_the_full_showdown_runs_one_round_per_rate_and_saves_main_comparisons(client):
+    body = {"seconds": 1.0, "seed": 2, "drain_s": 1.0, "rates": [0.5, 1.0], "policies": ["random"]}
+    r = client.post("/livecheck/start", json=body)
+    assert r.status_code == 200
+    t0 = time.time()
+    while time.time() - t0 < 120:
+        s = client.get("/livecheck/status").json()
+        if s["state"] in ("done", "failed", "stopped"):
+            break
+        time.sleep(0.3)
+    assert s["state"] == "done", s["messages"][-3:]
+    text = " ".join(m["text"] for m in s["messages"])
+    assert "Round 1 of 2" in text and "Round 2 of 2" in text and "Full showdown" in text
+    files = sorted(client.root.glob("comparison_*.json"))
+    docs = [json.loads(f.read_text()) for f in files]
+    mains = [d for d in docs if d["kind"] == "main"]
+    assert sorted(d["rate_rps"] for d in mains)[-2:] == [0.5, 1.0] and all(
+        d["rho"] is None for d in mains
+    )

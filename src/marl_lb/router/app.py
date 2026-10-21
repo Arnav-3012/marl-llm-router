@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -56,6 +57,7 @@ class Settings:
     time_scale: float = 0.01  # mock only: service and arrival times are multiplied by this
     ports: list = field(default_factory=list)  # real mode: one llama-server port per layout entry
     agents_exp: str | None = "e8_mix"
+    robust_exp: str | None = None  # ADR-038 agents trained on random slowdowns
     live_root: Path = ROOT / "results" / "live"
     host: str = "127.0.0.1"
 
@@ -72,6 +74,7 @@ class SimBody(BaseModel):
     rate_rps: float | None = None
     seconds: float = 60.0
     seed: int = 0
+    drain_s: float | None = None
 
 
 class CheckBody(BaseModel):
@@ -80,6 +83,9 @@ class CheckBody(BaseModel):
     seed: int = 0
     policies: list[str] = ["sed_global", "route_to_fast_shed", "ddqn_agents"]
     capacity: str = "auto"  # auto: reuse the measured capacity, measure it quickly if missing
+    rate_rps: float | None = None  # a fixed arrival rate: skips the capacity step (overload demo)
+    drain_s: float | None = None  # stop waiting this long after the last arrival (quick demos)
+    rates: list[float] | None = None  # the full showdown: one round per rate (req/s)
 
 
 class State:
@@ -105,7 +111,8 @@ class State:
 
     def _build_backends(self) -> None:
         layout = yaml.safe_load((ROOT / "configs" / "sim.yaml").read_text())["layout"]
-        calib = json.loads((ROOT / "profiling" / "calibration.json").read_text())["classes"]
+        calib_path = os.environ.get("MARL_CALIBRATION", "profiling/calibration.json")  # ADR-037
+        calib = json.loads((ROOT / calib_path).read_text())["classes"]
         if self.s.mode == "mock":
             mocks = {
                 f"mock://{i}": MockLlamaServer(calib[c], self.s.time_scale, f"m{i}")
@@ -151,6 +158,7 @@ class State:
         seconds: float,
         rho: float | None = None,
         rate_rps: float | None = None,
+        drain_s: float | None = None,
     ) -> tuple[SimulationRun, float]:
         """A ready-to-run replay of the held-out slice (seconds of real run time) and its rate."""
         rate = rate_rps if rate_rps is not None else rho * self.lambda_sat()
@@ -166,7 +174,9 @@ class State:
             "seconds": seconds,
             "mode": self.s.mode,
             "time_scale": self.scale,
-            "agents_exp": self.s.agents_exp if policy == "ddqn_agents" else None,
+            "agents_exp": {"ddqn_agents": self.s.agents_exp, "ddqn_robust": self.s.robust_exp}.get(
+                policy
+            ),
             "layout": self.world.params.layout,
         }
         run = SimulationRun(
@@ -180,13 +190,16 @@ class State:
             self.scale,
             0.1 * self.scale,
             salt=int(time.time()) % 100000 + self.n_runs,
+            drain_s=drain_s,
         )
         return run, rate
 
     def new_router(self, policy_name: str, seed: int) -> PolicyRouter:
         world = self.world
         try:
-            policy, params = build_policy(policy_name, world, self.s.agents_exp, seed)
+            policy, params = build_policy(
+                policy_name, world, self.s.agents_exp, seed, self.s.robust_exp
+            )
         except (ValueError, FileNotFoundError) as e:
             raise HTTPException(400, str(e)) from e
         cluster = LiveCluster(params, world.calib["classes"], world.est_output_tokens)
@@ -253,6 +266,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             st.world.params.tpot_target,
         )
         out = await router.handle(req, body.prompt, body.n_predict)
+        if out.status == "dropped":  # the policy chose Reject: a normal outcome, not an error
+            return {
+                "refused": True,
+                "policy": body.policy,
+                "actions": out.actions,
+                "hops": req.hops,
+            }
         if out.status != "done":
             raise HTTPException(
                 503, f"request {out.status}: the policy refused it or the server failed"
@@ -278,7 +298,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(409, "a run or a live test is still going")
         if body.rho is None and body.rate_rps is None:
             raise HTTPException(400, "give rho (of the real capacity) or rate_rps")
-        run, rate = st.make_run(body.policy, body.seed, body.seconds, body.rho, body.rate_rps)
+        run, rate = st.make_run(
+            body.policy, body.seed, body.seconds, body.rho, body.rate_rps, body.drain_s
+        )
         st.current = run
         st.task = asyncio.create_task(run.run())
         return {"run_id": run.run_id, "rate_rps": rate, "n_requests": len(run.stream)}
@@ -454,6 +476,7 @@ def main() -> None:
     ap.add_argument("--time-scale", type=float, default=0.01)
     ap.add_argument("--ports", default="", help="real mode: llama-server ports in layout order")
     ap.add_argument("--agents-exp", default="e8_mix")
+    ap.add_argument("--robust-exp", default=None, help="ADR-038 robust agents, e.g. e8_robust")
     ap.add_argument("--port", type=int, default=8000)
     a = ap.parse_args()
     settings = Settings(
@@ -461,6 +484,7 @@ def main() -> None:
         a.time_scale,
         [int(p) for p in a.ports.split(",") if p],
         a.agents_exp,
+        robust_exp=a.robust_exp,
     )
     uvicorn.run(create_app(settings), host="127.0.0.1", port=a.port, log_level="info")
 

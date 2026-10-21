@@ -145,11 +145,12 @@ export function ParetoScatter({ points, xLabel, yLabel, title }: { points: Paret
   const [ref] = useInView<HTMLDivElement>(); // points are always drawn: data must never wait for a scroll observer
   const H = 380;
   const pw = W - M.l - M.r, ph = H - M.t - M.b;
-  const xs = points.map((p) => (p.cost.mean ?? 0) + (p.cost.ci ?? 0)), ys = points.map((p) => (p.latency.mean ?? 0) + (p.latency.ci ?? 0));
+  // the axes follow the MEANS (a few intervals are huge because some seeds behaved very differently); whiskers are clipped to the plot
+  const xs = points.map((p) => p.cost.mean ?? 0), ys = points.map((p) => (p.latency.mean ?? 0) + (p.latency.ci ?? 0));
   // log y-axis when the latencies span more than a factor of 30 (here 7 s to 500 s), else linear
   const yPos = points.map((p) => p.latency.mean ?? 0).filter((v) => v > 0);
   const logY = yPos.length > 1 && Math.max(...yPos) / Math.min(...yPos) > 30;
-  const xmax = niceMax(Math.max(...xs) * 1.1);
+  const xmax = niceMax(Math.max(...xs) / 0.55); // data in the left ~55% of the plot; the right part holds the labels
   const yLo = logY ? 10 ** Math.floor(Math.log10(Math.min(...yPos))) : 0;
   const yHi = logY ? 10 ** Math.ceil(Math.log10(Math.max(...ys))) : niceMax(Math.max(...ys) * 1.1);
   const ymax = yHi;
@@ -158,18 +159,13 @@ export function ParetoScatter({ points, xLabel, yLabel, title }: { points: Paret
   const yTicks = logY ? Array.from({ length: Math.round(Math.log10(yHi / yLo)) + 1 }, (_, i) => yLo * 10 ** i) : ticks(ymax);
   const front = points.filter((p) => p.on_frontier).sort((a, b) => (a.cost.mean ?? 0) - (b.cost.mean ?? 0));
   const d = front.map((p, i) => `${i ? "L" : "M"}${x(p.cost.mean ?? 0)},${y(p.latency.mean ?? 0)}`).join(" ");
-  // label positions: start above-right of the marker and step down until no earlier label is close
+  // labels sit in a column at the right of the plot, ordered by height, joined to their dots by thin leader lines
+  const labelX = M.l + pw * 0.66;
+  const order = points.map((_, i) => i).sort((a, b) => y(points[a].latency.mean ?? 0) - y(points[b].latency.mean ?? 0));
   const labelY: number[] = [];
-  points.forEach((p, i) => {
-    const cx = x(p.cost.mean ?? 0);
-    let ly = y(p.latency.mean ?? 0) - 8;
-    for (let tries = 0; tries < 12; tries++) {
-      const clash = labelY.some((oy, j) => Math.abs(oy - ly) < 12 && Math.abs(x(points[j].cost.mean ?? 0) - cx) < 130);
-      if (!clash) break;
-      ly += 12;
-    }
-    labelY[i] = ly;
-  });
+  let last = -1e9;
+  order.forEach((i) => { const ly = Math.max(y(points[i].latency.mean ?? 0), last + 15); labelY[i] = ly; last = ly; });
+  const clipY = (v: number) => Math.min(Math.max(y(v), M.t), M.t + ph), clipX = (v: number) => Math.min(Math.max(x(v), M.l), M.l + pw);
   return (
     <div ref={ref}>
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>
@@ -185,15 +181,16 @@ export function ParetoScatter({ points, xLabel, yLabel, title }: { points: Paret
           return (
             <g key={i} tabIndex={0} role="img" aria-label={`${p.label}: cost ${fmt(p.cost.mean)}, latency ${fmt(p.latency.mean)}${p.on_frontier ? ", on the frontier" : ""}`}>
               <title>{`${p.label}: cost ${fmt(p.cost.mean)} ± ${fmt(p.cost.ci)}, ${yLabel} ${fmt(p.latency.mean)} ± ${fmt(p.latency.ci)}${p.on_frontier ? " (Pareto frontier)" : ""}`}</title>
-              <g stroke={st.color} strokeOpacity={0.6} strokeWidth={1.4}>
-                {p.cost.ci != null && <line x1={x((p.cost.mean ?? 0) - p.cost.ci)} x2={x((p.cost.mean ?? 0) + p.cost.ci)} y1={cy} y2={cy} />}
-                {p.latency.ci != null && <line x1={cx} x2={cx} y1={y((p.latency.mean ?? 0) - p.latency.ci)} y2={y((p.latency.mean ?? 0) + p.latency.ci)} />}
+              <line x1={cx + 9} y1={cy} x2={labelX - 6} y2={labelY[i] - 4} stroke={st.color} strokeOpacity={0.35} strokeWidth={1} />
+              <g stroke={st.color} strokeOpacity={0.35} strokeWidth={1.2} strokeDasharray="3 3">
+                {p.cost.ci != null && <line x1={clipX((p.cost.mean ?? 0) - p.cost.ci)} x2={clipX((p.cost.mean ?? 0) + p.cost.ci)} y1={cy} y2={cy} />}
+                {p.latency.ci != null && <line x1={cx} x2={cx} y1={clipY((p.latency.mean ?? 0) - p.latency.ci)} y2={clipY((p.latency.mean ?? 0) + p.latency.ci)} />}
               </g>
               <g className="pop" style={{ animationDelay: `${i * 70}ms` }}>
                 {p.on_frontier && <circle cx={cx} cy={cy} r={11} fill="none" stroke="#f7f8f8" strokeOpacity={0.5} />}
                 <Marker kind={st.marker} x={cx} y={cy} r={p.kind === "learned" ? 6 : 5} color={st.color} />
               </g>
-              <text x={cx + 12} y={labelY[i]} fontSize="10.5" className="strong">{p.label}</text>
+              <text x={labelX} y={labelY[i]} fontSize="11" className="strong" fill={st.color}>{p.label}{p.on_frontier ? " ◎" : ""}</text>
             </g>
           );
         })}

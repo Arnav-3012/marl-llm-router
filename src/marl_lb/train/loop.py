@@ -196,6 +196,8 @@ def train(
         span = full[-1].arrival_s - cfg["window_s"]
         start = float(rng.uniform(0, max(span, 0.0)))
         window = slice_stream(full, start, cfg["window_s"])
+        if cfg.get("load_scales"):  # ADR-038: a different server slowdown each episode
+            cluster.load_scale = float(rng.choice(cfg["load_scales"]))
         eps = epsilon_at(ep, cfg)
         t0 = time.time()
         stats = run_learning_episode(

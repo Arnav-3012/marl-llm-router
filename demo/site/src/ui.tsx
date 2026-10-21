@@ -181,6 +181,7 @@ export const POLICY_STYLE: Record<string, { label: string; color: string; marker
   route_to_fast_shed: { label: "Hand-written rule: route to fast + shed", color: "#c3cad6", marker: "diamond", dash: "8 3" },
   ddqn_reject_ft: { label: "DDQN + Reject (fine-tuned)", color: "#d55e00", marker: "triangle" },
   ddqn_reject_mix: { label: "DDQN agents + Reject", color: "#f28e4b", marker: "circle" },
+  ddqn_robust: { label: "Robust agents (random slowdowns)", color: "#e86a92", marker: "diamond" },
   ddqn_reject_scratch: { label: "DDQN + Reject (conversation traffic only)", color: "#b86b3a", marker: "diamond" },
   ddqn_ft_ctrl: { label: "DDQN fine-tuned, no Reject", color: "#b57700", marker: "square", dash: "3 3" },
   random: { label: "Random", color: "#cc79a7", marker: "diamond", dash: "1 4" },

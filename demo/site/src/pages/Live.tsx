@@ -6,9 +6,10 @@ import { Card, ChartFrame, Info, PageHead, fmt } from "../ui";
 import { ReplayStage } from "../viz/ReplayStage";
 import type { Frame } from "../data/types";
 import { Link } from "../router";
+import { RankedBars } from "../viz/RankedBars";
 
 const API = new URLSearchParams(window.location.search).get("api") ?? "http://127.0.0.1:8000";
-const ALL: [string, string][] = [["sed_global", "SED global"], ["route_to_fast_shed", "Hand-written rule + shed"], ["ddqn_agents", "Learned agents"], ["route_to_fast", "Hand-written rule"], ["random", "Random"]];
+const ALL: [string, string][] = [["sed_global", "SED global"], ["route_to_fast_shed", "Hand-written rule + shed"], ["ddqn_agents", "Learned agents"], ["ddqn_robust", "Robust agents"], ["route_to_fast", "Hand-written rule"], ["random", "Random"]];
 const DEFAULT = ["sed_global", "route_to_fast_shed", "ddqn_agents"];
 
 type Health = { status: string; mode: string; time_scale: number; backends: { name: string; class: string; url: string; up: boolean }[]; running: string | null };
@@ -70,11 +71,16 @@ export function Live() {
   useEffect(() => { const id = setInterval(poll, 800); return () => clearInterval(id); }, [poll]);
   useEffect(() => { feed.current?.scrollTo({ top: feed.current.scrollHeight, behavior: "smooth" }); }, [msgs.length]);
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (extra?: Record<string, unknown>) => {
     setErr(""); setMsgs([]); setRows([]); setFrames([]); n.current = 0; curRun.current = null; setRunId(null); setSent(null);
-    try { await api("/livecheck/start", { method: "POST", body: JSON.stringify({ seconds, rho, seed, policies }) }); setState("running"); }
+    try { await api("/livecheck/start", { method: "POST", body: JSON.stringify({ seconds, rho, seed, policies, ...(extra ?? {}) }) }); setState("running"); }
     catch (e) { setErr(String((e as Error).message)); }
   }, [seconds, rho, seed, policies]);
+  // The quick overload showdown for a demo: a fixed, heavy arrival rate (about four times what the cluster serves in time), 45 s of
+  // traffic per policy and at most 45 s to finish, so four policies take about six minutes and the differences are large.
+  // The full showdown (the main result): two rates, 120 s of traffic per policy, five policies; about 36 minutes, saved as the main comparison.
+  const fullShowdown = () => { if (window.confirm("The full showdown takes about 36 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.15, 0.3], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
+  const showdown = () => start({ rate_rps: 0.3, seconds: 45, drain_s: 45, policies: ["sed_global", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] });
   useEffect(() => { if (auto.current && health && health.status === "ok" && state === "idle") { auto.current = false; void start(); } });
   const stop = () => api("/livecheck/stop", { method: "POST" }).catch(() => undefined);
   const servers = (what: "start" | "stop") => {
@@ -82,6 +88,38 @@ export function Live() {
     if (what === "start" && !window.confirm("Start the four llama-servers on this machine? It takes about a minute and uses the CPU and GPU until you stop them.")) return;
     api(`/servers/${what}`, { method: "POST" }).catch((e) => setErr(String(e.message)));
   };
+  // "Try your own prompt": the same prompt (or the same burst of N copies) goes through every policy, one policy after the other
+  // (they share one chip, so running them at the same moment would make them slow each other down and the comparison unfair).
+  type Cmp = { policy: string; n: number; refused?: number; met: number; ttft50: number; ttft95: number; total50: number; servers: string; hops: number; err?: string };
+  const [cmp, setCmp] = useState<Cmp[] | null>(null);
+  const [cmpBusy, setCmpBusy] = useState("");
+  const [burst, setBurst] = useState(1);
+  const askAll = async () => {
+    setErr(""); setCmp([]); setChat((c) => ({ ...c, reply: null }));
+    const pols: string[] = [...ALL.map(([k]) => k), "sed_local_full"];
+    const med = (x: number[], q: number) => { const v = [...x].sort((m, n2) => m - n2); return v.length ? v[Math.min(v.length - 1, Math.floor(q * v.length))] : NaN; };
+    for (const k of pols) {
+      setCmpBusy(k);
+      try {
+        // the burst is staggered (a request every 250 ms) and answers are 200 tokens, close to the traffic the agents were trained on
+        const all = await Promise.all(Array.from({ length: burst }, async (_, i) => { await new Promise((r) => setTimeout(r, i * 250)); return api<any>("/chat", { method: "POST", body: JSON.stringify({ prompt: chat.prompt, n_predict: 200, policy: k }) }); }));
+        const rs = all.filter((r) => !r.refused);
+        const refused = all.length - rs.length;
+        const met = rs.filter((r) => r.ttft_s <= 5 && r.tpot_s <= 0.1).length;
+        const total = rs.map((r) => r.ttft_s + (r.tpot_s || 0) * 199);
+        if (!rs.length) throw new Error(`refused all ${all.length} requests`);
+        const names = Array.from(new Set(rs.map((r) => `${r.server}`))).join(", ");
+        setCmp((c) => [...(c ?? []), { policy: k, n: all.length, refused, met, ttft50: med(rs.map((r) => r.ttft_s), 0.5), ttft95: med(rs.map((r) => r.ttft_s), 0.95), total50: med(total, 0.5), servers: names, hops: rs.reduce((a2, r) => a2 + (r.hops ?? 0), 0) }]);
+      } catch (e) { setCmp((c) => [...(c ?? []), { policy: k, n: 0, met: 0, ttft50: NaN, ttft95: NaN, total50: NaN, servers: "", hops: 0, err: String((e as Error).message) }]); }
+    }
+    setCmpBusy("");
+  };
+  const polName = (k: string) => (ALL.find(([x]) => x === k) ?? [k, "SED local"])[1];
+  const PROMPTS: [string, string][] = [
+    ["Short question", "What is the capital of France?"],
+    ["Explain (medium)", "Explain in a few sentences how a transformer language model produces the next word."],
+    ["Long document (about 1,500 tokens)", "Summarise the following text in one sentence.\n\n" + "The cluster has four servers of two kinds. Fast servers answer quickly but cost more per second; slow servers are cheaper and slower. A router decides, for every request, which server should answer it. ".repeat(48)],
+  ];
   const send = async () => {
     setChat((c) => ({ ...c, busy: true, reply: null })); setErr("");
     try { const r = await api<any>("/chat", { method: "POST", body: JSON.stringify({ prompt: chat.prompt, n_predict: 64, policy: chat.policy }) }); setChat((c) => ({ ...c, reply: r, busy: false })); }
@@ -127,7 +165,9 @@ export function Live() {
                 {running && <div className="as-typing" aria-hidden="true"><i /><i /><i /></div>}
               </div>
               <footer className="as-foot">
-                <button className="primary" onClick={start} disabled={running}>{running ? "Running…" : msgs.length ? "Run again" : "Start live test"}</button>
+                <button className="primary" onClick={() => start()} disabled={running}>{running ? "Running…" : msgs.length ? "Run again" : "Start live test"}</button>
+                <button onClick={fullShowdown} disabled={running} title="the main real-server result: two loads, five policies, about 36 minutes">Full showdown (36 min)</button>
+                <button onClick={showdown} disabled={running} title="heavy overload, four policies, about six minutes">Quick overload showdown (6 min)</button>
                 <button onClick={stop} disabled={!running}>Stop</button>
                 <details className="as-opts"><summary>Options</summary>
                   <div className="as-optgrid">
@@ -147,7 +187,9 @@ export function Live() {
                 <div className="kpis">
                   <div className="tile"><div className="k">arrived</div><div className="v">{arrived}</div></div>
                   <div className="tile"><div className="k">met both targets</div><div className="v">{ok}</div></div>
-                  <div className="tile"><div className="k">missed or dropped</div><div className="v">{res.length - ok}</div></div>
+                  <div className="tile" title="finished, but the first word came after 5 s or words came slower than 10 per second"><div className="k">answered late</div><div className="v">{res.filter((r) => r.status === "done" && !r.ok).length}</div></div>
+                  <div className="tile" title="refused on purpose or a server error"><div className="k">refused</div><div className="v">{res.filter((r) => r.status !== "done").length}</div></div>
+                  <div className="tile" title="sent, no final result yet"><div className="k">still waiting</div><div className="v">{Math.max(0, arrived - res.length)}</div></div>
                   <div className="tile"><div className="k">first token p95</div><div className="v">{p95 == null ? "n/a" : `${fmt(p95, 2)} s`}</div></div>
                 </div>
                 {running && sent && <div className="muted" style={{ fontSize: 12.5 }}>{sent.sent} of {sent.of} requests sent in this run</div>}
@@ -158,6 +200,11 @@ export function Live() {
           {rows.length > 0 && (
             <section style={{ marginTop: 28 }} aria-label="results">
               <h2>Results of this live test</h2>
+              {rows.length > 1 && <Card className="flat" style={{ marginBottom: 16 }}>
+                <ChartFrame title="Every policy on the same requests, best first" better="higher" tip="Each policy replayed exactly the same requests, one after the other. The bar is goodput: requests per second that met both targets. The yellow tick is the arrival rate, the most any policy could reach. Refused requests never count as good, so the refused share is shown beside each bar.">
+                  <RankedBars rows={rows.map((r) => ({ label: r.label, policy: r.policy, goodput_rps: r.metrics.goodput_rps, sla_attainment: r.metrics.sla_attainment, drop_rate: r.metrics.drop_rate, ttft_p95: r.metrics.ttft_p95 }))} capacity={rows[0].metrics.n_arrived / rows[0].metrics.arrival_window_s} />
+                </ChartFrame>
+              </Card>}
               <div className="res-grid">
                 {rows.map((r) => {
                   const m = r.metrics;
@@ -187,7 +234,28 @@ export function Live() {
               <p className="muted">One real request through the chosen policy. It shows which server answered and the measured time to first token. <Info text="The chat goes through the same router and policy code as the replay. The answer comes from a small language model (Qwen2.5 3B or 1.5B), so do not expect it to be good." /></p>
               <textarea className="chatbox" value={chat.prompt} onChange={(e) => setChat({ ...chat, prompt: e.target.value })} rows={3} aria-label="prompt" />
               <div className="controls"><label>policy <select value={chat.policy} onChange={(e) => setChat({ ...chat, policy: e.target.value })} aria-label="policy">{ALL.map(([k, l]) => <option key={k} value={k}>{l}</option>)}<option value="sed_local_full">SED local</option></select></label>
-                <button className="primary" onClick={send} disabled={chat.busy || running}>{chat.busy ? "Waiting…" : "Send"}</button></div>
+                <button className="primary" onClick={send} disabled={chat.busy || running}>{chat.busy ? "Waiting…" : "Send"}</button>
+                <button onClick={askAll} disabled={chat.busy || running || !!cmpBusy} title="send the same prompt through every policy and rank them">{cmpBusy ? `Trying ${polName(cmpBusy)}…` : "Compare all policies"}</button></div>
+              <div className="controls" style={{ marginTop: 8 }}>
+                <label>example <select value="" onChange={(e) => { const x = PROMPTS.find(([n2]) => n2 === e.target.value); if (x) setChat((c) => ({ ...c, prompt: x[1] })); }} aria-label="example prompts"><option value="">choose…</option>{PROMPTS.map(([n2]) => <option key={n2}>{n2}</option>)}</select></label>
+                <label>load <select value={burst} onChange={(e) => setBurst(Number(e.target.value))} aria-label="requests at once"><option value={1}>1 request (idle cluster)</option><option value={4}>4 at once (busy)</option><option value={8}>8 at once (heavy)</option><option value={12}>12 at once (overload)</option></select></label>
+              </div>
+              {cmp && cmp.length > 0 && (() => {
+                const done = cmp.filter((x) => !x.err);
+                const ranked = [...done].sort((x, y) => (y.met / y.n - x.met / x.n) || (x.total50 - y.total50));
+                const win = ranked[0];
+                const tie = ranked.length > 1 && ranked[1].met === win.met && Math.abs(ranked[1].total50 - win.total50) < 0.25 * win.total50;
+                return (
+                  <div style={{ marginTop: 12 }}>
+                    {!cmpBusy && win && <div className="reading"><p style={{ margin: 0 }}><b>{tie ? "No clear winner" : `Best here: ${polName(win.policy)}`}.</b> {win.met} of {win.n} answers met both targets (first word within 5 s and 10 words per second), median time to the full answer {fmt(win.total50, 1)} s.{tie ? " The top policies are within a quarter of each other: treat as tied." : ""} One try per policy is an anecdote, not a result.</p></div>}
+                    <div className="tablewrap"><table>
+                      <thead><tr><th>policy</th><th>met both targets</th><th>first token median / p95 (s)</th><th>full answer median (s)</th><th>servers used</th><th>passed on</th></tr></thead>
+                      <tbody>{cmp.map((x) => <tr key={x.policy} className={win && x.policy === win.policy && !cmpBusy ? "best-row" : ""}><td style={{ textAlign: "left" }}>{polName(x.policy)}</td>{x.err ? <td colSpan={5}>{x.err}</td> : <><td>{x.met} of {x.n}{x.refused ? ` (${x.refused} refused)` : ""}</td><td>{fmt(x.ttft50, 2)} / {fmt(x.ttft95, 2)}</td><td>{fmt(x.total50, 1)}</td><td>{x.servers}</td><td>{x.hops}</td></>}</tr>)}</tbody>
+                    </table></div>
+                    <p className="muted" style={{ fontSize: 12.5 }}>The requests of one burst arrive 250 ms apart and ask for 200-token answers. The policies run one after another, not at the same moment: all four servers share one chip, so running them together would make them slow each other down and the comparison unfair. With one request on an idle cluster most policies pick the same fast server; the differences appear under load, so try 4, 8 or 12 at once.</p>
+                  </div>
+                );
+              })()}
               {chat.reply && <div className="reading"><p><b>Answered by {chat.reply.server}</b> ({String(chat.reply.class).replace("_", " ")}) after {fmt(chat.reply.ttft_s, 3)} s to the first token, {fmt(chat.reply.tpot_s, 3)} s per token after that; passed on {chat.reply.hops} time(s).</p><p style={{ margin: 0 }}>{chat.reply.text}</p></div>}
             </Card>
           </details>

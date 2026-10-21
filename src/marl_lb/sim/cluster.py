@@ -256,6 +256,7 @@ class Cluster:
         self.agents = [f"agent_{i}" for i in range(self.n)]
         self.possible_agents = list(self.agents)
         self.servers: list[Server] = []
+        self.load_scale = 1.0  # ADR-038: multiplier of the calibrated load terms, set per episode
         self.run = _Run()
 
     # ---- neighbourhood --------------------------------------------------------------------------
@@ -270,6 +271,9 @@ class Cluster:
             Server(i, name, self.classes[name], sim, self.p.est_output_tokens)
             for i, name in enumerate(self.p.layout)
         ]
+        if self.load_scale != 1.0:
+            for srv in self.servers:
+                srv.set_load_scale(self.load_scale)
         r = self.run = _Run()
         r.requests = [
             Request.from_stream(i, s, self.p.ttft_target, self.p.tpot_target)
@@ -427,6 +431,7 @@ class Cluster:
             self.servers[d["server"]].slowdown = d["factor"]
         busy = [s.is_busy() for s in self.servers]
         n_busy = sum(busy)
+        n_active = sum(len(s.active) for s in self.servers)
         for s, b in zip(self.servers, busy, strict=True):
             n_other = n_busy - int(b)
             # ADR-015: A scales with the number of busy neighbours; B is one fixed multiplier
@@ -435,7 +440,13 @@ class Cluster:
             n_eff = {"A": n_other, "B": (self.n - 1) if n_other > 0 else 0, "C": 0}[
                 self.p.interference_model
             ]
-            for req in s.advance(r.t, r.t + dt, n_eff, self.n):
+            # ADR-037 load terms (no effect when every g is 0): requests running on the other
+            # servers of the same class (shared GPU) and of the other class
+            a_same = sum(
+                len(o.active) for o in self.servers if o is not s and o.class_name == s.class_name
+            )
+            a_diff = n_active - len(s.active) - a_same
+            for req in s.advance(r.t, r.t + dt, n_eff, self.n, a_same, a_diff):
                 self._resolve(req)
             s.end_of_tick(self.p.kv_threshold)
         r.l_integral += r.in_system * dt

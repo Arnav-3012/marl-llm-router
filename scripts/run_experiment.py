@@ -55,6 +55,8 @@ def build_cfg(a) -> dict:
             cfg[key] = val
     if a.mix_code:  # ADR-034: half the training episodes come from the code trace's train part
         cfg["mix_code"] = True
+    if a.load_scales:  # ADR-038: e.g. "0,0.5,1,1.5", one drawn per episode
+        cfg["load_scales"] = [float(x) for x in a.load_scales.split(",")]
     if a.init_from:  # start from the saved agents of results/<exp> (same seed)
         cfg["init_from"] = a.init_from
     if a.eps_start is not None:  # fine-tuning explores less than training from scratch
@@ -159,6 +161,7 @@ def main() -> int:
     ap.add_argument("--delay-cost", type=float, dest="delay_cost")
     ap.add_argument("--eps-decay", type=int, dest="eps_decay")
     ap.add_argument("--mix-code", action="store_true", dest="mix_code", help="train on conv + code")
+    ap.add_argument("--load-scales", dest="load_scales", help="ADR-038 server slowdown draws")
     ap.add_argument("--init-from", dest="init_from", help="fine-tune the agents of results/<exp>")
     ap.add_argument("--eps-start", type=float, dest="eps_start")
     ap.add_argument(

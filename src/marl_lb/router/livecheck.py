@@ -14,7 +14,7 @@ import asyncio
 import json
 from datetime import datetime
 
-from marl_lb.eval.saturation import find_lambda_sat
+from marl_lb.eval.saturation import find_lambda_sat, is_saturated
 from marl_lb.router.capacity import THRESHOLDS, criteria_from_events
 from marl_lb.router.factory import POLICIES
 from marl_lb.router.runs import machine_info
@@ -22,6 +22,7 @@ from marl_lb.sim.request import Request
 
 LABEL = {
     "ddqn_agents": "the learned agents (DDQN + Reject)",
+    "ddqn_robust": "the robust agents (trained on random slowdowns)",
     "route_to_fast_shed": "the hand-written rule (route to fast + shed)",
     "route_to_fast": "the hand-written rule (route to fast)",
     "sed_global": "SED global, a strong classic rule",
@@ -30,8 +31,14 @@ LABEL = {
     "cache_aware_local_full": "local cache-aware routing",
     "random": "random routing",
 }
-QUICK = {"window": 40.0, "seeds": [0], "grid": [0.15, 0.3, 0.6, 1.2], "refine": 2}
+# ADR-037: the first real runs saturated at the lowest load (0.15 req/s), so start lower and use
+# longer windows; the grid is still geometric and refined by bisection
+QUICK = {"window": 60.0, "seeds": [0], "grid": [0.05, 0.1, 0.2, 0.4], "refine": 2}
 MOCK_NOTE = " MOCK: simulated stand-ins, so this is a rehearsal, not a result."
+
+
+def crit_sat(crit: dict) -> bool:
+    return is_saturated(crit, THRESHOLDS)
 
 
 class LiveCheck:
@@ -44,6 +51,7 @@ class LiveCheck:
         self.opts: dict = {}
         self.task: asyncio.Task | None = None
         self._stop = False
+        self.saved: str | None = None
 
     def say(self, text: str, kind: str = "info") -> None:
         at = datetime.now().strftime("%H:%M:%S")
@@ -70,7 +78,10 @@ class LiveCheck:
             self._stopped()
             raise
         except Exception as e:  # noqa: BLE001 - report instead of dying silently
-            self.fail(f"The live test stopped on an error: {e}")
+            if self._stop:  # Stop was pressed while a worker thread was running
+                self._stopped()
+            else:
+                self.fail(f"The live test stopped on an error: {e}")
 
     async def _steps(self, opts: dict) -> None:
         st = self.st
@@ -103,32 +114,67 @@ class LiveCheck:
         if self._stop:
             return self._stopped()
         # 3. capacity
-        lam = await self._capacity(opts)
-        if lam is None:
-            return
-        rate = opts["rho"] * lam
-        whose = " (the simulator's)" if mock else ""
-        self.say(
-            f"Load ρ = {opts['rho']} means {rate:.2f} requests per second on this cluster; "
-            f"its capacity is {lam:.2f}{whose}."
-        )
-        # 4. one run per policy on the same slice
+        if opts.get("rates"):  # the full showdown: fixed rates, no capacity step
+            lam, rate = None, float(opts["rates"][0])
+            self.say(
+                f"Full showdown at {', '.join(f'{float(x):.2f}' for x in opts['rates'])} requests "
+                f"per second. Each policy gets the same requests for {opts['seconds']:.0f} s, then "
+                f"at most {opts.get('drain_s') or 0:.0f} s to finish."
+            )
+        elif opts.get("rate_rps"):  # a fixed rate (the quick overload showdown): no capacity step
+            lam, rate = None, float(opts["rate_rps"])
+            self.say(
+                f"Fixed load: {rate:.2f} requests per second, well above what this cluster can "
+                "serve in time (an overload). Each policy gets the same requests for "
+                f"{opts['seconds']:.0f} s, then {opts.get('drain_s') or 0:.0f} s to finish."
+            )
+        else:
+            lam = await self._capacity(opts)
+            if lam is None:
+                return
+            rate = opts["rho"] * lam
+            whose = " (the simulator's)" if mock else ""
+            self.say(
+                f"Load ρ = {opts['rho']} means {rate:.2f} requests per second on this cluster; "
+                f"its capacity is {lam:.2f}{whose}."
+            )
+        # 4+5. one run per policy on the same slice (for each rate in the full showdown)
+        rates = [float(x) for x in opts["rates"]] if opts.get("rates") else [rate]
+        for n, rt in enumerate(rates, 1):
+            if len(rates) > 1:
+                self.rows = []
+                self.say(f"Round {n} of {len(rates)}: {rt:.2f} requests per second.")
+            if not await self._round(opts, rt, lam, mock):
+                return
+        self.state = "done"
+
+    async def _round(self, opts: dict, rate: float, lam, mock: bool) -> bool:
+        """Every policy once on the same slice at `rate`; False if Stop was pressed."""
+        st = self.st
         todo = [x for x in opts["policies"] if x in POLICIES]
         if "ddqn_agents" in todo and not st.s.agents_exp:
             self.say(
                 "Skipping the learned agents: the router was started without their weights.", "warn"
             )
             todo.remove("ddqn_agents")
+        if "ddqn_robust" in todo and not st.s.robust_exp:
+            self.say(
+                "Skipping the robust agents: the router was started without --robust-exp.", "warn"
+            )
+            todo.remove("ddqn_robust")
         slice_ids = set()
         for k, pol in enumerate(todo, 1):
             if self._stop:
-                return self._stopped()
+                self._stopped()
+                return False
             self.say(
                 f"Run {k} of {len(todo)}: {LABEL.get(pol, pol)}, {opts['seconds']:.0f} s of "
                 f"held-out traffic (seed {opts['seed']}). Watch the cluster below."
             )
-            run, _ = st.make_run(pol, opts["seed"], opts["seconds"], rate_rps=rate)
-            run.cfg["rho"] = opts["rho"]
+            run, _ = st.make_run(
+                pol, opts["seed"], opts["seconds"], rate_rps=rate, drain_s=opts.get("drain_s")
+            )
+            run.cfg["rho"] = None if (opts.get("rate_rps") or opts.get("rates")) else opts["rho"]
             st.current, self.current_run = run, run.run_id
             m = await run.run()
             sl = json.loads((run.dir / "slice.json").read_text())["slice_id"]
@@ -149,7 +195,8 @@ class LiveCheck:
                 "ok",
             )
         if self._stop:
-            return self._stopped()
+            self._stopped()
+            return False
         # 5. reading
         same = len(slice_ids) == 1
         self.say(
@@ -158,13 +205,60 @@ class LiveCheck:
             "ok" if same else "warn",
         )
         self._compare()
+        self._save_comparison(opts, rate, lam, slice_ids)
         self.say(
             "Honest reading: one run per policy is an anecdote, not a result. The 5-seed recorded "
             "results are on the Baselines and Stress tests pages; this check shows that the system "
             "runs for real and how the live numbers compare."
             + (" MOCK: not a result." if mock else "")
         )
-        self.state = "done"
+        return True
+
+    def _save_comparison(self, opts: dict, rate: float, lam: float, slice_ids: set) -> None:
+        """results/live/comparison_<time>.json: every policy on one slice, ranked by goodput."""
+        ranked = sorted(self.rows, key=lambda r: -r["metrics"]["goodput_rps"])
+        doc = {
+            "created": datetime.now().isoformat(timespec="seconds"),
+            "mode": self.st.s.mode,
+            "rho": None if (opts.get("rate_rps") or opts.get("rates")) else opts["rho"],
+            "rate_rps": rate,
+            "capacity_rps": lam,
+            "seconds": opts["seconds"],
+            "seed": opts["seed"],
+            "same_slice": len(slice_ids) == 1,
+            "slice_ids": sorted(slice_ids),
+            "kind": "main" if opts.get("rates") else "quick" if opts.get("rate_rps") else "guided",
+            "drain_s": opts.get("drain_s"),
+            "note": "one run per policy is an anecdote, not a result",
+            "ranking": [
+                {
+                    "rank": i + 1,
+                    "policy": r["policy"],
+                    "label": r["label"],
+                    "run_id": r["run_id"],
+                    **{
+                        k: r["metrics"].get(k)
+                        for k in (
+                            "goodput_rps",
+                            "sla_attainment",
+                            "drop_rate",
+                            "ttft_p50",
+                            "ttft_p95",
+                            "cost_per_request",
+                            "n_arrived",
+                            "n_completed",
+                            "n_sla_met",
+                        )
+                    },
+                }
+                for i, r in enumerate(ranked)
+            ],
+        }
+        root = self.st.s.live_root
+        root.mkdir(parents=True, exist_ok=True)
+        name = f"comparison_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        (root / name).write_text(json.dumps(doc, indent=2, default=float))
+        self.saved = name
 
     def _compare(self) -> None:
         if len(self.rows) < 2:
@@ -199,20 +293,26 @@ class LiveCheck:
         points: list[dict] = []
 
         def evaluate(rate: float) -> dict:
+            if self._stop:
+                raise RuntimeError("stopped")
+
             async def one() -> dict:
                 run, _ = st.make_run("sed_global", 0, win, rate_rps=rate)
                 st.current, self.current_run = run, run.run_id
                 await run.run()
                 crit = criteria_from_events(run.router.events.events, win)
                 points.append({"rate_rps": rate, "run_id": run.run_id, **crit})
+                verdict = "overloaded" if crit_sat(crit) else "kept up"
                 self.say(
-                    f"  {rate:.2f} req/s: {crit['completion_ratio'] * 100:.0f}% completed in "
-                    f"time, {crit['drop_rate'] * 100:.0f}% dropped, backlog x"
-                    f"{crit['backlog_ratio']:.1f}."
+                    f"  {rate:.2f} req/s: {crit['completion_ratio'] * 100:.0f}% finished inside "
+                    f"the window, {crit['drop_rate'] * 100:.0f}% refused, backlog x"
+                    f"{crit['backlog_ratio']:.1f} ({verdict})."
                 )
                 return crit
 
             c = asyncio.run_coroutine_threadsafe(one(), loop).result()
+            if self._stop:
+                raise RuntimeError("stopped")
             return {k: c[k] for k in ("completion_ratio", "drop_rate", "backlog_ratio")}
 
         args = (evaluate, QUICK["grid"], n_ref, THRESHOLDS)

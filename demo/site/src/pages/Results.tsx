@@ -1,4 +1,5 @@
 // Pareto, Baselines & E1, Observability, Traces, Method pages.
+import { RankedBars } from "../viz/RankedBars";
 import { useState } from "react";
 import { BarsCI, LineChart, ParetoScatter, type BarSeries } from "../charts";
 import { Card, ChartFrame, Info, Loaded, PageHead, Marker, SourceNote, fmt, styleOf, useData, useLoad } from "../ui";
@@ -54,7 +55,7 @@ export function Pareto() {
   return (
     <>
       <PageHead eyebrow="Question 2 · cost against speed" title="Can the agents trade cost for speed?"></PageHead>
-      <p className="lead">The weight λ says how much a cheaper service is worth to an agent. We trained agents with λ = 0, 1 and 2 and compared them with fixed rules at load 0.8 on held-out traffic. Lower and further left is better; circled points are on the frontier.</p>
+      <p className="lead">The weight λ says how much a cheaper service is worth to an agent. We trained the three-action agents (before the Reject action existed) with λ = 0, 1 and 2 and compared them with fixed rules at load 0.8 on held-out traffic. Lower and further left is better; points marked ◎ are on the frontier. Dashed whiskers are 95% intervals over 5 seeds, cut off at the edge of the plot when they are huge.</p>
       <Loaded state={s} what="Cost–latency frontier (E3)">
         {(d, env) => {
           const learned = d.points.filter((p) => p.kind === "learned");
@@ -65,7 +66,7 @@ export function Pareto() {
           return (
             <>
               <Card className="flat"><ChartFrame title="Cost against latency at load 0.8" better="lower"
-                tip={<><b>How to read it.</b> Each dot is one policy. Left means cheaper (synthetic price per request), lower means a shorter wait for the first token (seconds, log scale because the worst policies are 100 times slower). The best place is the bottom left. Circled dots are on the frontier: no other dot is both cheaper and faster. Whiskers are 95% intervals over 5 seeds; a long whisker means some seeds behaved very differently.</>}>
+                tip={<><b>How to read it.</b> Each dot is one policy. Left means cheaper (synthetic price per request), lower means a shorter wait for the first token (seconds, log scale because the worst policies are 100 times slower). The best place is the bottom left. Circled dots are on the frontier: no other dot is both cheaper and faster. Dashed whiskers are 95% intervals over 5 seeds, clipped at the plot edge; a very long whisker means some seeds behaved very differently (some seeds did not learn). Labels are in the column on the right, joined to their dots by thin lines.</>}>
                 <ParetoScatter points={d.points} xLabel="cost per request (synthetic units, lower is better)" yLabel="TTFT p95 (s)" title="Cost per request against TTFT p95 at load 0.8" />
               </ChartFrame><SourceNote source={env.source} /></Card>
               <div className="verdict tie" style={{ marginTop: 12 }}><b>Reading:</b> {note}</div>
@@ -530,8 +531,25 @@ function LiveRunsSection() {
         {(d, env) => (
           <Card className="flat">
             {d.capacity && <p className="lead" style={{ marginBottom: 12 }}>The measured capacity of the real cluster is <b>{fmt(d.capacity.lambda_sat_rps, 2)} requests per second</b>{d.capacity.quick ? " (a quick estimate)" : ""}; load ρ on the Live page is a share of it.</p>}
+            {(() => {
+              const frame = (c: any, short: boolean) => (
+                <ChartFrame key={c.file} title={`${short ? "Short demo: " : ""}every policy on the same requests at ${fmt(c.rate_rps, 2)} requests per second, best first`} better="higher"
+                  tip={`${short ? "A short live demo (about 45 s of traffic per policy), so each policy sees only about a dozen requests and the ranking is noisy. " : "The main live test on the real servers. "}Every policy replayed exactly the same requests, one after the other. The bar is goodput, requests per second that met both targets; the yellow tick is the arrival rate, the most any policy could reach. Refused requests never count as good, so the refused share is shown beside each bar. One run per policy is an anecdote, not a result.`}
+                  reading={<p><b>Highest in this run: {c.ranking[0].label}.</b> {c.rho != null ? `Load ρ ${c.rho} of the measured capacity (${fmt(c.rate_rps, 2)} req/s)` : `${fmt(c.rate_rps, 2)} req/s`}, {c.seconds} s of traffic per policy{c.drain_s ? ` plus at most ${c.drain_s} s to finish` : ""}, seed {c.seed}, {c.same_slice ? "identical requests for every policy" : "slices differ"}.</p>}>
+                  <RankedBars rows={c.ranking} capacity={c.rate_rps} />
+                </ChartFrame>
+              );
+              const latest = (kinds: string[]) => { const m = new Map<number, any>(); for (const c of d.comparisons ?? []) if (kinds.includes(c.kind ?? "guided")) m.set(c.rate_rps, c); return [...m.values()].sort((x, y) => x.rate_rps - y.rate_rps); };
+              const main = latest(["main"]), other = latest(["quick", "guided"]);
+              return (
+                <>
+                  {main.map((c) => frame(c, false))}
+                  {other.length > 0 && <details style={{ marginTop: 12 }}><summary>Short demo runs from the Live page ({other.length})</summary>{other.map((c) => frame(c, true))}</details>}
+                </>
+              );
+            })()}
             {d.runs.length > 0 ? (
-              <div className="tablewrap"><table>
+              <div className="tablewrap" style={{ marginTop: 16 }}><table>
                 <thead><tr><th>policy</th><th>ρ</th><th>seed</th><th>slice</th><th>goodput (req/s)</th><th>met both targets</th><th>dropped</th><th>first token p95 (s)</th><th>cost / request</th></tr></thead>
                 <tbody>{d.runs.map((r: any) => <tr key={r.run_id}><td style={{ textAlign: "left" }}>{styleOf(r.policy === "ddqn_agents" ? "ddqn_reject_mix" : r.policy).label}</td><td>{r.rho ?? "n/a"}</td><td>{r.seed}</td><td>{r.slice}</td><td>{fmt(r.metrics.goodput_rps, 3)}</td><td>{fmt(r.metrics.sla_attainment * 100, 0)}%</td><td>{fmt(r.metrics.drop_rate * 100, 1)}%</td><td>{r.metrics.ttft_p95 == null ? "n/a" : fmt(r.metrics.ttft_p95, 2)}</td><td>{r.metrics.cost_per_request == null ? "n/a" : fmt(r.metrics.cost_per_request, 1)}</td></tr>)}</tbody>
               </table></div>

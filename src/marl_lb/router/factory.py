@@ -13,12 +13,22 @@ from marl_lb.router.policy_router import LearnedPolicy
 from marl_lb.sim.cluster import SimParams
 from marl_lb.train.loop import load_agents
 
-POLICIES = ["random", "sed_local_full", "sed_global", "cache_aware_local_full",
-            "cache_aware_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents"]  # fmt: skip
+POLICIES = [
+    "random", "sed_local_full", "sed_global", "cache_aware_local_full", "cache_aware_global",
+    "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust",
+]  # fmt: skip
 
 
-def build_policy(name: str, world, agents_exp: str | None = None, seed: int = 0):
+def build_policy(
+    name: str,
+    world,
+    agents_exp: str | None = None,
+    seed: int = 0,
+    robust_exp: str | None = None,
+):
     """(policy object, SimParams) for `name` on `world`'s layout."""
+    if name == "ddqn_robust":  # ADR-038: agents trained on random server slowdowns
+        name, agents_exp = "ddqn_agents", robust_exp
     if name == "ddqn_agents":
         if not agents_exp:
             raise ValueError("ddqn_agents needs the agents experiment (for example e8_mix)")

@@ -47,6 +47,7 @@ export function AgentExplainer() {
   const cur = ACTIONS.find((a) => a.key === action)!;
   const pct = (m?: Mix) => (m ? (m[action] > 0 && m[action] < 0.01 ? "under 1%" : `${Math.round(m[action] * 100)}%`) : "n/a");
   return (
+    <>
     <div className="explainer">
       <div className="ex-stage">
         <IsoCluster mode="explain" action={action} playKey={play} scrollLinked={false} height={340} mixFast={mix.fast} mixSlow={mix.slow} />
@@ -69,11 +70,12 @@ export function AgentExplainer() {
           </button>
         ))}
       </div>
-      <div className="ex-sees">
+    </div>
+    <div className="ex-sees">
         <h3>What an agent sees before it chooses</h3>
         <div className="ex-chips">{SEES.map(([k, v]) => <span key={k} className="ex-chip" tabIndex={0}><b>{k}</b><i>{v}</i></span>)}</div>
         <p className="muted" style={{ marginTop: 10 }}>Seven numbers between 0 and 1, nothing else: no server names, no labels saying which servers are fast. Agents learn the difference from how requests turn out.</p>
-      </div>
     </div>
+    </>
   );
 }

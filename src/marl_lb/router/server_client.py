@@ -88,6 +88,7 @@ class LlamaClient:
         cache_prompt: bool = True,
         on_first: Callable[[float], None] | None = None,
         on_token: Callable[[int, float], None] | None = None,
+        ignore_eos: bool = False,
     ) -> Completion:
         """One streamed /completion call. on_first(t) fires at the first token, on_token(n, t) at
         every token (n counts from 1)."""
@@ -98,6 +99,8 @@ class LlamaClient:
             "cache_prompt": cache_prompt,
             "stream": True,
         }
+        if ignore_eos:  # replay: generate exactly the recorded output length, as benchmarks do
+            body["ignore_eos"] = True
         t_send = self.clock()
         t_first, n, parts, final = None, 0, [], {}
         async for chunk in self.transport.stream(url, body):

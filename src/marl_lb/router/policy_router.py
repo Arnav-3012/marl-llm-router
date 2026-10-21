@@ -86,7 +86,9 @@ class PolicyRouter:
             a = int(np.flatnonzero(mask)[0])
         return a, None
 
-    async def handle(self, req, prompt, n_predict: int, cache_prompt: bool = True) -> Outcome:
+    async def handle(
+        self, req, prompt, n_predict: int, cache_prompt: bool = True, ignore_eos: bool = False
+    ) -> Outcome:
         c = self.cluster
         now = self.now()
         req.arrival = now
@@ -112,6 +114,7 @@ class PolicyRouter:
                     n_predict,
                     cache_prompt,
                     actions,
+                    ignore_eos,
                 )
             if a == FORWARD:
                 dst = forward_target(c.servers, c.neighbours(holder), req)
@@ -137,7 +140,9 @@ class PolicyRouter:
         )
         return Outcome(req, status, None, None, actions)
 
-    async def _serve(self, req, j: int, prompt, n_predict, cache_prompt, actions) -> Outcome:
+    async def _serve(
+        self, req, j: int, prompt, n_predict, cache_prompt, actions, ignore_eos=False
+    ) -> Outcome:
         sh, t0 = self.cluster.servers[j], self.t0
         req.output_tokens = (
             n_predict  # the budget sent to the backend, as the simulator's output length
@@ -156,6 +161,7 @@ class PolicyRouter:
                 cache_prompt,
                 on_first=first,
                 on_token=lambda n, t: sh.token(req),
+                ignore_eos=ignore_eos,
             )
         except Exception:  # noqa: BLE001 - a backend failure must not take the router down
             sh.abort(req, self.now())
@@ -175,5 +181,11 @@ class PolicyRouter:
             server=j,
             ttft=req.ttft,
             cost=cost,
+            n_tokens=comp.n_tokens,
+            t_first=req.t_first,
+            # the server's own timings: prompt and decode time, for calibration under load
+            srv_prompt_ms=comp.timings.get("prompt_ms"),
+            srv_prompt_n=comp.timings.get("prompt_n"),
+            srv_predicted_ms=comp.timings.get("predicted_ms"),
         )
         return Outcome(req, "done", j, comp, actions, cost)

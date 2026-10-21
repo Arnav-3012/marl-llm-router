@@ -37,18 +37,22 @@ def percentile(values, q: float) -> float | None:
     return float(np.percentile(values, q)) if len(values) else None
 
 
-def live_metrics(resolved: list, servers: list, window_s: float, episode_s: float) -> dict:
+def live_metrics(
+    resolved: list, servers: list, window_s: float, episode_s: float, unfinished: int = 0
+) -> dict:
     """The simulator's headline metrics from a finished live run (same definitions)."""
     done = [r for r in resolved if r.status == "done"]
     met = [r for r in done if r.sla_met()]
-    n = max(len(resolved), 1)
+    # requests still running when a drain cap stopped the wait count as arrived and as not good
+    n = max(len(resolved) + unfinished, 1)
     busy = [s.busy_seconds for s in servers]
     cost = sum(s.price * s.busy_seconds for s in servers)
     layout = [s.class_name for s in servers]
     return {
-        "n_arrived": len(resolved),
+        "n_arrived": len(resolved) + unfinished,
         "n_completed": len(done),
         "n_dropped": len(resolved) - len(done),
+        "n_unfinished": unfinished,
         "n_sla_met": len(met),
         "goodput_rps": len(met) / max(window_s, 1e-9),
         "sla_attainment": len(met) / n,
@@ -91,7 +95,9 @@ class SimulationRun:
         time_scale: float = 1.0,
         sample_dt: float = 0.1,
         salt: int = 0,
+        drain_s: float | None = None,
     ):
+        self.drain_s = drain_s  # None: wait for all; else stop waiting this long after the end
         self.run_id, self.router, self.stream, self.cfg = run_id, router, stream, cfg
         self.root, self.scale, self.sample_dt, self.salt = root, time_scale, sample_dt, salt
         self.ttft_target, self.tpot_target = ttft_target, tpot_target
@@ -121,21 +127,38 @@ class SimulationRun:
                 if self._stop:
                     break
                 delay = s.arrival_s * self.scale - r.now()
-                if delay > 0:
-                    await asyncio.sleep(delay)
+                while delay > 0 and not self._stop:  # sleep in short steps so Stop is quick
+                    await asyncio.sleep(min(delay, 0.25))
+                    delay = s.arrival_s * self.scale - r.now()
+                if self._stop:
+                    break
                 req = Request.from_stream(i, s, self.ttft_target, self.tpot_target)
                 prompt = synth_prompt(
                     self.salt, s.conversation_id, s.turn_index, s.history_included, s.prompt_tokens
                 )
-                self._tasks.append(asyncio.create_task(r.handle(req, prompt, s.output_tokens)))
+                self._tasks.append(
+                    asyncio.create_task(r.handle(req, prompt, s.output_tokens, ignore_eos=True))
+                )
                 self.sent += 1
                 last_arrival = r.now()
+            # wait for the requests still running: until all are done, or the drain cap (a quick
+            # demo) is reached, or Stop is pressed; whatever is left is cancelled and counted
+            # as arrived and not good
+            deadline = None if self.drain_s is None else r.now() + self.drain_s * self.scale
+            pending = {t for t in self._tasks if not t.done()}
+            while pending and not self._stop:
+                if deadline is not None and r.now() >= deadline:
+                    break
+                _, pending = await asyncio.wait(pending, timeout=0.5)
+            unfinished = len(pending)
+            for t in pending:
+                t.cancel()
             await asyncio.gather(*self._tasks, return_exceptions=True)
         finally:
             sampler.cancel()
         episode_s = r.now()
         self.metrics = live_metrics(
-            r.resolved, r.cluster.servers, max(last_arrival, 1e-9), episode_s
+            r.resolved, r.cluster.servers, max(last_arrival, 1e-9), episode_s, unfinished
         )
         self.metrics["time_scale"] = self.scale
         self.state = "stopped" if self._stop else "done"
