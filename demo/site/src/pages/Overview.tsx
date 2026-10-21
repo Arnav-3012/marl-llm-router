@@ -54,7 +54,7 @@ export function Overview() {
             <Link className="btn" to="/replay">Watch a recorded episode</Link>
             {(() => {
               const n = overview.env?.data?.real_server_runs ?? 0;
-              const tip = "What this build does not show: the learned agents are trained and compared in a simulator calibrated on real servers (5 repeats of each measurement, one machine). The break-it experiments, a changed hardware mix and a centralised baseline were not run.";
+              const tip = "What this build does not show: the learned agents are trained and compared in a simulator calibrated on real servers (5 repeats of each measurement, one machine). The break-it experiments and a centralised baseline were not run; a changed hardware mix (one fast, three slow servers) is on the Stress tests page.";
               return n > 0
                 ? <span className="pill ok" title={tip}><span className="dot" />simulation calibrated on real servers · {n} real-server run{n > 1 ? "s" : ""}</span>
                 : <span className="pill warn" title={tip}><span className="dot" />simulation calibrated on real servers · no real-server run yet</span>;

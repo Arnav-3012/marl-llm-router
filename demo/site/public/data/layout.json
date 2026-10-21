@@ -1,7 +1,331 @@
 {
  "schema_version": 1,
- "status": "not_run",
- "reason": "the layout test (ADR-035) has not been run",
- "data": null,
- "source": null
+ "status": "ok",
+ "data": {
+  "agents_experiment": "l13_agents",
+  "layout": [
+   "fast_expensive",
+   "slow_cheap",
+   "slow_cheap",
+   "slow_cheap"
+  ],
+  "seeds": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "tau": 0.0,
+  "tau_scores": {
+   "0.0": 0.21163745058309377,
+   "0.02": 0.21141511606484764,
+   "0.05": 0.21124803994429017,
+   "0.1": 0.21080275467898615,
+   "0.2": 0.20916177947309703,
+   "0.4": 0.20654655873658523,
+   "0.8": 0.2064632945557784
+  },
+  "created": "2026-10-21T03:18:33",
+  "rhos": {
+   "0.5": {
+    "arrival_rate": 0.20654401180041382,
+    "policies": {
+     "agents": {
+      "goodput": [
+       0.1920262195394164,
+       0.004030328012700116
+      ],
+      "drop_rate": 0.04548937652385928
+     },
+     "route_to_fast_shed_tau": {
+      "goodput": [
+       0.16756611364873697,
+       0.0008245240013296049
+      ],
+      "drop_rate": 0.07823058167885753
+     },
+     "route_to_fast_shed": {
+      "goodput": [
+       0.1895945972479312,
+       0.0004917052202400979
+      ],
+      "drop_rate": 0.07823058167885755
+     },
+     "route_to_fast": {
+      "goodput": [
+       0.1889039589639591,
+       0.0009052504025132384
+      ],
+      "drop_rate": 0.0
+     },
+     "sed_global": {
+      "goodput": [
+       0.18854425152439028,
+       0.0007974668989028434
+      ],
+      "drop_rate": 0.0
+     },
+     "sed_local_full": {
+      "goodput": [
+       0.1033367532393293,
+       0.0009529160367878216
+      ],
+      "drop_rate": 0.0
+     },
+     "random": {
+      "goodput": [
+       0.09279013111117163,
+       0.0018816039632365091
+      ],
+      "drop_rate": 0.02075931731104145
+     }
+    },
+    "agents_minus": {
+     "route_to_fast_shed_tau": {
+      "mean": 0.024460105890679446,
+      "ci": 0.0040851916848239096,
+      "beats": true,
+      "loses": false
+     },
+     "route_to_fast_shed": {
+      "mean": 0.0024316222914851915,
+      "ci": 0.003627056524777215,
+      "beats": false,
+      "loses": false
+     },
+     "route_to_fast": {
+      "mean": 0.0031222605754573085,
+      "ci": 0.003601779023148934,
+      "beats": false,
+      "loses": false
+     },
+     "sed_global": {
+      "mean": 0.0034819680150261325,
+      "ci": 0.003766916721984403,
+      "beats": false,
+      "loses": false
+     },
+     "sed_local_full": {
+      "mean": 0.08868946630008712,
+      "ci": 0.0043433578386148,
+      "beats": true,
+      "loses": false
+     },
+     "random": {
+      "mean": 0.09923608842824479,
+      "ci": 0.004456789521335261,
+      "beats": true,
+      "loses": false
+     }
+    }
+   },
+   "0.8": {
+    "arrival_rate": 0.3304704188806621,
+    "policies": {
+     "agents": {
+      "goodput": [
+       0.2857170580792684,
+       0.00741509662637532
+      ],
+      "drop_rate": 0.06750261233019854
+     },
+     "route_to_fast_shed_tau": {
+      "goodput": [
+       0.23286020807926838,
+       0.0034077578112932188
+      ],
+      "drop_rate": 0.12309299895506794
+     },
+     "route_to_fast_shed": {
+      "goodput": [
+       0.2897457814024392,
+       0.0010176711599793123
+      ],
+      "drop_rate": 0.11417624521072796
+     },
+     "route_to_fast": {
+      "goodput": [
+       0.004120808427700349,
+       0.000309850653479669
+      ],
+      "drop_rate": 0.1350748867990247
+     },
+     "sed_global": {
+      "goodput": [
+       0.004143829703832753,
+       0.0002858468976631385
+      ],
+      "drop_rate": 0.1352838732149077
+     },
+     "sed_local_full": {
+      "goodput": [
+       0.004926553092334496,
+       0.00036994817463206693
+      ],
+      "drop_rate": 0.14022988505747128
+     },
+     "random": {
+      "goodput": [
+       0.0066761700783972144,
+       0.0007357434838220594
+      ],
+      "drop_rate": 0.16078021595262976
+     }
+    },
+    "agents_minus": {
+     "route_to_fast_shed_tau": {
+      "mean": 0.052856850000000025,
+      "ci": 0.010729924973068326,
+      "beats": true,
+      "loses": false
+     },
+     "route_to_fast_shed": {
+      "mean": -0.004028723323170747,
+      "ci": 0.007674736354000188,
+      "beats": false,
+      "loses": false
+     },
+     "route_to_fast": {
+      "mean": 0.28159624965156804,
+      "ci": 0.007495377692613034,
+      "beats": true,
+      "loses": false
+     },
+     "sed_global": {
+      "mean": 0.28157322837543564,
+      "ci": 0.007366036620494268,
+      "beats": true,
+      "loses": false
+     },
+     "sed_local_full": {
+      "mean": 0.28079050498693386,
+      "ci": 0.0076764662019255915,
+      "beats": true,
+      "loses": false
+     },
+     "random": {
+      "mean": 0.27904088800087123,
+      "ci": 0.007266220267120343,
+      "beats": true,
+      "loses": false
+     }
+    }
+   },
+   "0.95": {
+    "arrival_rate": 0.39243362242078617,
+    "policies": {
+     "agents": {
+      "goodput": [
+       0.32100004141169436,
+       0.010294842481230611
+      ],
+      "drop_rate": 0.09174503657262278
+     },
+     "route_to_fast_shed_tau": {
+      "goodput": [
+       0.24538378229529617,
+       0.005152664901853245
+      ],
+      "drop_rate": 0.1650992685475444
+     },
+     "route_to_fast_shed": {
+      "goodput": [
+       0.3362818522743359,
+       0.0011025374020582441
+      ],
+      "drop_rate": 0.12922326715430163
+     },
+     "route_to_fast": {
+      "goodput": [
+       0.0033625451450892867,
+       0.0002277054148558474
+      ],
+      "drop_rate": 0.2707070707070707
+     },
+     "sed_global": {
+      "goodput": [
+       0.0030891674910169865,
+       0.0001935123922834513
+      ],
+      "drop_rate": 0.2704284221525601
+     },
+     "sed_local_full": {
+      "goodput": [
+       0.003307869614274826,
+       0.0004554108297116951
+      ],
+      "drop_rate": 0.27189132706374086
+     },
+     "random": {
+      "goodput": [
+       0.006150997216626744,
+       0.0007590180495194919
+      ],
+      "drop_rate": 0.2901428073841867
+     }
+    },
+    "agents_minus": {
+     "route_to_fast_shed_tau": {
+      "mean": 0.07561625911639809,
+      "ci": 0.013137482059478562,
+      "beats": true,
+      "loses": false
+     },
+     "route_to_fast_shed": {
+      "mean": -0.015281810862641554,
+      "ci": 0.010806615273151424,
+      "beats": false,
+      "loses": true
+     },
+     "route_to_fast": {
+      "mean": 0.31763749626660504,
+      "ci": 0.010485306214788874,
+      "beats": true,
+      "loses": false
+     },
+     "sed_global": {
+      "mean": 0.3179108739206773,
+      "ci": 0.010321250125390558,
+      "beats": true,
+      "loses": false
+     },
+     "sed_local_full": {
+      "mean": 0.3176921717974195,
+      "ci": 0.010650216065171797,
+      "beats": true,
+      "loses": false
+     },
+     "random": {
+      "mean": 0.31484904419506754,
+      "ci": 0.010466883671381261,
+      "beats": true,
+      "loses": false
+     }
+    }
+   }
+  },
+  "verdict": {
+   "a": false,
+   "b": true,
+   "beats_old": [],
+   "loses_new": [],
+   "beats_new": [
+    "0.5",
+    "0.8",
+    "0.95"
+   ],
+   "head": "The agents are not worse than the rewritten rule, but they did not beat the unchanged old rule at any load, so the old rule did not break here."
+  },
+  "agents_training_minutes": 25.24702427148819,
+  "lambda_sat_rps": 0.412944140625
+ },
+ "source": {
+  "files": [
+   "results/layout/l13.json",
+   "results/saturation_l13/lambda_sat_flat.json"
+  ],
+  "n_seeds": 5,
+  "note": "held-out stream"
+ }
 }
