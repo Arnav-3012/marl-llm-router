@@ -1,7 +1,1959 @@
 {
  "schema_version": 1,
- "status": "not_run",
- "reason": "no real-server run yet (docs/DEMO.md)",
- "data": null,
- "source": null
+ "status": "ok",
+ "data": {
+  "runs": [
+   {
+    "run_id": "20261021-090154_001_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 40.0,
+    "slice": "375d43cc490f",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 7,
+     "n_completed": 7,
+     "n_dropped": 0,
+     "n_sla_met": 6,
+     "goodput_rps": 0.15166501598797433,
+     "sla_attainment": 0.8571428571428571,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.3006396659766324,
+     "ttft_p95": 6.0065168332075665,
+     "cost_per_request": 20.989957403666008,
+     "utilisation": [
+      0.36873704899665544,
+      0.04629596403366896,
+      0.46647298390315384,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 6,
+      "slow_cheap": 1
+     },
+     "arrival_window_s": 39.560870124958456,
+     "episode_s": 43.37874170899158,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-090238_002_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 40.0,
+    "slice": "f0b0cc90b1cf",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 21,
+     "n_completed": 21,
+     "n_dropped": 0,
+     "n_sla_met": 4,
+     "goodput_rps": 0.1021736844715531,
+     "sla_attainment": 0.19047619047619047,
+     "drop_rate": 0.0,
+     "ttft_p50": 2.6428017080179416,
+     "ttft_p95": 9.528521542029921,
+     "cost_per_request": 20.147791152698034,
+     "utilisation": [
+      0.8708875557771377,
+      0.03458954840799544,
+      0.8545628977285178,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 20,
+      "slow_cheap": 1
+     },
+     "arrival_window_s": 39.14902374998201,
+     "episode_s": 60.99765599996317,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-090339_003_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 40.0,
+    "slice": "c1c505f6fb54",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 37,
+     "n_completed": 37,
+     "n_dropped": 0,
+     "n_sla_met": 4,
+     "goodput_rps": 0.10379971619952374,
+     "sla_attainment": 0.10810810810810811,
+     "drop_rate": 0.0,
+     "ttft_p50": 13.73659658402903,
+     "ttft_p95": 39.94861956638051,
+     "cost_per_request": 23.40988480302543,
+     "utilisation": [
+      0.9658154930345688,
+      0.40078301531380317,
+      0.997731318372493,
+      0.12071750258801041
+     ],
+     "completed_by_class": {
+      "fast_expensive": 32,
+      "slow_cheap": 5
+     },
+     "arrival_window_s": 38.53575083299074,
+     "episode_s": 103.41428216599161,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-090522_004_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 40.0,
+    "slice": "d6d682de4eff",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 66,
+     "n_completed": 56,
+     "n_dropped": 10,
+     "n_sla_met": 2,
+     "goodput_rps": 0.050766697867335946,
+     "sla_attainment": 0.030303030303030304,
+     "drop_rate": 0.15151515151515152,
+     "ttft_p50": 75.53708974999608,
+     "ttft_p95": 247.05621685399092,
+     "cost_per_request": 44.68553286459168,
+     "utilisation": [
+      0.43646418452043856,
+      0.9935740518314563,
+      0.4428684933037689,
+      0.9430180543774804
+     ],
+     "completed_by_class": {
+      "fast_expensive": 38,
+      "slow_cheap": 18
+     },
+     "arrival_window_s": 39.39590487501118,
+     "episode_s": 458.8238455419778,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-092053_001_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 90.0,
+    "slice": "6b3e0b9e3d2a",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 13,
+     "n_completed": 13,
+     "n_dropped": 0,
+     "n_sla_met": 12,
+     "goodput_rps": 0.14740920212023256,
+     "sla_attainment": 0.9230769230769231,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.9598017919925041,
+     "ttft_p95": 3.910393116238988,
+     "cost_per_request": 17.005579218125114,
+     "utilisation": [
+      0.36900853021680347,
+      0.0,
+      0.2893131665816043,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 13,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 81.40604404202895,
+     "episode_s": 83.95307754201349,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-092222_002_route_to_fast_seed0",
+    "policy": "route_to_fast",
+    "rho": null,
+    "seed": 0,
+    "seconds": 90.0,
+    "slice": "6b3e0b9e3d2a",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 13,
+     "n_completed": 13,
+     "n_dropped": 0,
+     "n_sla_met": 12,
+     "goodput_rps": 0.14740899146594033,
+     "sla_attainment": 0.9230769230769231,
+     "drop_rate": 0.0,
+     "ttft_p50": 1.1284185419790447,
+     "ttft_p95": 3.9971367329941088,
+     "cost_per_request": 17.286189577219865,
+     "utilisation": [
+      0.36320685344719966,
+      0.0,
+      0.3049448750711347,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 13,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 81.40616037504515,
+     "episode_s": 84.08287179103354,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-092351_003_random_seed0",
+    "policy": "random",
+    "rho": null,
+    "seed": 0,
+    "seconds": 90.0,
+    "slice": "6b3e0b9e3d2a",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 13,
+     "n_completed": 13,
+     "n_dropped": 0,
+     "n_sla_met": 11,
+     "goodput_rps": 0.1351234586041749,
+     "sla_attainment": 0.8461538461538461,
+     "drop_rate": 0.0,
+     "ttft_p50": 1.9528663330129348,
+     "ttft_p95": 95.6945404998376,
+     "cost_per_request": 16.991992368197177,
+     "utilisation": [
+      0.060983583234533977,
+      0.734679566298962,
+      0.0822840109414969,
+      0.12956486526691852
+     ],
+     "completed_by_class": {
+      "fast_expensive": 8,
+      "slow_cheap": 5
+     },
+     "arrival_window_s": 81.4070340829785,
+     "episode_s": 153.68651287496323,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-092631_004_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 90.0,
+    "slice": "e321de1a8c94",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 28,
+     "n_dropped": 0,
+     "n_sla_met": 13,
+     "goodput_rps": 0.1478159774313003,
+     "sla_attainment": 0.4642857142857143,
+     "drop_rate": 0.0,
+     "ttft_p50": 2.8574903544795234,
+     "ttft_p95": 9.217987591351264,
+     "cost_per_request": 24.998986931727682,
+     "utilisation": [
+      0.8026987017856564,
+      0.016195418323065015,
+      0.764161162643934,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 27,
+      "slow_cheap": 1
+     },
+     "arrival_window_s": 87.94719099998474,
+     "episode_s": 111.39597508398583,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-092828_005_route_to_fast_seed0",
+    "policy": "route_to_fast",
+    "rho": null,
+    "seed": 0,
+    "seconds": 90.0,
+    "slice": "e321de1a8c94",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 28,
+     "n_dropped": 0,
+     "n_sla_met": 5,
+     "goodput_rps": 0.056852278002841504,
+     "sla_attainment": 0.17857142857142858,
+     "drop_rate": 0.0,
+     "ttft_p50": 3.732033145497553,
+     "ttft_p95": 17.144410548236916,
+     "cost_per_request": 25.77713682756959,
+     "utilisation": [
+      0.8591777049701491,
+      0.0,
+      0.7060858715017724,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 28,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 87.94722349999938,
+     "episode_s": 115.27768262499012,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-093030_006_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 90.0,
+    "slice": "f4a020b244d9",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 40,
+     "n_completed": 40,
+     "n_dropped": 0,
+     "n_sla_met": 5,
+     "goodput_rps": 0.05831973628550274,
+     "sla_attainment": 0.125,
+     "drop_rate": 0.0,
+     "ttft_p50": 24.210895750002237,
+     "ttft_p95": 50.743520503473704,
+     "cost_per_request": 34.52529035321495,
+     "utilisation": [
+      0.9269250803778194,
+      0.535642992039511,
+      0.9813425964574284,
+      0.24483735589740432
+     ],
+     "completed_by_class": {
+      "fast_expensive": 36,
+      "slow_cheap": 4
+     },
+     "arrival_window_s": 85.73426970798755,
+     "episode_s": 164.14134829101386,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-093320_007_route_to_fast_seed0",
+    "policy": "route_to_fast",
+    "rho": null,
+    "seed": 0,
+    "seconds": 90.0,
+    "slice": "f4a020b244d9",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 40,
+     "n_completed": 40,
+     "n_dropped": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.034991890629333194,
+     "sla_attainment": 0.075,
+     "drop_rate": 0.0,
+     "ttft_p50": 14.695442687516334,
+     "ttft_p95": 27.30275316454644,
+     "cost_per_request": 29.360559762601042,
+     "utilisation": [
+      0.9419686007781758,
+      0.0,
+      0.9739401013445288,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 40,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 85.73415000003297,
+     "episode_s": 153.24613187502837,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-101451_001_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "a38a0db25c03",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 3,
+     "n_completed": 3,
+     "n_dropped": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.05573808367269243,
+     "sla_attainment": 1.0,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.29083758301567286,
+     "ttft_p95": 1.1371718204696661,
+     "cost_per_request": 14.513607778586447,
+     "utilisation": [
+      0.19736107666264965,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 3,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 53.82316366699524,
+     "episode_s": 55.15376191702671,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-101546_002_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "00c72c77862c",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 7,
+     "n_completed": 7,
+     "n_dropped": 0,
+     "n_sla_met": 6,
+     "goodput_rps": 0.10110976185887507,
+     "sla_attainment": 0.8571428571428571,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.3201746249687858,
+     "ttft_p95": 4.732807471277189,
+     "cost_per_request": 21.435142762293772,
+     "utilisation": [
+      0.3435534583746883,
+      0.0,
+      0.2394526767499079,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 7,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 59.34145120799076,
+     "episode_s": 64.34151816600934,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-101650_003_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "5a89d02ee01b",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 4,
+     "n_completed": 4,
+     "n_dropped": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.0551811429424882,
+     "sla_attainment": 0.75,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.9092661455215421,
+     "ttft_p95": 5.306841708833233,
+     "cost_per_request": 23.272886082995683,
+     "utilisation": [
+      0.23954948799470777,
+      0.0,
+      0.1351066641648611,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 4,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 54.366398375015706,
+     "episode_s": 62.117987250036094,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-101752_004_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "9d9dc38014a0",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 3,
+     "n_completed": 3,
+     "n_dropped": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.06967129156194649,
+     "sla_attainment": 1.0,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.2826725000049919,
+     "ttft_p95": 1.1337963125202803,
+     "cost_per_request": 14.46735922130756,
+     "utilisation": [
+      0.2438943407903514,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 3,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 43.05934241699288,
+     "episode_s": 44.488606750033796,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-101837_005_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "8a18f69752b3",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 21,
+     "n_completed": 21,
+     "n_dropped": 0,
+     "n_sla_met": 4,
+     "goodput_rps": 0.06811729847328131,
+     "sla_attainment": 0.19047619047619047,
+     "drop_rate": 0.0,
+     "ttft_p50": 4.968135292001534,
+     "ttft_p95": 13.144388207991142,
+     "cost_per_request": 32.4020694938455,
+     "utilisation": [
+      0.8756174109450313,
+      0.04627361547624481,
+      0.9118655662843912,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 20,
+      "slow_cheap": 1
+     },
+     "arrival_window_s": 58.72223487502197,
+     "episode_s": 94.55586795904674,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-102011_006_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "ab2e8bdf4f82",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 37,
+     "n_completed": 37,
+     "n_dropped": 0,
+     "n_sla_met": 2,
+     "goodput_rps": 0.03459852713217789,
+     "sla_attainment": 0.05405405405405406,
+     "drop_rate": 0.0,
+     "ttft_p50": 40.3259462909773,
+     "ttft_p95": 69.0118475920055,
+     "cost_per_request": 36.41057237170832,
+     "utilisation": [
+      0.9388975823299669,
+      0.47311613911651573,
+      0.9978141948122622,
+      0.134052107022553
+     ],
+     "completed_by_class": {
+      "fast_expensive": 32,
+      "slow_cheap": 5
+     },
+     "arrival_window_s": 57.80592891597189,
+     "episode_s": 161.26271266594995,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-102253_007_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": 0.8,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "6a7d68156897",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 3,
+     "n_completed": 3,
+     "n_dropped": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.06688382618827389,
+     "sla_attainment": 1.0,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.5820909999893047,
+     "ttft_p95": 2.259867400024086,
+     "cost_per_request": 32.12607349998628,
+     "utilisation": [
+      0.2105174899657166,
+      0.0,
+      0.2997966002376704,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 3,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 44.853893249994144,
+     "episode_s": 47.215147665992845,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-102340_008_route_to_fast_shed_seed0",
+    "policy": "route_to_fast_shed",
+    "rho": 0.8,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "6a7d68156897",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 3,
+     "n_completed": 3,
+     "n_dropped": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.06688391783285923,
+     "sla_attainment": 1.0,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.655504958005622,
+     "ttft_p95": 2.1444412951590492,
+     "cost_per_request": 30.210861667913075,
+     "utilisation": [
+      0.14905655927098788,
+      0.0,
+      0.33261570366966703,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 3,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 44.853831791027915,
+     "episode_s": 47.04058754100697,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-102428_009_ddqn_agents_seed0",
+    "policy": "ddqn_agents",
+    "rho": 0.8,
+    "seed": 0,
+    "seconds": 60.0,
+    "slice": "6a7d68156897",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 3,
+     "n_completed": 3,
+     "n_dropped": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.06688442520002424,
+     "sla_attainment": 1.0,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.7565305000171065,
+     "ttft_p95": 1.9918634503148496,
+     "cost_per_request": 22.04669288933898,
+     "utilisation": [
+      0.0,
+      0.0,
+      0.35314346292774634,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 3,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 44.85349154198775,
+     "episode_s": 46.82238637498813,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-103807_001_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 45.0,
+    "slice": "7c8b921bce30",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 24,
+     "n_completed": 23,
+     "n_dropped": 0,
+     "n_unfinished": 1,
+     "n_sla_met": 4,
+     "goodput_rps": 0.09114429532354713,
+     "sla_attainment": 0.16666666666666666,
+     "drop_rate": 0.0,
+     "ttft_p50": 3.642258625011891,
+     "ttft_p95": 12.58530448688543,
+     "cost_per_request": 24.518172244607147,
+     "utilisation": [
+      0.748429084744377,
+      0.023431826195438894,
+      0.8317608098429782,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 22,
+      "slow_cheap": 1
+     },
+     "arrival_window_s": 43.88645483297296,
+     "episode_s": 88.88728691602591,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-104549_002_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": 0.8,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "8f019684cfb1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 8,
+     "n_completed": 8,
+     "n_dropped": 0,
+     "n_unfinished": 0,
+     "n_sla_met": 7,
+     "goodput_rps": 0.06840978120068228,
+     "sla_attainment": 0.875,
+     "drop_rate": 0.0,
+     "ttft_p50": 0.8935796460136771,
+     "ttft_p95": 4.394687993230762,
+     "cost_per_request": 15.463495645526564,
+     "utilisation": [
+      0.2943097958808847,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 8,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 102.32454887503991,
+     "episode_s": 105.08311895799125,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-104832_001_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 28,
+     "n_dropped": 0,
+     "n_unfinished": 0,
+     "n_sla_met": 19,
+     "goodput_rps": 0.1620294045339548,
+     "sla_attainment": 0.6785714285714286,
+     "drop_rate": 0.0,
+     "ttft_p50": 1.6614234584849328,
+     "ttft_p95": 6.028625229516183,
+     "cost_per_request": 25.48543792263081,
+     "utilisation": [
+      0.766532285783187,
+      0.013359067937591207,
+      0.39542468784044577,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 27,
+      "slow_cheap": 1
+     },
+     "arrival_window_s": 117.2626663330011,
+     "episode_s": 153.0923920419882,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-105105_002_route_to_fast_seed0",
+    "policy": "route_to_fast",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 28,
+     "n_dropped": 0,
+     "n_unfinished": 0,
+     "n_sla_met": 2,
+     "goodput_rps": 0.017055773203454926,
+     "sla_attainment": 0.07142857142857142,
+     "drop_rate": 0.0,
+     "ttft_p50": 6.022773104021326,
+     "ttft_p95": 21.91404429190443,
+     "cost_per_request": 37.834182839291834,
+     "utilisation": [
+      0.9131175765773089,
+      0.0,
+      0.7980186474880145,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 28,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 117.26234724995447,
+     "episode_s": 154.77393099997425,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-105340_003_route_to_fast_shed_seed0",
+    "policy": "route_to_fast_shed",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 23,
+     "n_dropped": 5,
+     "n_unfinished": 0,
+     "n_sla_met": 18,
+     "goodput_rps": 0.1535014832660832,
+     "sla_attainment": 0.6428571428571429,
+     "drop_rate": 0.17857142857142858,
+     "ttft_p50": 2.0020191249786876,
+     "ttft_p95": 5.265469066123477,
+     "cost_per_request": 30.593584789935015,
+     "utilisation": [
+      0.819807534719499,
+      0.0,
+      0.46407387234365394,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 23,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 117.26271054201061,
+     "episode_s": 137.0166368749924,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-105558_004_ddqn_agents_seed0",
+    "policy": "ddqn_agents",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 23,
+     "n_dropped": 5,
+     "n_unfinished": 0,
+     "n_sla_met": 12,
+     "goodput_rps": 0.10233461711265188,
+     "sla_attainment": 0.42857142857142855,
+     "drop_rate": 0.17857142857142858,
+     "ttft_p50": 2.079878083022777,
+     "ttft_p95": 5.648501945455791,
+     "cost_per_request": 30.49823098557839,
+     "utilisation": [
+      0.7532013277240664,
+      0.0,
+      0.5836340525649206,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 23,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 117.26237258297624,
+     "episode_s": 131.17907466599718,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-105809_005_ddqn_robust_seed0",
+    "policy": "ddqn_robust",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 18,
+     "n_dropped": 10,
+     "n_unfinished": 0,
+     "n_sla_met": 16,
+     "goodput_rps": 0.13644571330515765,
+     "sla_attainment": 0.5714285714285714,
+     "drop_rate": 0.35714285714285715,
+     "ttft_p50": 1.0811688335088547,
+     "ttft_p95": 3.5349043910711746,
+     "cost_per_request": 32.8363234260016,
+     "utilisation": [
+      0.7363782023624098,
+      0.0,
+      0.39066063471102985,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 18,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 117.26275316701503,
+     "episode_s": 131.10768729203846,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-110020_006_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 52,
+     "n_dropped": 0,
+     "n_unfinished": 1,
+     "n_sla_met": 4,
+     "goodput_rps": 0.03337392947375873,
+     "sla_attainment": 0.07547169811320754,
+     "drop_rate": 0.0,
+     "ttft_p50": 25.86218354149605,
+     "ttft_p95": 48.575725341544604,
+     "cost_per_request": 31.91041541665282,
+     "utilisation": [
+      0.9671682942228953,
+      0.1674936147788143,
+      0.965787280753748,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 49,
+      "slow_cheap": 3
+     },
+     "arrival_window_s": 119.85403166699689,
+     "episode_s": 210.0614305830095,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-110350_007_route_to_fast_seed0",
+    "policy": "route_to_fast",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 47,
+     "n_dropped": 0,
+     "n_unfinished": 6,
+     "n_sla_met": 2,
+     "goodput_rps": 0.016686944943503146,
+     "sla_attainment": 0.03773584905660377,
+     "drop_rate": 0.0,
+     "ttft_p50": 33.12468162504956,
+     "ttft_p95": 58.9300752124167,
+     "cost_per_request": 33.0304462198277,
+     "utilisation": [
+      0.8710421472360554,
+      0.0,
+      0.9770115788040327,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 47,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 119.85417383298045,
+     "episode_s": 210.00890700001037,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-110720_008_route_to_fast_shed_seed0",
+    "policy": "route_to_fast_shed",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 43,
+     "n_dropped": 10,
+     "n_unfinished": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.025030407033990974,
+     "sla_attainment": 0.05660377358490566,
+     "drop_rate": 0.18867924528301888,
+     "ttft_p50": 2.7504589169984683,
+     "ttft_p95": 7.8063144747342434,
+     "cost_per_request": 30.67879866669496,
+     "utilisation": [
+      0.9512540147537693,
+      0.0,
+      0.9664896952079062,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 43,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 119.85422354203183,
+     "episode_s": 171.97140783403302,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-111012_009_ddqn_agents_seed0",
+    "policy": "ddqn_agents",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 42,
+     "n_dropped": 11,
+     "n_unfinished": 0,
+     "n_sla_met": 4,
+     "goodput_rps": 0.03337403375540408,
+     "sla_attainment": 0.07547169811320754,
+     "drop_rate": 0.20754716981132076,
+     "ttft_p50": 2.8801996455003973,
+     "ttft_p95": 13.573406410714938,
+     "cost_per_request": 32.97665267076255,
+     "utilisation": [
+      0.8973821215584504,
+      0.0,
+      0.948968222969567,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 42,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 119.85365716699744,
+     "episode_s": 187.53475150000304,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-111320_010_ddqn_robust_seed0",
+    "policy": "ddqn_robust",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 31,
+     "n_dropped": 22,
+     "n_unfinished": 0,
+     "n_sla_met": 6,
+     "goodput_rps": 0.05006121963937441,
+     "sla_attainment": 0.11320754716981132,
+     "drop_rate": 0.41509433962264153,
+     "ttft_p50": 2.436092916992493,
+     "ttft_p95": 6.023808166995877,
+     "cost_per_request": 36.06626180103499,
+     "utilisation": [
+      0.7944745608288929,
+      0.0,
+      0.9969918163429407,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 31,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 119.85325254203053,
+     "episode_s": 156.0249930000282,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-111918_011_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 53,
+     "n_dropped": 0,
+     "n_unfinished": 0,
+     "n_sla_met": 5,
+     "goodput_rps": 0.041717355832481,
+     "sla_attainment": 0.09433962264150944,
+     "drop_rate": 0.0,
+     "ttft_p50": 3.287512000009883,
+     "ttft_p95": 9.773725091991945,
+     "cost_per_request": 24.10299934452852,
+     "utilisation": [
+      0.8944530716276308,
+      0.01937908558566941,
+      0.9529971827573536,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 52,
+      "slow_cheap": 1
+     },
+     "arrival_window_s": 119.8541925830068,
+     "episode_s": 172.4156988330069,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-112218_012_route_to_fast_seed0",
+    "policy": "route_to_fast",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 44,
+     "n_dropped": 0,
+     "n_unfinished": 9,
+     "n_sla_met": 2,
+     "goodput_rps": 0.01668694677071447,
+     "sla_attainment": 0.03773584905660377,
+     "drop_rate": 0.0,
+     "ttft_p50": 22.17981585400412,
+     "ttft_p95": 65.31970045998752,
+     "cost_per_request": 35.62276432572716,
+     "utilisation": [
+      0.8830224624205412,
+      0.0,
+      0.9827782525438132,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 44,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 119.85416070901556,
+     "episode_s": 210.01728879200527,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-112553_013_route_to_fast_shed_seed0",
+    "policy": "route_to_fast_shed",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 44,
+     "n_dropped": 9,
+     "n_unfinished": 0,
+     "n_sla_met": 5,
+     "goodput_rps": 0.041717358152699294,
+     "sla_attainment": 0.09433962264150944,
+     "drop_rate": 0.16981132075471697,
+     "ttft_p50": 2.79874124948401,
+     "ttft_p95": 7.752922246398521,
+     "cost_per_request": 26.93952499999961,
+     "utilisation": [
+      0.9381711698133478,
+      0.0,
+      0.8634211556079611,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 44,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 119.85418591700727,
+     "episode_s": 164.48492304200772,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-112845_014_ddqn_agents_seed0",
+    "policy": "ddqn_agents",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 39,
+     "n_dropped": 14,
+     "n_unfinished": 0,
+     "n_sla_met": 10,
+     "goodput_rps": 0.08343539861050887,
+     "sla_attainment": 0.18867924528301888,
+     "drop_rate": 0.2641509433962264,
+     "ttft_p50": 2.4450339160393924,
+     "ttft_p95": 5.175326379766922,
+     "cost_per_request": 26.537831829025006,
+     "utilisation": [
+      0.8952304965926744,
+      0.0,
+      0.8365153772185412,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 39,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 119.85320579196559,
+     "episode_s": 149.41214195796056,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-113120_015_ddqn_robust_seed0",
+    "policy": "ddqn_robust",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "7c828f12a649",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 53,
+     "n_completed": 32,
+     "n_dropped": 21,
+     "n_unfinished": 0,
+     "n_sla_met": 21,
+     "goodput_rps": 0.17521293061663323,
+     "sla_attainment": 0.39622641509433965,
+     "drop_rate": 0.39622641509433965,
+     "ttft_p50": 1.8608979579585139,
+     "ttft_p95": 4.447832183152786,
+     "cost_per_request": 29.80765381238598,
+     "utilisation": [
+      0.7472469509662318,
+      0.0,
+      0.830874086176577,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 32,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 119.8541678750189,
+     "episode_s": 151.10452550003538,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-114023_001_sed_global_seed0",
+    "policy": "sed_global",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 28,
+     "n_dropped": 0,
+     "n_unfinished": 0,
+     "n_sla_met": 22,
+     "goodput_rps": 0.18761226722015673,
+     "sla_attainment": 0.7857142857142857,
+     "drop_rate": 0.0,
+     "ttft_p50": 1.9157880624989048,
+     "ttft_p95": 5.576284395955736,
+     "cost_per_request": 19.676123031094903,
+     "utilisation": [
+      0.619144725272882,
+      0.032994702637007794,
+      0.4633540939074854,
+      0.21161945361092016
+     ],
+     "completed_by_class": {
+      "fast_expensive": 26,
+      "slow_cheap": 2
+     },
+     "arrival_window_s": 117.26312104199314,
+     "episode_s": 120.43245504196966,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-114224_002_route_to_fast_seed0",
+    "policy": "route_to_fast",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 28,
+     "n_dropped": 0,
+     "n_unfinished": 0,
+     "n_sla_met": 3,
+     "goodput_rps": 0.025582355678736755,
+     "sla_attainment": 0.10714285714285714,
+     "drop_rate": 0.0,
+     "ttft_p50": 7.541898916504579,
+     "ttft_p95": 35.03000175579799,
+     "cost_per_request": 41.95431530652734,
+     "utilisation": [
+      0.7832178804642768,
+      0.0,
+      0.5690497211776532,
+      0.7458174467624578
+     ],
+     "completed_by_class": {
+      "fast_expensive": 23,
+      "slow_cheap": 5
+     },
+     "arrival_window_s": 117.26832500001183,
+     "episode_s": 190.85982662497554,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-114535_003_route_to_fast_shed_seed0",
+    "policy": "route_to_fast_shed",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 17,
+     "n_dropped": 11,
+     "n_unfinished": 0,
+     "n_sla_met": 12,
+     "goodput_rps": 0.10233486354131498,
+     "sla_attainment": 0.42857142857142855,
+     "drop_rate": 0.39285714285714285,
+     "ttft_p50": 1.8058377919951454,
+     "ttft_p95": 7.84742989139631,
+     "cost_per_request": 40.197971487250044,
+     "utilisation": [
+      0.597651726904713,
+      0.0,
+      0.6048956569617772,
+      0.17337091403132782
+     ],
+     "completed_by_class": {
+      "fast_expensive": 16,
+      "slow_cheap": 1
+     },
+     "arrival_window_s": 117.26209020795068,
+     "episode_s": 137.1239542909898,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-114753_004_ddqn_agents_seed0",
+    "policy": "ddqn_agents",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 16,
+     "n_dropped": 12,
+     "n_unfinished": 0,
+     "n_sla_met": 12,
+     "goodput_rps": 0.1023348595775008,
+     "sla_attainment": 0.42857142857142855,
+     "drop_rate": 0.42857142857142855,
+     "ttft_p50": 2.0249889170227107,
+     "ttft_p95": 5.549861229243106,
+     "cost_per_request": 31.608068854024168,
+     "utilisation": [
+      0.48918958253884576,
+      0.0,
+      0.5853057258019946,
+      0.0
+     ],
+     "completed_by_class": {
+      "fast_expensive": 16,
+      "slow_cheap": 0
+     },
+     "arrival_window_s": 117.26209474995267,
+     "episode_s": 117.66666120797163,
+     "time_scale": 1.0
+    }
+   },
+   {
+    "run_id": "20261021-114951_005_ddqn_robust_seed0",
+    "policy": "ddqn_robust",
+    "rho": null,
+    "seed": 0,
+    "seconds": 120.0,
+    "slice": "307af7e387a1",
+    "machine": "macOS-27.0.1-arm64-arm-64bit",
+    "metrics": {
+     "n_arrived": 28,
+     "n_completed": 15,
+     "n_dropped": 13,
+     "n_unfinished": 0,
+     "n_sla_met": 11,
+     "goodput_rps": 0.09380629190374573,
+     "sla_attainment": 0.39285714285714285,
+     "drop_rate": 0.4642857142857143,
+     "ttft_p50": 1.5802477920078672,
+     "ttft_p95": 10.400714850105578,
+     "cost_per_request": 40.40121061659884,
+     "utilisation": [
+      0.5593089276263034,
+      0.23858896933534635,
+      0.5203756225879085,
+      0.14159312461023926
+     ],
+     "completed_by_class": {
+      "fast_expensive": 12,
+      "slow_cheap": 3
+     },
+     "arrival_window_s": 117.2629231660394,
+     "episode_s": 128.96966137504205,
+     "time_scale": 1.0
+    }
+   }
+  ],
+  "capacity": {
+   "lambda_sat_rps": 0.07500000000000001,
+   "quick": true,
+   "window_s": 60.0,
+   "measured": "2026-10-21T10:22:53"
+  },
+  "comparisons": [
+   {
+    "created": "2026-10-21T10:25:14",
+    "mode": "real",
+    "rho": 0.8,
+    "rate_rps": 0.06000000000000001,
+    "capacity_rps": 0.07500000000000001,
+    "seconds": 60.0,
+    "seed": 0,
+    "same_slice": true,
+    "slice_ids": [
+     "6a7d68156897"
+    ],
+    "note": "one run per policy is an anecdote, not a result",
+    "ranking": [
+     {
+      "rank": 1,
+      "policy": "ddqn_agents",
+      "label": "the learned agents (DDQN + Reject)",
+      "run_id": "20261021-102428_009_ddqn_agents_seed0",
+      "goodput_rps": 0.06688442520002424,
+      "sla_attainment": 1.0,
+      "drop_rate": 0.0,
+      "ttft_p50": 0.7565305000171065,
+      "ttft_p95": 1.9918634503148496,
+      "cost_per_request": 22.04669288933898,
+      "n_arrived": 3,
+      "n_completed": 3,
+      "n_sla_met": 3
+     },
+     {
+      "rank": 2,
+      "policy": "route_to_fast_shed",
+      "label": "the hand-written rule (route to fast + shed)",
+      "run_id": "20261021-102340_008_route_to_fast_shed_seed0",
+      "goodput_rps": 0.06688391783285923,
+      "sla_attainment": 1.0,
+      "drop_rate": 0.0,
+      "ttft_p50": 0.655504958005622,
+      "ttft_p95": 2.1444412951590492,
+      "cost_per_request": 30.210861667913075,
+      "n_arrived": 3,
+      "n_completed": 3,
+      "n_sla_met": 3
+     },
+     {
+      "rank": 3,
+      "policy": "sed_global",
+      "label": "SED global, a strong classic rule",
+      "run_id": "20261021-102253_007_sed_global_seed0",
+      "goodput_rps": 0.06688382618827389,
+      "sla_attainment": 1.0,
+      "drop_rate": 0.0,
+      "ttft_p50": 0.5820909999893047,
+      "ttft_p95": 2.259867400024086,
+      "cost_per_request": 32.12607349998628,
+      "n_arrived": 3,
+      "n_completed": 3,
+      "n_sla_met": 3
+     }
+    ],
+    "file": "comparison_20261021-102514.json"
+   },
+   {
+    "created": "2026-10-21T11:00:20",
+    "mode": "real",
+    "rho": null,
+    "rate_rps": 0.15,
+    "capacity_rps": null,
+    "seconds": 120.0,
+    "seed": 0,
+    "same_slice": true,
+    "slice_ids": [
+     "307af7e387a1"
+    ],
+    "kind": "main",
+    "drain_s": 90.0,
+    "note": "one run per policy is an anecdote, not a result",
+    "ranking": [
+     {
+      "rank": 1,
+      "policy": "sed_global",
+      "label": "SED global, a strong classic rule",
+      "run_id": "20261021-104832_001_sed_global_seed0",
+      "goodput_rps": 0.1620294045339548,
+      "sla_attainment": 0.6785714285714286,
+      "drop_rate": 0.0,
+      "ttft_p50": 1.6614234584849328,
+      "ttft_p95": 6.028625229516183,
+      "cost_per_request": 25.48543792263081,
+      "n_arrived": 28,
+      "n_completed": 28,
+      "n_sla_met": 19
+     },
+     {
+      "rank": 2,
+      "policy": "route_to_fast_shed",
+      "label": "the hand-written rule (route to fast + shed)",
+      "run_id": "20261021-105340_003_route_to_fast_shed_seed0",
+      "goodput_rps": 0.1535014832660832,
+      "sla_attainment": 0.6428571428571429,
+      "drop_rate": 0.17857142857142858,
+      "ttft_p50": 2.0020191249786876,
+      "ttft_p95": 5.265469066123477,
+      "cost_per_request": 30.593584789935015,
+      "n_arrived": 28,
+      "n_completed": 23,
+      "n_sla_met": 18
+     },
+     {
+      "rank": 3,
+      "policy": "ddqn_robust",
+      "label": "the robust agents (trained on random slowdowns)",
+      "run_id": "20261021-105809_005_ddqn_robust_seed0",
+      "goodput_rps": 0.13644571330515765,
+      "sla_attainment": 0.5714285714285714,
+      "drop_rate": 0.35714285714285715,
+      "ttft_p50": 1.0811688335088547,
+      "ttft_p95": 3.5349043910711746,
+      "cost_per_request": 32.8363234260016,
+      "n_arrived": 28,
+      "n_completed": 18,
+      "n_sla_met": 16
+     },
+     {
+      "rank": 4,
+      "policy": "ddqn_agents",
+      "label": "the learned agents (DDQN + Reject)",
+      "run_id": "20261021-105558_004_ddqn_agents_seed0",
+      "goodput_rps": 0.10233461711265188,
+      "sla_attainment": 0.42857142857142855,
+      "drop_rate": 0.17857142857142858,
+      "ttft_p50": 2.079878083022777,
+      "ttft_p95": 5.648501945455791,
+      "cost_per_request": 30.49823098557839,
+      "n_arrived": 28,
+      "n_completed": 23,
+      "n_sla_met": 12
+     },
+     {
+      "rank": 5,
+      "policy": "route_to_fast",
+      "label": "the hand-written rule (route to fast)",
+      "run_id": "20261021-105105_002_route_to_fast_seed0",
+      "goodput_rps": 0.017055773203454926,
+      "sla_attainment": 0.07142857142857142,
+      "drop_rate": 0.0,
+      "ttft_p50": 6.022773104021326,
+      "ttft_p95": 21.91404429190443,
+      "cost_per_request": 37.834182839291834,
+      "n_arrived": 28,
+      "n_completed": 28,
+      "n_sla_met": 2
+     }
+    ],
+    "file": "comparison_20261021-110020.json"
+   },
+   {
+    "created": "2026-10-21T11:15:56",
+    "mode": "real",
+    "rho": null,
+    "rate_rps": 0.3,
+    "capacity_rps": null,
+    "seconds": 120.0,
+    "seed": 0,
+    "same_slice": true,
+    "slice_ids": [
+     "7c828f12a649"
+    ],
+    "kind": "main",
+    "drain_s": 90.0,
+    "note": "one run per policy is an anecdote, not a result",
+    "ranking": [
+     {
+      "rank": 1,
+      "policy": "ddqn_robust",
+      "label": "the robust agents (trained on random slowdowns)",
+      "run_id": "20261021-111320_010_ddqn_robust_seed0",
+      "goodput_rps": 0.05006121963937441,
+      "sla_attainment": 0.11320754716981132,
+      "drop_rate": 0.41509433962264153,
+      "ttft_p50": 2.436092916992493,
+      "ttft_p95": 6.023808166995877,
+      "cost_per_request": 36.06626180103499,
+      "n_arrived": 53,
+      "n_completed": 31,
+      "n_sla_met": 6
+     },
+     {
+      "rank": 2,
+      "policy": "ddqn_agents",
+      "label": "the learned agents (DDQN + Reject)",
+      "run_id": "20261021-111012_009_ddqn_agents_seed0",
+      "goodput_rps": 0.03337403375540408,
+      "sla_attainment": 0.07547169811320754,
+      "drop_rate": 0.20754716981132076,
+      "ttft_p50": 2.8801996455003973,
+      "ttft_p95": 13.573406410714938,
+      "cost_per_request": 32.97665267076255,
+      "n_arrived": 53,
+      "n_completed": 42,
+      "n_sla_met": 4
+     },
+     {
+      "rank": 3,
+      "policy": "sed_global",
+      "label": "SED global, a strong classic rule",
+      "run_id": "20261021-110020_006_sed_global_seed0",
+      "goodput_rps": 0.03337392947375873,
+      "sla_attainment": 0.07547169811320754,
+      "drop_rate": 0.0,
+      "ttft_p50": 25.86218354149605,
+      "ttft_p95": 48.575725341544604,
+      "cost_per_request": 31.91041541665282,
+      "n_arrived": 53,
+      "n_completed": 52,
+      "n_sla_met": 4
+     },
+     {
+      "rank": 4,
+      "policy": "route_to_fast_shed",
+      "label": "the hand-written rule (route to fast + shed)",
+      "run_id": "20261021-110720_008_route_to_fast_shed_seed0",
+      "goodput_rps": 0.025030407033990974,
+      "sla_attainment": 0.05660377358490566,
+      "drop_rate": 0.18867924528301888,
+      "ttft_p50": 2.7504589169984683,
+      "ttft_p95": 7.8063144747342434,
+      "cost_per_request": 30.67879866669496,
+      "n_arrived": 53,
+      "n_completed": 43,
+      "n_sla_met": 3
+     },
+     {
+      "rank": 5,
+      "policy": "route_to_fast",
+      "label": "the hand-written rule (route to fast)",
+      "run_id": "20261021-110350_007_route_to_fast_seed0",
+      "goodput_rps": 0.016686944943503146,
+      "sla_attainment": 0.03773584905660377,
+      "drop_rate": 0.0,
+      "ttft_p50": 33.12468162504956,
+      "ttft_p95": 58.9300752124167,
+      "cost_per_request": 33.0304462198277,
+      "n_arrived": 53,
+      "n_completed": 47,
+      "n_sla_met": 2
+     }
+    ],
+    "file": "comparison_20261021-111556.json"
+   },
+   {
+    "created": "2026-10-21T11:33:57",
+    "mode": "real",
+    "rho": null,
+    "rate_rps": 0.3,
+    "capacity_rps": null,
+    "seconds": 120.0,
+    "seed": 0,
+    "same_slice": true,
+    "slice_ids": [
+     "7c828f12a649"
+    ],
+    "kind": "main",
+    "adaptive": false,
+    "drain_s": 90.0,
+    "note": "one run per policy is an anecdote, not a result",
+    "ranking": [
+     {
+      "rank": 1,
+      "policy": "ddqn_robust",
+      "label": "the robust agents (trained on random slowdowns)",
+      "run_id": "20261021-113120_015_ddqn_robust_seed0",
+      "goodput_rps": 0.17521293061663323,
+      "sla_attainment": 0.39622641509433965,
+      "drop_rate": 0.39622641509433965,
+      "ttft_p50": 1.8608979579585139,
+      "ttft_p95": 4.447832183152786,
+      "cost_per_request": 29.80765381238598,
+      "n_arrived": 53,
+      "n_completed": 32,
+      "n_sla_met": 21
+     },
+     {
+      "rank": 2,
+      "policy": "ddqn_agents",
+      "label": "the learned agents (DDQN + Reject)",
+      "run_id": "20261021-112845_014_ddqn_agents_seed0",
+      "goodput_rps": 0.08343539861050887,
+      "sla_attainment": 0.18867924528301888,
+      "drop_rate": 0.2641509433962264,
+      "ttft_p50": 2.4450339160393924,
+      "ttft_p95": 5.175326379766922,
+      "cost_per_request": 26.537831829025006,
+      "n_arrived": 53,
+      "n_completed": 39,
+      "n_sla_met": 10
+     },
+     {
+      "rank": 3,
+      "policy": "route_to_fast_shed",
+      "label": "the hand-written rule (route to fast + shed)",
+      "run_id": "20261021-112553_013_route_to_fast_shed_seed0",
+      "goodput_rps": 0.041717358152699294,
+      "sla_attainment": 0.09433962264150944,
+      "drop_rate": 0.16981132075471697,
+      "ttft_p50": 2.79874124948401,
+      "ttft_p95": 7.752922246398521,
+      "cost_per_request": 26.93952499999961,
+      "n_arrived": 53,
+      "n_completed": 44,
+      "n_sla_met": 5
+     },
+     {
+      "rank": 4,
+      "policy": "sed_global",
+      "label": "SED global, a strong classic rule",
+      "run_id": "20261021-111918_011_sed_global_seed0",
+      "goodput_rps": 0.041717355832481,
+      "sla_attainment": 0.09433962264150944,
+      "drop_rate": 0.0,
+      "ttft_p50": 3.287512000009883,
+      "ttft_p95": 9.773725091991945,
+      "cost_per_request": 24.10299934452852,
+      "n_arrived": 53,
+      "n_completed": 53,
+      "n_sla_met": 5
+     },
+     {
+      "rank": 5,
+      "policy": "route_to_fast",
+      "label": "the hand-written rule (route to fast)",
+      "run_id": "20261021-112218_012_route_to_fast_seed0",
+      "goodput_rps": 0.01668694677071447,
+      "sla_attainment": 0.03773584905660377,
+      "drop_rate": 0.0,
+      "ttft_p50": 22.17981585400412,
+      "ttft_p95": 65.31970045998752,
+      "cost_per_request": 35.62276432572716,
+      "n_arrived": 53,
+      "n_completed": 44,
+      "n_sla_met": 2
+     }
+    ],
+    "file": "comparison_20261021-113357_rate0.3.json"
+   },
+   {
+    "created": "2026-10-21T11:52:00",
+    "mode": "real",
+    "rho": null,
+    "rate_rps": 0.15,
+    "capacity_rps": null,
+    "seconds": 120.0,
+    "seed": 0,
+    "same_slice": true,
+    "slice_ids": [
+     "307af7e387a1"
+    ],
+    "kind": "main",
+    "drain_s": 90.0,
+    "adaptive": true,
+    "note": "one run per policy is an anecdote, not a result",
+    "ranking": [
+     {
+      "rank": 1,
+      "policy": "sed_global",
+      "label": "SED global, a strong classic rule",
+      "run_id": "20261021-114023_001_sed_global_seed0",
+      "goodput_rps": 0.18761226722015673,
+      "sla_attainment": 0.7857142857142857,
+      "drop_rate": 0.0,
+      "ttft_p50": 1.9157880624989048,
+      "ttft_p95": 5.576284395955736,
+      "cost_per_request": 19.676123031094903,
+      "n_arrived": 28,
+      "n_completed": 28,
+      "n_sla_met": 22
+     },
+     {
+      "rank": 2,
+      "policy": "route_to_fast_shed",
+      "label": "the hand-written rule (route to fast + shed)",
+      "run_id": "20261021-114535_003_route_to_fast_shed_seed0",
+      "goodput_rps": 0.10233486354131498,
+      "sla_attainment": 0.42857142857142855,
+      "drop_rate": 0.39285714285714285,
+      "ttft_p50": 1.8058377919951454,
+      "ttft_p95": 7.84742989139631,
+      "cost_per_request": 40.197971487250044,
+      "n_arrived": 28,
+      "n_completed": 17,
+      "n_sla_met": 12
+     },
+     {
+      "rank": 3,
+      "policy": "ddqn_agents",
+      "label": "the learned agents (DDQN + Reject)",
+      "run_id": "20261021-114753_004_ddqn_agents_seed0",
+      "goodput_rps": 0.1023348595775008,
+      "sla_attainment": 0.42857142857142855,
+      "drop_rate": 0.42857142857142855,
+      "ttft_p50": 2.0249889170227107,
+      "ttft_p95": 5.549861229243106,
+      "cost_per_request": 31.608068854024168,
+      "n_arrived": 28,
+      "n_completed": 16,
+      "n_sla_met": 12
+     },
+     {
+      "rank": 4,
+      "policy": "ddqn_robust",
+      "label": "the robust agents (trained on random slowdowns)",
+      "run_id": "20261021-114951_005_ddqn_robust_seed0",
+      "goodput_rps": 0.09380629190374573,
+      "sla_attainment": 0.39285714285714285,
+      "drop_rate": 0.4642857142857143,
+      "ttft_p50": 1.5802477920078672,
+      "ttft_p95": 10.400714850105578,
+      "cost_per_request": 40.40121061659884,
+      "n_arrived": 28,
+      "n_completed": 15,
+      "n_sla_met": 11
+     },
+     {
+      "rank": 5,
+      "policy": "route_to_fast",
+      "label": "the hand-written rule (route to fast)",
+      "run_id": "20261021-114224_002_route_to_fast_seed0",
+      "goodput_rps": 0.025582355678736755,
+      "sla_attainment": 0.10714285714285714,
+      "drop_rate": 0.0,
+      "ttft_p50": 7.541898916504579,
+      "ttft_p95": 35.03000175579799,
+      "cost_per_request": 41.95431530652734,
+      "n_arrived": 28,
+      "n_completed": 28,
+      "n_sla_met": 3
+     }
+    ],
+    "file": "comparison_20261021-115200.json"
+   }
+  ]
+ },
+ "source": {
+  "files": [
+   "results/live/20261021-090154_001_sed_global_seed0",
+   "results/live/20261021-090238_002_sed_global_seed0",
+   "results/live/20261021-090339_003_sed_global_seed0",
+   "results/live/20261021-090522_004_sed_global_seed0",
+   "results/live/20261021-092053_001_sed_global_seed0",
+   "results/live/20261021-092222_002_route_to_fast_seed0",
+   "results/live/20261021-092351_003_random_seed0",
+   "results/live/20261021-092631_004_sed_global_seed0",
+   "results/live/20261021-092828_005_route_to_fast_seed0",
+   "results/live/20261021-093030_006_sed_global_seed0",
+   "results/live/20261021-093320_007_route_to_fast_seed0",
+   "results/live/20261021-101451_001_sed_global_seed0",
+   "results/live/20261021-101546_002_sed_global_seed0",
+   "results/live/20261021-101650_003_sed_global_seed0",
+   "results/live/20261021-101752_004_sed_global_seed0",
+   "results/live/20261021-101837_005_sed_global_seed0",
+   "results/live/20261021-102011_006_sed_global_seed0",
+   "results/live/20261021-102253_007_sed_global_seed0",
+   "results/live/20261021-102340_008_route_to_fast_shed_seed0",
+   "results/live/20261021-102428_009_ddqn_agents_seed0",
+   "results/live/20261021-103807_001_sed_global_seed0",
+   "results/live/20261021-104549_002_sed_global_seed0",
+   "results/live/20261021-104832_001_sed_global_seed0",
+   "results/live/20261021-105105_002_route_to_fast_seed0",
+   "results/live/20261021-105340_003_route_to_fast_shed_seed0",
+   "results/live/20261021-105558_004_ddqn_agents_seed0",
+   "results/live/20261021-105809_005_ddqn_robust_seed0",
+   "results/live/20261021-110020_006_sed_global_seed0",
+   "results/live/20261021-110350_007_route_to_fast_seed0",
+   "results/live/20261021-110720_008_route_to_fast_shed_seed0",
+   "results/live/20261021-111012_009_ddqn_agents_seed0",
+   "results/live/20261021-111320_010_ddqn_robust_seed0",
+   "results/live/20261021-111918_011_sed_global_seed0",
+   "results/live/20261021-112218_012_route_to_fast_seed0",
+   "results/live/20261021-112553_013_route_to_fast_shed_seed0",
+   "results/live/20261021-112845_014_ddqn_agents_seed0",
+   "results/live/20261021-113120_015_ddqn_robust_seed0",
+   "results/live/20261021-114023_001_sed_global_seed0",
+   "results/live/20261021-114224_002_route_to_fast_seed0",
+   "results/live/20261021-114535_003_route_to_fast_shed_seed0",
+   "results/live/20261021-114753_004_ddqn_agents_seed0",
+   "results/live/20261021-114951_005_ddqn_robust_seed0",
+   "results/live/real_lambda_sat.json",
+   "results/live/comparison_20261021-102514.json",
+   "results/live/comparison_20261021-110020.json",
+   "results/live/comparison_20261021-111556.json",
+   "results/live/comparison_20261021-113357_rate0.3.json",
+   "results/live/comparison_20261021-115200.json"
+  ],
+  "note": "real servers, one machine"
+ }
 }

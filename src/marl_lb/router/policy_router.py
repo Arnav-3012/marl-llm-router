@@ -160,7 +160,7 @@ class PolicyRouter:
                 n_predict,
                 cache_prompt,
                 on_first=first,
-                on_token=lambda n, t: sh.token(req),
+                on_token=lambda n, t: sh.token(req, t - t0),
                 ignore_eos=ignore_eos,
             )
         except Exception:  # noqa: BLE001 - a backend failure must not take the router down
@@ -168,7 +168,7 @@ class PolicyRouter:
             return self._drop(req, self.now(), actions, status="error")
         req.output_tokens = comp.n_tokens
         req.t_first = comp.t_first - t0
-        sh.finish(req, comp.t_done - t0)
+        sh.finish(req, comp.t_done - t0, comp.timings.get("prompt_ms"))
         req.attributed_s = (comp.t_done - t0 - req.t_enqueue) / max(conc["n"], 1)
         cost = sh.price * req.attributed_s
         self.resolved.append(req)

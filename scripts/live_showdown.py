@@ -90,6 +90,7 @@ def main() -> int:
             "same_slice": len(slices) == 1,
             "slice_ids": sorted(slices),
             "kind": "main",
+            "adaptive": bool(h.get("adaptive")),
             "drain_s": a.drain,
             "note": "one run per policy is an anecdote, not a result",
             "ranking": [

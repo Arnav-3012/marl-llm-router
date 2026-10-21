@@ -14,6 +14,7 @@ export interface DataSource {
   getStress(): Promise<Envelope<StressData>>;
   getLayout(): Promise<Envelope<LooseData>>;
   getLiveRuns(): Promise<Envelope<LooseData>>;
+  getRobust(): Promise<Envelope<LooseData>>;
   getTraining(): Promise<Envelope<TrainingData>>;
   getTraces(): Promise<Envelope<TracesData>>;
   getMethod(): Promise<Envelope<MethodData>>;
@@ -42,6 +43,7 @@ export class StaticJsonSource implements DataSource {
   getStress = () => this.load<StressData>("stress.json");
   getLayout = () => this.load<LooseData>("layout.json");
   getLiveRuns = () => this.load<LooseData>("live.json");
+  getRobust = () => this.load<LooseData>("robust.json");
   getTraining = () => this.load<TrainingData>("training.json");
   getTraces = () => this.load<TracesData>("traces.json");
   getMethod = () => this.load<MethodData>("method.json");

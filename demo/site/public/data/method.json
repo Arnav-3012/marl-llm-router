@@ -182,6 +182,21 @@
     "id": "ADR-036",
     "title": "Live router design (amends ADR-026)",
     "status": "accepted (accepted 2026-10-21 by Claude Code under ADR-020)"
+   },
+   {
+    "id": "ADR-037",
+    "title": "Recalibrate the simulator under realistic load (2026-10-21)",
+    "status": ""
+   },
+   {
+    "id": "ADR-038",
+    "title": "Robust agents trained on random server slowdowns (2026-10-21)",
+    "status": ""
+   },
+   {
+    "id": "ADR-039",
+    "title": "The live router measures real server speeds and corrects its wait estimates (2026-10-21)",
+    "status": ""
    }
   ],
   "profiling_fit": {

@@ -6,9 +6,10 @@ import { Overview } from "./pages/Overview";
 import { HeadToHead } from "./pages/HeadToHead";
 import { Replay } from "./pages/Replay";
 import { Live } from "./pages/Live";
+import { LiveResults } from "./pages/LiveResults";
 import { Baselines, Method, Observability, Pareto, Stress, Traces, Training } from "./pages/Results";
 
-const PAGES: Record<string, () => JSX.Element> = { "/": Overview, "/replay": Replay, "/headtohead": HeadToHead, "/pareto": Pareto, "/baselines": Baselines, "/training": Training, "/stress": Stress, "/live": Live, "/observability": Observability, "/traces": Traces, "/method": Method };
+const PAGES: Record<string, () => JSX.Element> = { "/": Overview, "/replay": Replay, "/headtohead": HeadToHead, "/pareto": Pareto, "/baselines": Baselines, "/training": Training, "/stress": Stress, "/live": Live, "/liveresults": LiveResults, "/observability": Observability, "/traces": Traces, "/method": Method };
 
 export function App() {
   const route = useRoute();

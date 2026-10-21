@@ -57,6 +57,7 @@ class Settings:
     time_scale: float = 0.01  # mock only: service and arrival times are multiplied by this
     ports: list = field(default_factory=list)  # real mode: one llama-server port per layout entry
     agents_exp: str | None = "e8_mix"
+    adaptive: bool = False  # ADR-039: measure real server speeds and correct wait estimates
     robust_exp: str | None = None  # ADR-038 agents trained on random slowdowns
     live_root: Path = ROOT / "results" / "live"
     host: str = "127.0.0.1"
@@ -202,7 +203,9 @@ class State:
             )
         except (ValueError, FileNotFoundError) as e:
             raise HTTPException(400, str(e)) from e
-        cluster = LiveCluster(params, world.calib["classes"], world.est_output_tokens)
+        cluster = LiveCluster(
+            params, world.calib["classes"], world.est_output_tokens, self.s.adaptive
+        )
         dt = params.dt * self.scale
         return PolicyRouter(
             self.backends,
@@ -240,6 +243,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 for b, u in zip(st.backends, up, strict=True)
             ],
             "policies": POLICIES,
+            "adaptive": st.s.adaptive,
             "running": st.current.run_id if st.current and st.current.state == "running" else None,
         }
 
@@ -476,6 +480,9 @@ def main() -> None:
     ap.add_argument("--time-scale", type=float, default=0.01)
     ap.add_argument("--ports", default="", help="real mode: llama-server ports in layout order")
     ap.add_argument("--agents-exp", default="e8_mix")
+    ap.add_argument(
+        "--adaptive", action="store_true", help="ADR-039: correct wait estimates with live speeds"
+    )
     ap.add_argument("--robust-exp", default=None, help="ADR-038 robust agents, e.g. e8_robust")
     ap.add_argument("--port", type=int, default=8000)
     a = ap.parse_args()
@@ -485,6 +492,7 @@ def main() -> None:
         [int(p) for p in a.ports.split(",") if p],
         a.agents_exp,
         robust_exp=a.robust_exp,
+        adaptive=a.adaptive,
     )
     uvicorn.run(create_app(settings), host="127.0.0.1", port=a.port, log_level="info")
 

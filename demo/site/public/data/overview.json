@@ -43,7 +43,7 @@
    ]
   },
   "q3_observability_available": true,
-  "real_server_runs": 0,
+  "real_server_runs": 42,
   "q4_reject": {
    "rhos": {
     "0.8": {
@@ -205,7 +205,7 @@
    "prototype": 5,
    "timing": 1
   },
-  "exported_at": "2026-10-21T08:49:42",
+  "exported_at": "2026-10-21T11:52:25",
   "not_done": [
    "break-it experiments (M2/M3)",
    "E5 burst test",

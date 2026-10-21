@@ -80,6 +80,8 @@ export function Live() {
   // traffic per policy and at most 45 s to finish, so four policies take about six minutes and the differences are large.
   // The full showdown (the main result): two rates, 120 s of traffic per policy, five policies; about 36 minutes, saved as the main comparison.
   const fullShowdown = () => { if (window.confirm("The full showdown takes about 36 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.15, 0.3], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
+  // Medium load only (0.15 req/s, about 28 requests per policy), about 12 minutes.
+  const mediumShowdown = () => { if (window.confirm("The medium-load showdown takes about 12 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.15], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
   const showdown = () => start({ rate_rps: 0.3, seconds: 45, drain_s: 45, policies: ["sed_global", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] });
   useEffect(() => { if (auto.current && health && health.status === "ok" && state === "idle") { auto.current = false; void start(); } });
   const stop = () => api("/livecheck/stop", { method: "POST" }).catch(() => undefined);
@@ -166,6 +168,7 @@ export function Live() {
               </div>
               <footer className="as-foot">
                 <button className="primary" onClick={() => start()} disabled={running}>{running ? "Running…" : msgs.length ? "Run again" : "Start live test"}</button>
+                <button onClick={mediumShowdown} disabled={running} title="the medium load, five policies, about 12 minutes">Medium-load showdown (12 min)</button>
                 <button onClick={fullShowdown} disabled={running} title="the main real-server result: two loads, five policies, about 36 minutes">Full showdown (36 min)</button>
                 <button onClick={showdown} disabled={running} title="heavy overload, four policies, about six minutes">Quick overload showdown (6 min)</button>
                 <button onClick={stop} disabled={!running}>Stop</button>
@@ -197,6 +200,9 @@ export function Live() {
             </div>
           </div>
 
+          {rows.length === 0 && (
+            <div className="verdict tie" style={{ marginTop: 20 }}><b>Looking for the saved results?</b> The charts of earlier live tests are kept on the <Link to="/liveresults">Live results page</Link>: the medium and heavy loads, every run side by side. This page only shows the test you start here.</div>
+          )}
           {rows.length > 0 && (
             <section style={{ marginTop: 28 }} aria-label="results">
               <h2>Results of this live test</h2>

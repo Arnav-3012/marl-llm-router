@@ -229,6 +229,7 @@ class LiveCheck:
             "slice_ids": sorted(slice_ids),
             "kind": "main" if opts.get("rates") else "quick" if opts.get("rate_rps") else "guided",
             "drain_s": opts.get("drain_s"),
+            "adaptive": bool(self.st.s.adaptive),
             "note": "one run per policy is an anecdote, not a result",
             "ranking": [
                 {

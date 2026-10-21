@@ -27,6 +27,8 @@ class ShadowServer(Server):
         self._pf0: dict[int, float] = {}  # request id -> prefill estimate at dispatch
         self._held: set[int] = set()  # request ids holding KV in the shadow
         self._last: float | None = None
+        self.adapt = False  # ADR-039: learn live_dec / live_pf from what the backend actually does
+        self._tok_last: dict[int, float] = {}
 
     def _tick_busy(self, now: float) -> None:
         """Busy seconds = wall time with at least one request present (same meaning as the sim)."""
@@ -55,13 +57,29 @@ class ShadowServer(Server):
             self.kv.admit(req.id, tokens)
             self._held.add(req.id)
         self.active.append(req)
+        self._tok_last[req.id] = now
         return len(self.active)
 
-    def token(self, req) -> None:
+    def token(self, req, now: float | None = None) -> None:
         req.dec_left = max(req.dec_left - 1, 0)
+        if self.adapt and now is not None:
+            last = self._tok_last.get(req.id)
+            if last is not None:  # gap between two tokens of one request = one decode step
+                nominal = self.t0 + self.k * max(len(self.active), 1)
+                self._learn("live_dec", (now - last) / nominal, 0.05, 0.7, 12.0)
+            self._tok_last[req.id] = now
 
-    def finish(self, req, now: float) -> None:
+    def _learn(self, attr: str, ratio: float, alpha: float, lo: float, hi: float) -> None:
+        """Move a speed factor towards the measured ratio (exponential average, clipped)."""
+        ratio = min(max(ratio, lo), hi)
+        setattr(self, attr, (1 - alpha) * getattr(self, attr) + alpha * ratio)
+
+    def finish(self, req, now: float, prompt_ms: float | None = None) -> None:
         self._tick_busy(now)
+        nominal_pf = self._pf0.get(req.id, 0.0)
+        if self.adapt and prompt_ms and nominal_pf > 0.1:  # the backend's own prompt time
+            self._learn("live_pf", prompt_ms / 1000.0 / nominal_pf, 0.2, 0.7, 12.0)
+        self._tok_last.pop(req.id, None)
         if req in self.active:
             self.active.remove(req)
         if req in self.queue:
@@ -89,7 +107,9 @@ class ShadowServer(Server):
 class LiveCluster:
     """What decisions look at: the shadow servers and the simulator's parameters."""
 
-    def __init__(self, params: SimParams, classes: dict, est_output_tokens: float):
+    def __init__(
+        self, params: SimParams, classes: dict, est_output_tokens: float, adapt: bool = False
+    ):
         self.p = params
         self.n = len(params.layout)
         sim = {"max_queue": params.max_queue, "prefix_cache_fraction": params.prefix_cache_fraction}
@@ -97,6 +117,8 @@ class LiveCluster:
             ShadowServer(i, name, classes[name], sim, est_output_tokens)
             for i, name in enumerate(params.layout)
         ]
+        for srv in self.servers:
+            srv.adapt = adapt  # ADR-039: measure real speeds and correct the wait estimates
 
     def neighbours(self, i: int) -> list:
         return neighbour_ids(self.p.k, self.n, i)

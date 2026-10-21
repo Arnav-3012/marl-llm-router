@@ -1,5 +1,4 @@
 // Pareto, Baselines & E1, Observability, Traces, Method pages.
-import { RankedBars } from "../viz/RankedBars";
 import { useState } from "react";
 import { BarsCI, LineChart, ParetoScatter, type BarSeries } from "../charts";
 import { Card, ChartFrame, Info, Loaded, PageHead, Marker, SourceNote, fmt, styleOf, useData, useLoad } from "../ui";
@@ -419,20 +418,18 @@ export function Stress() {
       <p className="lead">Four tests that could show the agents doing better than fixed rules, with the pass/fail rule written down before running them (ADR-032, ADR-033). The agents shown are the final ones (Reject action, trained on conversation and code-assistant traffic). Nothing was retrained or tuned for the tests themselves. Each one can fail, and a failure is shown as a failure.</p>
       <Loaded state={s} what="Stress tests">
         {(d, env) => {
-          const sw = d.sweep_reject, v2 = d.sweep_v2;
+          const sw = d.sweep_reject;
           const line = (id: string, label: string, src: any, key: string) => ({ id, label, color: styleOf(id).color, marker: styleOf(id).marker, dash: styleOf(id).dash, points: (src?.rhos ?? []).map((r: number, i: number) => ({ x: r, y: src.policies[key]?.[i]?.mean ?? null })) });
           const sweepSeries = sw ? [
             line("ddqn_reject_mix", "DDQN agents + Reject", sw, "ddqn_agents"),
-            ...(v2 ? [line("ddqn", "DDQN agents (3 actions)", v2, "ddqn_agents")] : []),
             line("route_to_fast_shed", styleOf("route_to_fast_shed").label, sw, "route_to_fast_shed"),
             line("route_to_fast", styleOf("route_to_fast").label, sw, "route_to_fast"),
             line("sed_global", "SED (global)", sw, "sed_global"),
           ] : [];
-          const dg = d.degradation?.e8_mix, dgv2 = d.degradation?.main_v2;
+          const dg = d.degradation?.e8_mix;
           const dRhos = dg ? Object.keys(dg.rhos) : [];
           const degSeries: BarSeries[] = dg ? [
             { id: "ddqn_reject_mix", label: "DDQN agents + Reject", values: dRhos.map((r) => pair(dg.rhos[r].policies.ddqn_agents.goodput_degraded)) },
-            ...(dgv2 ? [{ id: "ddqn", label: "DDQN agents (3 actions)", values: dRhos.map((r) => pair(dgv2.rhos[r]?.policies.ddqn_agents.goodput_degraded)) }] : []),
             ...["route_to_fast_shed", "route_to_fast", "sed_global", "sed_local_full"].map((p) => ({ id: p, values: dRhos.map((r) => pair(dg.rhos[r].policies[p]?.goodput_degraded)) })),
           ] : [];
           const sh = d.shuffle ?? {};
@@ -440,7 +437,6 @@ export function Stress() {
           const shRho = "0.8";
           const shSeries: BarSeries[] = [
             ...(sh.e8_mix ? [{ id: "ddqn_reject_mix", label: "DDQN agents + Reject", values: feats.map((f) => { const m = sh.e8_mix.rhos[shRho].features[f]; return { mean: -m.mean_diff, ci: m.ci, n: m.n }; }) }] : []),
-            ...(sh.main_v2 ? [{ id: "ddqn", label: "DDQN agents (3 actions)", values: feats.map((f) => { const m = sh.main_v2.rhos[shRho].features[f]; return { mean: -m.mean_diff, ci: m.ci, n: m.n }; }) }] : []),
           ];
           const used = sh.e8_mix ? feats.filter((f) => sh.e8_mix.used[f]).map((f) => FEATURE_LABEL[f] ?? f) : [];
           const notUsed = sh.e8_mix ? feats.filter((f) => !sh.e8_mix.used[f]).map((f) => FEATURE_LABEL[f] ?? f) : [];
@@ -489,6 +485,7 @@ export function Stress() {
         }}
       </Loaded>
       <LayoutSection />
+      <RobustSection />
       <LiveRunsSection />
     </>
   );
@@ -521,38 +518,57 @@ function LayoutSection() {
   );
 }
 
+function RobustSection() {
+  const ds = useData();
+  const s = useLoad(() => ds.getRobust(), []);
+  return (
+    <>
+      <h2>6 · Robust agents: insurance for a slower real world</h2>
+      <Loaded state={s} what="Robust agents (ADR-038)">
+        {(d, env) => {
+          const worlds: [string, string, string][] = [["firstcal", "Profiled simulator (the calibration the agents were built on)", "offered load ρ"], ["heavy", "Slowed simulator (servers slow down under load, like the real ones)", "arrival rate (req/s)"]];
+          const series = (w: any, rhos: string[]): BarSeries[] => [["agents_mix", "ddqn_reject_mix", "Final agents"], ["agents_robust", "ddqn_robust", "Robust agents"], ["route_to_fast_shed", "route_to_fast_shed", undefined], ["sed_global", "sed_global", undefined]].map(([k, id, label]) => ({ id: id as string, label: label as string | undefined, values: rhos.map((r) => pair(w.rhos[r].policies[k as string].goodput)) }));
+          return (
+            <Card className="flat">
+              <p className="lead" style={{ marginBottom: 12 }}>The first real-server runs showed that busy servers slow down more than the simulator predicts. We trained a second set of agents on random server slowdowns (ADR-038). It is a trade-off, not an upgrade: it costs goodput when the servers are as fast as profiled and gains it when they slow down.</p>
+              {worlds.map(([k, title, xl]) => {
+                const w = d[k]; const rhos = Object.keys(w.rhos);
+                const groups = k === "heavy" ? rhos.map((r) => fmt(w.rhos[r].arrival_rate, 2)) : rhos;
+                return (
+                  <ChartFrame key={k} title={title} better="higher"
+                    tip="Held-out traffic, 5 seeds, mean and 95% interval; same requests for every policy. The robust agents were trained on random slowdowns of the servers; the final agents were not. Only the key policies are drawn."
+                    reading={<p>{k === "heavy"
+                      ? <>At the heaviest load the robust agents beat the final agents by {fmt(w.rhos[rhos[2]].robust_minus.agents_mix.mean, 3)} ± {fmt(w.rhos[rhos[2]].robust_minus.agents_mix.ci, 3)} req/s and the hand shed rule by {fmt(w.rhos[rhos[2]].robust_minus.route_to_fast_shed.mean, 3)} ± {fmt(w.rhos[rhos[2]].robust_minus.route_to_fast_shed.ci, 3)}; the other rules collapse. At the lighter loads they tie.</>
+                      : <>Here the robust agents lose to the final agents at every load ({rhos.map((r) => fmt(w.rhos[r].robust_minus.agents_mix.mean, 3)).join(", ")} req/s) and refuse {rhos.map((r) => fmt(w.rhos[r].policies.agents_robust.drop_rate * 100, 0)).join("%, ")}% of requests against {rhos.map((r) => fmt(w.rhos[r].policies.agents_mix.drop_rate * 100, 0)).join("%, ")}%: they cannot tell a fast server from a slowed one, so they refuse early. This is why the final agents stay the headline agents.</>}</p>}>
+                    <BarsCI groups={groups} series={series(w, rhos)} xLabel={xl} yLabel="goodput (req/s)" title={title} />
+                  </ChartFrame>
+                );
+              })}
+              <SourceNote source={env.source} />
+            </Card>
+          );
+        }}
+      </Loaded>
+    </>
+  );
+}
+
 function LiveRunsSection() {
   const ds = useData();
   const s = useLoad(() => ds.getLiveRuns(), []);
   return (
     <>
-      <h2>6 · The real servers</h2>
+      <h2>7 · The real servers</h2>
       <Loaded state={s} what="Real-server runs">
         {(d, env) => (
           <Card className="flat">
             {d.capacity && <p className="lead" style={{ marginBottom: 12 }}>The measured capacity of the real cluster is <b>{fmt(d.capacity.lambda_sat_rps, 2)} requests per second</b>{d.capacity.quick ? " (a quick estimate)" : ""}; load ρ on the Live page is a share of it.</p>}
-            {(() => {
-              const frame = (c: any, short: boolean) => (
-                <ChartFrame key={c.file} title={`${short ? "Short demo: " : ""}every policy on the same requests at ${fmt(c.rate_rps, 2)} requests per second, best first`} better="higher"
-                  tip={`${short ? "A short live demo (about 45 s of traffic per policy), so each policy sees only about a dozen requests and the ranking is noisy. " : "The main live test on the real servers. "}Every policy replayed exactly the same requests, one after the other. The bar is goodput, requests per second that met both targets; the yellow tick is the arrival rate, the most any policy could reach. Refused requests never count as good, so the refused share is shown beside each bar. One run per policy is an anecdote, not a result.`}
-                  reading={<p><b>Highest in this run: {c.ranking[0].label}.</b> {c.rho != null ? `Load ρ ${c.rho} of the measured capacity (${fmt(c.rate_rps, 2)} req/s)` : `${fmt(c.rate_rps, 2)} req/s`}, {c.seconds} s of traffic per policy{c.drain_s ? ` plus at most ${c.drain_s} s to finish` : ""}, seed {c.seed}, {c.same_slice ? "identical requests for every policy" : "slices differ"}.</p>}>
-                  <RankedBars rows={c.ranking} capacity={c.rate_rps} />
-                </ChartFrame>
-              );
-              const latest = (kinds: string[]) => { const m = new Map<number, any>(); for (const c of d.comparisons ?? []) if (kinds.includes(c.kind ?? "guided")) m.set(c.rate_rps, c); return [...m.values()].sort((x, y) => x.rate_rps - y.rate_rps); };
-              const main = latest(["main"]), other = latest(["quick", "guided"]);
-              return (
-                <>
-                  {main.map((c) => frame(c, false))}
-                  {other.length > 0 && <details style={{ marginTop: 12 }}><summary>Short demo runs from the Live page ({other.length})</summary>{other.map((c) => frame(c, true))}</details>}
-                </>
-              );
-            })()}
+            <p className="muted" style={{ marginBottom: 12 }}>The ranked charts and tables of the real-server showdowns are on the <Link to="/liveresults">Live results page</Link>.</p>
             {d.runs.length > 0 ? (
-              <div className="tablewrap" style={{ marginTop: 16 }}><table>
+              <details><summary>All saved real-server runs (for audit)</summary><div className="tablewrap" style={{ marginTop: 16 }}><table>
                 <thead><tr><th>policy</th><th>ρ</th><th>seed</th><th>slice</th><th>goodput (req/s)</th><th>met both targets</th><th>dropped</th><th>first token p95 (s)</th><th>cost / request</th></tr></thead>
                 <tbody>{d.runs.map((r: any) => <tr key={r.run_id}><td style={{ textAlign: "left" }}>{styleOf(r.policy === "ddqn_agents" ? "ddqn_reject_mix" : r.policy).label}</td><td>{r.rho ?? "n/a"}</td><td>{r.seed}</td><td>{r.slice}</td><td>{fmt(r.metrics.goodput_rps, 3)}</td><td>{fmt(r.metrics.sla_attainment * 100, 0)}%</td><td>{fmt(r.metrics.drop_rate * 100, 1)}%</td><td>{r.metrics.ttft_p95 == null ? "n/a" : fmt(r.metrics.ttft_p95, 2)}</td><td>{r.metrics.cost_per_request == null ? "n/a" : fmt(r.metrics.cost_per_request, 1)}</td></tr>)}</tbody>
-              </table></div>
+              </table></div></details>
             ) : <p className="muted">No finished run yet.</p>}
             <p className="muted" style={{ marginTop: 10 }}>Real llama-servers on one machine, replaying the same held-out traffic one policy after the other (same slice id = identical requests). One run per policy is an anecdote, not a result; it shows that the system works on real servers and how its live numbers compare with the simulation. Synthetic prices per busy second.</p>
             <SourceNote source={env.source} />

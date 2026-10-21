@@ -61,6 +61,9 @@ class Server:
         # ADR-038: with est_aware_load False the router-side estimates (expected_wait, SED) use the
         # nominal step time, like the live router whose shadow servers know no load terms
         self.est_aware_load = cls.get("est_aware_load", True)
+        # ADR-039: the LIVE router measures how much slower than nominal this server really is
+        # (decode step and prefill) and scales its wait estimates by it; always 1.0 in the simulator
+        self.live_dec = self.live_pf = 1.0
         self._base_load = (
             self.ctx_decode, self.g_same_pre, self.g_same_dec, self.g_diff_pre, self.g_diff_dec
         )  # fmt: skip
@@ -111,11 +114,11 @@ class Server:
         """Server seconds per decoded token when the present requests (+extra) share steps."""
         b = max(1, min(self.max_batch, self.n_present() + extra))
         if not self.est_aware_load:
-            return (self.t0 + self.k * b) / b
+            return (self.t0 + self.k * b) / b * self.live_dec
         ctx = sum(r.prompt_tokens + r.output_tokens - r.dec_left for r in self.active)
         ctx += extra * self.est_output_tokens  # a newcomer adds roughly its own context
         step = self.t0 + self.k * b + self.ctx_decode * ctx
-        return step * self._load_mult(decode=True) / b
+        return step * self._load_mult(decode=True) / b * self.live_dec
 
     def expected_wait(self) -> float:
         """Seconds of work ahead of a new request: remaining prefill plus expected remaining decode.
@@ -127,16 +130,20 @@ class Server:
         work = 0.0
         for r in self.active:
             generated = r.output_tokens - r.dec_left
-            work += r.pf_left + max(self.est_output_tokens - generated, 0.0) * per_tok
+            work += (
+                r.pf_left * self.live_pf + max(self.est_output_tokens - generated, 0.0) * per_tok
+            )
         for r in self.queue:
-            work += r.pf_left + self.est_output_tokens * per_tok
+            work += r.pf_left * self.live_pf + self.est_output_tokens * per_tok
         return work
 
     def est_service_seconds(self, req) -> float:
         """Estimated service time of `req` here: its prefill plus the expected decode (SED,
         ADR-013).
         """
-        return self.prefill_seconds(req) + self.est_output_tokens * self._per_token(extra=1)
+        return self.prefill_seconds(req) * self.live_pf + self.est_output_tokens * self._per_token(
+            extra=1
+        )
 
     # ---- taking work ----------------------------------------------------------------------------
     def enqueue(self, req, now: float) -> None:

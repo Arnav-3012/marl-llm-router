@@ -351,6 +351,20 @@ def export_layout(results: Path):
     return envelope(d, {"files": files, "n_seeds": len(d["seeds"]), "note": "held-out stream"})
 
 
+def export_robust(results: Path):
+    """Robust agents (ADR-038) vs the final agents and key rules, in two simulated worlds."""
+    docs = {}
+    for tag in ("firstcal", "heavy"):
+        f = results / "robust" / f"{tag}.json"
+        if f.exists():
+            docs[tag] = json.loads(f.read_text())
+    if len(docs) < 2:
+        return envelope(None, reason="the robust-agent test (ADR-038) has not been run")
+    files = [f"results/robust/{t}.json" for t in docs]
+    n = len(docs["heavy"]["seeds"])
+    return envelope(docs, {"files": files, "n_seeds": n, "note": "held-out"})
+
+
 def export_live(results: Path):
     """Finished live runs on REAL servers (mock rehearsals excluded) and the measured capacity."""
     runs = []
@@ -780,6 +794,7 @@ def run_export(
         "stress.json": export_stress(results),
         "layout.json": export_layout(results),
         "live.json": export_live(results),
+        "robust.json": export_robust(results),
         "training.json": export_training(results),
         "traces.json": export_traces(results),
         "method.json": export_method(results, root),
