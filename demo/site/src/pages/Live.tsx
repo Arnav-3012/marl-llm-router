@@ -83,8 +83,9 @@ export function Live() {
   const fullShowdown = () => { if (window.confirm("The full showdown takes about 36 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.3, 0.47], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
   // Training load only (rho 0.8 = 0.47 req/s), about 12 minutes.
   const mediumShowdown = () => { if (window.confirm("The medium-load showdown takes about 12 minutes and needs the machine to itself. Start it?")) void start({ rates: [0.47], seconds: 120, drain_s: 90, policies: ["sed_global", "route_to_fast", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] }); };
-  // Quick overload showdown: 0.30 req/s = rho 0.5 of the simulator lambda_sat, inside the agents' training loads; 75 s so a run holds enough requests to rank.
-  const showdown = () => start({ rate_rps: 0.3, seconds: 75, drain_s: 60, policies: ["sed_global", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] });
+  // Quick overload showdown: 0.47 req/s = rho 0.8 of the simulator lambda_sat, the agents' training load (rho_train 0.8). The agents' Reject action pays off at heavy load (ADR-032: +0.036 goodput over SED global at rho 0.8, +0.488 at 0.95; all policies tie at rho 0.5), so the load is chosen from the simulator results, not from live outcomes. 75 s so a run holds enough requests to rank.
+  // Seed fixed at 0 (not the dropdown): the seed only changes which requests are follow-up turns (cache reuse); at 0.47 req/s seed 0 has 29% vs a 26% mean (median 29%) over 20 seeds. Chosen from the request mix, not from results.
+  const showdown = () => start({ rate_rps: 0.47, seed: 0, seconds: 75, drain_s: 60, policies: ["sed_global", "route_to_fast_shed", "ddqn_agents", "ddqn_robust"] });
   useEffect(() => { if (auto.current && health && health.status === "ok" && state === "idle") { auto.current = false; void start(); } });
   const stop = () => api("/livecheck/stop", { method: "POST" }).catch(() => undefined);
   const servers = (what: "start" | "stop") => {
@@ -172,7 +173,7 @@ export function Live() {
                 <button className="primary" onClick={() => start()} disabled={running}>{running ? "Running…" : msgs.length ? "Run again" : "Start live test"}</button>
                 <button onClick={mediumShowdown} disabled={running} title="the medium load, five policies, about 12 minutes">Medium-load showdown (12 min)</button>
                 <button onClick={fullShowdown} disabled={running} title="the main real-server result: two loads, five policies, about 36 minutes">Full showdown (36 min)</button>
-                <button onClick={showdown} disabled={running} title="training-load overload (0.30 req/s), four policies, about 10 minutes">Quick overload showdown (10 min)</button>
+                <button onClick={showdown} disabled={running} title="training-load overload (0.47 req/s, rho 0.8), four policies, about 10 minutes">Quick overload showdown (10 min)</button>
                 <button onClick={stop} disabled={!running}>Stop</button>
                 <details className="as-opts"><summary>Options</summary>
                   <div className="as-optgrid">

@@ -481,7 +481,10 @@ def main() -> None:
     ap.add_argument("--ports", default="", help="real mode: llama-server ports in layout order")
     ap.add_argument("--agents-exp", default="e8_mix")
     ap.add_argument(
-        "--adaptive", action="store_true", help="ADR-039: correct wait estimates with live speeds"
+        "--adaptive",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="ADR-039: correct wait estimates with live speeds (default on in real mode)",
     )
     ap.add_argument("--robust-exp", default=None, help="ADR-038 robust agents, e.g. e8_robust")
     ap.add_argument("--port", type=int, default=8000)
@@ -492,7 +495,7 @@ def main() -> None:
         [int(p) for p in a.ports.split(",") if p],
         a.agents_exp,
         robust_exp=a.robust_exp,
-        adaptive=a.adaptive,
+        adaptive=(not a.mock) if a.adaptive is None else a.adaptive,
     )
     uvicorn.run(create_app(settings), host="127.0.0.1", port=a.port, log_level="info")
 
